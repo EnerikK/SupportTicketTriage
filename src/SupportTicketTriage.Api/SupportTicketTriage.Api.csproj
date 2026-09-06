@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SupportTicketTriage.Application\SupportTicketTriage.Application.csproj" />
+    <ProjectReference Include="..\SupportTicketTriage.Infrastructure\SupportTicketTriage.Infrastructure.csproj" />
+    <ProjectReference Include="..\SupportTicketTriage.Domain\SupportTicketTriage.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
