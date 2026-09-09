@@ -19,6 +19,16 @@ public class TicketTests
         Assert.InRange(ticket.CreatedAt, before, after);
     }
 
+    [Fact]
+    public void Create_TruncatesCreatedAtToMicrosecondPrecision()
+    {
+        var ticket = Ticket.Create("some subject", "some body");
+
+        // Postgres timestamptz only stores microsecond precision (1000ns);
+        // a DateTimeOffset tick is 100ns, so the last digit must be zero.
+        Assert.Equal(0, ticket.CreatedAt.Ticks % 10);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

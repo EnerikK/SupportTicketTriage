@@ -27,6 +27,16 @@ public sealed class Ticket
             throw new ArgumentException("Body is required.", nameof(body));
         }
 
-        return new Ticket(Guid.CreateVersion7(), subject, body, DateTimeOffset.UtcNow);
+        return new Ticket(Guid.CreateVersion7(), subject, body, UtcNowToMicrosecondPrecision());
+    }
+
+    private static DateTimeOffset UtcNowToMicrosecondPrecision()
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        // Postgres timestamptz only stores microsecond precision (1000ns), but
+        // DateTimeOffset ticks are 100ns - truncate here so the in-memory value
+        // matches what a round trip through the database actually returns.
+        return now.AddTicks(-(now.Ticks % 10));
     }
 }
