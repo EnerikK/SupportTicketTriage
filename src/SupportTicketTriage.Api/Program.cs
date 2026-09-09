@@ -1,3 +1,4 @@
+using SupportTicketTriage.Api.Endpoints;
 using SupportTicketTriage.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ var app = builder.Build();
 app.Services.ApplyMigrations();
 
 app.MapHealthChecks("/health");
+app.MapTicketEndpoints();
 
 app.Run();
 
