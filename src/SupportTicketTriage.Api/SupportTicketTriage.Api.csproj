@@ -6,4 +6,18 @@
     <ProjectReference Include="..\SupportTicketTriage.Domain\SupportTicketTriage.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <!-- Not used directly - pins the version so it matches Infrastructure's
+         Npgsql provider instead of drifting to whatever floor version NuGet
+         picks transitively through the project reference. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <!-- dotnet-ef requires the Design package on the startup project, not
+         just wherever the DbContext lives. Build-time only. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
 </Project>
