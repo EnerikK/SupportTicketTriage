@@ -3,6 +3,7 @@ WORKDIR /src
 
 COPY nuget.config .
 COPY Directory.Build.props .
+COPY Directory.Packages.props .
 COPY src/SupportTicketTriage.Domain/SupportTicketTriage.Domain.csproj src/SupportTicketTriage.Domain/
 COPY src/SupportTicketTriage.Application/SupportTicketTriage.Application.csproj src/SupportTicketTriage.Application/
 COPY src/SupportTicketTriage.Infrastructure/SupportTicketTriage.Infrastructure.csproj src/SupportTicketTriage.Infrastructure/
