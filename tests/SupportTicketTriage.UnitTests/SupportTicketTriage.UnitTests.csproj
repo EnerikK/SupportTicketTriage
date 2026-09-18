@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SupportTicketTriage.Application\SupportTicketTriage.Application.csproj" />
     <ProjectReference Include="..\..\src\SupportTicketTriage.Domain\SupportTicketTriage.Domain.csproj" />
+    <ProjectReference Include="..\..\tools\SupportTicketTriage.Eval\SupportTicketTriage.Eval.csproj" />
   </ItemGroup>
 
 </Project>

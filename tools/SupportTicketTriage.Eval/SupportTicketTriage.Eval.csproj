@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SupportTicketTriage.Application\SupportTicketTriage.Application.csproj" />
+    <ProjectReference Include="..\..\src\SupportTicketTriage.Domain\SupportTicketTriage.Domain.csproj" />
+    <ProjectReference Include="..\..\src\SupportTicketTriage.Infrastructure\SupportTicketTriage.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Neither is used directly. They pin the versions so they match
+         Infrastructure instead of drifting down to whatever
+         Pgvector.EntityFrameworkCore resolves transitively - without the
+         Relational pin, its assembly is absent from the output entirely and
+         model configuration fails at runtime. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Pgvector.EntityFrameworkCore" />
+  </ItemGroup>
+
+</Project>
