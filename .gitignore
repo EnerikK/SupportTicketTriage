@@ -24,3 +24,9 @@ Thumbs.db
 # AI assistant working docs - not for the public repo
 CLAUDE.MD
 docs/BUILD-SPEC.MD
+DECISIONS.MD
+AUDIT.MD
+
+# Claude Code scratch space, including git worktrees
+.claude/
+
