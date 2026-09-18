@@ -24,10 +24,12 @@ services:
         condition: service_healthy
     environment:
       ConnectionStrings__Default: "Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
-      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
-      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
-      AZURE_OPENAI_CHAT_DEPLOYMENT: ${AZURE_OPENAI_CHAT_DEPLOYMENT}
-      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: ${AZURE_OPENAI_EMBEDDING_DEPLOYMENT}
+      # Double underscores are how ASP.NET Core maps environment variables onto
+      # configuration sections, so these bind to the AzureOpenAi section.
+      AzureOpenAi__Endpoint: ${AZURE_OPENAI_ENDPOINT}
+      AzureOpenAi__ApiKey: ${AZURE_OPENAI_API_KEY}
+      AzureOpenAi__ChatDeployment: ${AZURE_OPENAI_CHAT_DEPLOYMENT}
+      AzureOpenAi__EmbeddingDeployment: ${AZURE_OPENAI_EMBEDDING_DEPLOYMENT}
     ports:
       - "8080:8080"
 
