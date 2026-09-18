@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using SupportTicketTriage.Api.Contracts;
+using SupportTicketTriage.Infrastructure.Persistence;
 
 namespace SupportTicketTriage.IntegrationTests;
 
@@ -30,6 +33,22 @@ public class TicketEndpointsTests(TicketApiFactory factory)
 
         var listResponse = await _client.GetFromJsonAsync<List<TicketResponse>>("/tickets");
         Assert.Contains(listResponse!, t => t.Id == created.Id);
+    }
+
+    [Fact]
+    public async Task Post_WithNoAiConfiguration_StillIngestsWithoutEmbedding()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/tickets", new IngestTicketRequest("No Azure configured", "Ingest must not depend on AI."));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var created = await response.Content.ReadFromJsonAsync<TicketResponse>();
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+
+        Assert.True(await db.Tickets.AnyAsync(t => t.Id == created!.Id));
+        Assert.False(await db.TicketEmbeddings.AnyAsync(e => e.TicketId == created!.Id));
     }
 
     [Fact]

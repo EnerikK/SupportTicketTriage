@@ -1,14 +1,54 @@
+using System.ClientModel;
+using Azure.AI.OpenAI;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using SupportTicketTriage.Application.Redaction;
+using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Infrastructure.Persistence;
 
 namespace SupportTicketTriage.Infrastructure;
 
 public static class InfrastructureServiceCollectionExtensions
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        string connectionString,
+        IConfiguration configuration)
     {
-        services.AddDbContext<SupportTicketTriageDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<SupportTicketTriageDbContext>(
+            options => options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
+
+        services.AddSingleton<PiiRedactor>();
+
+        var section = configuration.GetSection(AzureOpenAiOptions.SectionName);
+        var azureOpenAi = new AzureOpenAiOptions
+        {
+            Endpoint = section["Endpoint"],
+            ApiKey = section["ApiKey"],
+            EmbeddingDeployment = section["EmbeddingDeployment"],
+        };
+
+        // The stack must still start when Azure OpenAI is unavailable, so the
+        // embedding generator is only registered when it is fully configured.
+        if (azureOpenAi.IsConfigured)
+        {
+            services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(_ =>
+                new AzureOpenAIClient(
+                        new Uri(azureOpenAi.Endpoint!),
+                        new ApiKeyCredential(azureOpenAi.ApiKey!))
+                    .GetEmbeddingClient(azureOpenAi.EmbeddingDeployment!)
+                    .AsIEmbeddingGenerator());
+        }
+
+        services.AddScoped(sp => new TicketEmbeddingService(
+            sp.GetService<IEmbeddingGenerator<string, Embedding<float>>>(),
+            azureOpenAi.EmbeddingDeployment,
+            sp.GetRequiredService<PiiRedactor>(),
+            sp.GetRequiredService<SupportTicketTriageDbContext>(),
+            sp.GetRequiredService<ILogger<TicketEmbeddingService>>()));
 
         return services;
     }
