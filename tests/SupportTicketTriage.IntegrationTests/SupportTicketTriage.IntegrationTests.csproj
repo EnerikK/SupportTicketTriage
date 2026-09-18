@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SupportTicketTriage.Api\SupportTicketTriage.Api.csproj" />
     <ProjectReference Include="..\..\src\SupportTicketTriage.Infrastructure\SupportTicketTriage.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\tools\SupportTicketTriage.Eval\SupportTicketTriage.Eval.csproj" />
   </ItemGroup>
 
 </Project>
