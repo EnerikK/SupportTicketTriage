@@ -27,6 +27,9 @@ docs/BUILD-SPEC.MD
 DECISIONS.MD
 AUDIT.MD
 
+# Generated evaluation reports. The committed baseline lives in eval/baseline/.
+eval/results/
+
 # Claude Code scratch space, including git worktrees
 .claude/
 
