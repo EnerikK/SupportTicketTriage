@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -12,9 +13,11 @@ using SupportTicketTriage.Infrastructure.Persistence;
 namespace SupportTicketTriage.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SupportTicketTriageDbContext))]
-    partial class SupportTicketTriageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260918110333_AddTicketResolution")]
+    partial class AddTicketResolution
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

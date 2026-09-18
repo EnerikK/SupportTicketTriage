@@ -21,5 +21,10 @@ public sealed class TicketConfiguration : IEntityTypeConfiguration<Ticket>
 
         builder.Property(t => t.CreatedAt)
             .IsRequired();
+
+        builder.Property(t => t.Resolution);
+        builder.Property(t => t.ResolvedAt);
+
+        builder.Ignore(t => t.IsResolved);
     }
 }
