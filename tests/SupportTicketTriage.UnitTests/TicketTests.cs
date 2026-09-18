@@ -29,6 +29,49 @@ public class TicketTests
         Assert.Equal(0, ticket.CreatedAt.Ticks % 10);
     }
 
+    [Fact]
+    public void Create_LeavesTheTicketUnresolved()
+    {
+        var ticket = Ticket.Create("some subject", "some body");
+
+        Assert.False(ticket.IsResolved);
+        Assert.Null(ticket.Resolution);
+        Assert.Null(ticket.ResolvedAt);
+    }
+
+    [Fact]
+    public void Resolve_RecordsTheApprovedResolution()
+    {
+        var ticket = Ticket.Create("some subject", "some body");
+        var before = DateTimeOffset.UtcNow;
+
+        ticket.Resolve("Reset the password from the account page.");
+
+        Assert.True(ticket.IsResolved);
+        Assert.Equal("Reset the password from the account page.", ticket.Resolution);
+        Assert.InRange(ticket.ResolvedAt!.Value, before.AddTicks(-10), DateTimeOffset.UtcNow);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Resolve_WithMissingResolution_Throws(string? resolution)
+    {
+        var ticket = Ticket.Create("some subject", "some body");
+
+        Assert.Throws<ArgumentException>(() => ticket.Resolve(resolution!));
+    }
+
+    [Fact]
+    public void Resolve_WhenAlreadyResolved_Throws()
+    {
+        var ticket = Ticket.Create("some subject", "some body");
+        ticket.Resolve("first");
+
+        Assert.Throws<InvalidOperationException>(() => ticket.Resolve("second"));
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using SupportTicketTriage.Application.Redaction;
 using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Infrastructure.Persistence;
+using SupportTicketTriage.Infrastructure.Retrieval;
 
 namespace SupportTicketTriage.Infrastructure;
 
@@ -42,6 +43,8 @@ public static class InfrastructureServiceCollectionExtensions
                     .GetEmbeddingClient(azureOpenAi.EmbeddingDeployment!)
                     .AsIEmbeddingGenerator());
         }
+
+        services.AddScoped<TicketRetrievalService>();
 
         services.AddScoped(sp => new TicketEmbeddingService(
             sp.GetService<IEmbeddingGenerator<string, Embedding<float>>>(),
