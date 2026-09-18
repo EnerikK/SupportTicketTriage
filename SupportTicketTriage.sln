@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SupportTicketTriage.UnitTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SupportTicketTriage.IntegrationTests", "tests\SupportTicketTriage.IntegrationTests\SupportTicketTriage.IntegrationTests.csproj", "{040305D3-554F-4BCC-B231-F653C4FBE720}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{07C2787E-EAC7-C090-1BA3-A61EC2A24D84}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SupportTicketTriage.Eval", "tools\SupportTicketTriage.Eval\SupportTicketTriage.Eval.csproj", "{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +103,18 @@ Global
 		{040305D3-554F-4BCC-B231-F653C4FBE720}.Release|x64.Build.0 = Release|Any CPU
 		{040305D3-554F-4BCC-B231-F653C4FBE720}.Release|x86.ActiveCfg = Release|Any CPU
 		{040305D3-554F-4BCC-B231-F653C4FBE720}.Release|x86.Build.0 = Release|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Debug|x64.Build.0 = Debug|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Debug|x86.Build.0 = Debug|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Release|x64.ActiveCfg = Release|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Release|x64.Build.0 = Release|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Release|x86.ActiveCfg = Release|Any CPU
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -110,5 +126,6 @@ Global
 		{FDC2911A-9729-42DD-8E10-88DE08367C20} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{B75AAF4E-F329-4BA3-870E-85435776C43F} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{040305D3-554F-4BCC-B231-F653C4FBE720} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{C19D05AA-FDB8-48C5-876B-E7F9C96E0D14} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 	EndGlobalSection
 EndGlobal
