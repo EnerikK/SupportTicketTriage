@@ -7,9 +7,11 @@ public sealed class SupportTicketTriageDbContext(DbContextOptions<SupportTicketT
     : DbContext(options)
 {
     public DbSet<Ticket> Tickets => Set<Ticket>();
+    public DbSet<TicketEmbedding> TicketEmbeddings => Set<TicketEmbedding>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasPostgresExtension("vector");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(SupportTicketTriageDbContext).Assembly);
     }
 }

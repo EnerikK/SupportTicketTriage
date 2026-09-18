@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using SupportTicketTriage.Api.Contracts;
 using SupportTicketTriage.Domain;
+using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Infrastructure.Persistence;
 
 namespace SupportTicketTriage.Api.Endpoints;
@@ -18,6 +19,7 @@ public static class TicketEndpoints
     private static async Task<Results<Created<TicketResponse>, ValidationProblem>> IngestTicket(
         IngestTicketRequest request,
         SupportTicketTriageDbContext db,
+        TicketEmbeddingService embeddings,
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.Subject) || string.IsNullOrWhiteSpace(request.Body))
@@ -31,6 +33,10 @@ public static class TicketEndpoints
         var ticket = Ticket.Create(request.Subject, request.Body);
         db.Tickets.Add(ticket);
         await db.SaveChangesAsync(ct);
+
+        // Deliberately after the ticket is persisted, and deliberately not
+        // allowed to fail the request: ingest must survive Azure being down.
+        await embeddings.TryEmbedAsync(ticket, ct);
 
         var response = TicketResponse.FromDomain(ticket);
         return TypedResults.Created($"/tickets/{ticket.Id}", response);

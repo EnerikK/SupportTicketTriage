@@ -4,7 +4,9 @@ using SupportTicketTriage.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHealthChecks();
-builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Default")!);
+builder.Services.AddInfrastructure(
+    builder.Configuration.GetConnectionString("Default")!,
+    builder.Configuration);
 
 var app = builder.Build();
 
