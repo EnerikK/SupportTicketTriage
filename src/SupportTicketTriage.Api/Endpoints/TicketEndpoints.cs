@@ -4,6 +4,7 @@ using SupportTicketTriage.Api.Contracts;
 using SupportTicketTriage.Domain;
 using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Infrastructure.Persistence;
+using SupportTicketTriage.Infrastructure.Retrieval;
 
 namespace SupportTicketTriage.Api.Endpoints;
 
@@ -14,6 +15,23 @@ public static class TicketEndpoints
         app.MapPost("/tickets", IngestTicket);
         app.MapGet("/tickets", ListTickets);
         app.MapGet("/tickets/{id:guid}", GetTicket);
+        app.MapGet("/tickets/{id:guid}/similar", GetSimilarTickets);
+    }
+
+    private static async Task<Results<Ok<List<SimilarTicketResponse>>, NotFound>> GetSimilarTickets(
+        Guid id,
+        SupportTicketTriageDbContext db,
+        TicketRetrievalService retrieval,
+        CancellationToken ct)
+    {
+        if (!await db.Tickets.AnyAsync(t => t.Id == id, ct))
+        {
+            return TypedResults.NotFound();
+        }
+
+        var similar = await retrieval.FindSimilarAsync(id, ct: ct);
+
+        return TypedResults.Ok(similar.Select(SimilarTicketResponse.FromResult).ToList());
     }
 
     private static async Task<Results<Created<TicketResponse>, ValidationProblem>> IngestTicket(
