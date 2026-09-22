@@ -1,5 +1,3 @@
-using System.ClientModel;
-using Azure.AI.OpenAI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -34,14 +32,10 @@ public static class InfrastructureServiceCollectionExtensions
 
         // The stack must still start when Azure OpenAI is unavailable, so the
         // embedding generator is only registered when it is fully configured.
-        if (azureOpenAi.IsConfigured)
+        var embeddingGenerator = AzureOpenAiEmbeddingFactory.Create(azureOpenAi);
+        if (embeddingGenerator is not null)
         {
-            services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(_ =>
-                new AzureOpenAIClient(
-                        new Uri(azureOpenAi.Endpoint!),
-                        new ApiKeyCredential(azureOpenAi.ApiKey!))
-                    .GetEmbeddingClient(azureOpenAi.EmbeddingDeployment!)
-                    .AsIEmbeddingGenerator());
+            services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(embeddingGenerator);
         }
 
         services.AddScoped<TicketRetrievalService>();

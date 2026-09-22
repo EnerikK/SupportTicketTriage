@@ -25,6 +25,15 @@ if (arguments.TryGetValue("help", out _))
           --reset                 Delete existing tickets before seeding
           --write-baseline        Write eval/baseline/retrieval-baseline.json;
                                   refused for stand-in embedders
+
+        The embedding deployment is read from the environment, not from an
+        argument, so the key stays out of shell history. Set all three to run
+        against Azure OpenAI; leave any one unset and the run falls back to the
+        lexical stand-in, which cannot produce a baseline.
+
+          AzureOpenAi__Endpoint
+          AzureOpenAi__ApiKey
+          AzureOpenAi__EmbeddingDeployment
         """);
     return 0;
 }
@@ -54,15 +63,17 @@ var options = new DbContextOptionsBuilder<SupportTicketTriageDbContext>()
 await using var db = new SupportTicketTriageDbContext(options);
 await db.Database.MigrateAsync();
 
-var generator = new LexicalEmbeddingGenerator(TicketEmbedding.Dimensions);
+var embedding = EmbeddingSelection.From(EmbeddingSelection.OptionsFromEnvironment());
+Console.WriteLine($"Embedding model: {embedding.ModelName}.");
+
 var embeddingService = new TicketEmbeddingService(
-    generator,
-    LexicalEmbeddingGenerator.ModelName,
+    embedding.Generator,
+    embedding.ModelName,
     new PiiRedactor(),
     db,
     NullLogger<TicketEmbeddingService>.Instance);
 
-var runner = new EvalRunner(db, embeddingService, new TicketRetrievalService(db), LexicalEmbeddingGenerator.ModelName);
+var runner = new EvalRunner(db, embeddingService, new TicketRetrievalService(db), embedding.ModelName);
 
 if (await runner.HasExistingDataAsync())
 {
