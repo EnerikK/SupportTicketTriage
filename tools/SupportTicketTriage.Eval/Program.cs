@@ -49,7 +49,7 @@ var outputDirectory = arguments.GetValueOrDefault("output") ?? Path.Combine("eva
 
 if (!File.Exists(datasetPath))
 {
-    Console.Error.WriteLine($"Dataset not found at {datasetPath}.");
+    Console.Error.WriteLine($"Dataset not found at {Path.GetFullPath(datasetPath)}.");
     return 1;
 }
 
@@ -98,7 +98,7 @@ await report.WriteJsonAsync(jsonPath);
 
 Console.WriteLine();
 Console.WriteLine(report.ToMarkdown());
-Console.WriteLine($"Wrote {markdownPath} and {jsonPath}.");
+Console.WriteLine($"Wrote {Path.GetFullPath(markdownPath)} and {Path.GetFullPath(jsonPath)}.");
 
 if (arguments.ContainsKey("write-baseline"))
 {
@@ -110,7 +110,7 @@ if (arguments.ContainsKey("write-baseline"))
         // and gitignored, while the baseline is committed and reviewed.
         var baselinePath = Path.Combine("eval", "baseline", "retrieval-baseline.json");
         await report.WriteJsonAsync(baselinePath);
-        Console.WriteLine($"Wrote {baselinePath}.");
+        Console.WriteLine($"Wrote {Path.GetFullPath(baselinePath)}.");
     }
     catch (InvalidOperationException ex)
     {
