@@ -1,0 +1,24 @@
+{
+  "DatasetVersion": "1.0",
+  "EmbeddingModel": "text-embedding-3-small",
+  "EmbeddingModelIsReal": true,
+  "GeneratedAt": "2026-09-22T16:09:14.5914066+00:00",
+  "CorpusCount": 240,
+  "QueryCount": 60,
+  "ScoredQueryCount": 54,
+  "UnscoredQueryCount": 6,
+  "RecallAtK": {
+    "1": 0.7592592592592593,
+    "3": 0.8981481481481481,
+    "5": 0.9444444444444444,
+    "10": 0.9907407407407407
+  },
+  "TraitCoverage": {
+    "hard-negative": 75,
+    "ambiguous": 18,
+    "near-duplicate": 41,
+    "pii": 19,
+    "injection": 12,
+    "malformed": 6
+  }
+}
