@@ -16,7 +16,7 @@ public static class AzureOpenAiEmbeddingFactory
 {
     public static IEmbeddingGenerator<string, Embedding<float>>? Create(AzureOpenAiOptions options)
     {
-        if (!options.IsConfigured)
+        if (!options.IsEmbeddingConfigured)
         {
             return null;
         }

@@ -28,14 +28,22 @@ public static class InfrastructureServiceCollectionExtensions
             Endpoint = section["Endpoint"],
             ApiKey = section["ApiKey"],
             EmbeddingDeployment = section["EmbeddingDeployment"],
+            ChatDeployment = section["ChatDeployment"],
         };
 
-        // The stack must still start when Azure OpenAI is unavailable, so the
-        // embedding generator is only registered when it is fully configured.
+        // The stack must still start when Azure OpenAI is unavailable, so each
+        // client is only registered when its own deployment is configured. The
+        // two are independent: retrieval works with embeddings alone.
         var embeddingGenerator = AzureOpenAiEmbeddingFactory.Create(azureOpenAi);
         if (embeddingGenerator is not null)
         {
             services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(embeddingGenerator);
+        }
+
+        var chatClient = AzureOpenAiChatFactory.Create(azureOpenAi);
+        if (chatClient is not null)
+        {
+            services.AddSingleton(chatClient);
         }
 
         services.AddScoped<TicketRetrievalService>();
@@ -46,6 +54,13 @@ public static class InfrastructureServiceCollectionExtensions
             sp.GetRequiredService<PiiRedactor>(),
             sp.GetRequiredService<SupportTicketTriageDbContext>(),
             sp.GetRequiredService<ILogger<TicketEmbeddingService>>()));
+
+        services.AddScoped(sp => new TicketClassificationService(
+            sp.GetService<IChatClient>(),
+            azureOpenAi.ChatDeployment,
+            sp.GetRequiredService<PiiRedactor>(),
+            sp.GetRequiredService<SupportTicketTriageDbContext>(),
+            sp.GetRequiredService<ILogger<TicketClassificationService>>()));
 
         return services;
     }
