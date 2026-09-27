@@ -9,6 +9,7 @@ public sealed class SupportTicketTriageDbContext(DbContextOptions<SupportTicketT
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<TicketEmbedding> TicketEmbeddings => Set<TicketEmbedding>();
     public DbSet<TicketClassification> TicketClassifications => Set<TicketClassification>();
+    public DbSet<TicketRoutingDecision> TicketRoutingDecisions => Set<TicketRoutingDecision>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
