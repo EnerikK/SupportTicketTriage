@@ -5,6 +5,7 @@ using SupportTicketTriage.Domain;
 using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Infrastructure.Persistence;
 using SupportTicketTriage.Infrastructure.Retrieval;
+using SupportTicketTriage.Infrastructure.Routing;
 
 namespace SupportTicketTriage.Api.Endpoints;
 
@@ -17,6 +18,24 @@ public static class TicketEndpoints
         app.MapGet("/tickets/{id:guid}", GetTicket);
         app.MapGet("/tickets/{id:guid}/similar", GetSimilarTickets);
         app.MapGet("/tickets/{id:guid}/classification", GetClassification);
+        app.MapGet("/tickets/{id:guid}/routing", GetRouting);
+    }
+
+    /// Returns the most recent routing decision, on the same 404-rather-than-
+    /// empty-200 basis as the classification resource.
+    private static async Task<Results<Ok<TicketRoutingResponse>, NotFound>> GetRouting(
+        Guid id,
+        SupportTicketTriageDbContext db,
+        CancellationToken ct)
+    {
+        var decision = await db.TicketRoutingDecisions
+            .Where(d => d.TicketId == id)
+            .OrderByDescending(d => d.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+
+        return decision is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(TicketRoutingResponse.FromEntity(decision));
     }
 
     /// Returns the most recent classification. A ticket that exists but has
@@ -58,6 +77,7 @@ public static class TicketEndpoints
         SupportTicketTriageDbContext db,
         TicketEmbeddingService embeddings,
         TicketClassificationService classification,
+        TicketRoutingService routing,
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.Subject) || string.IsNullOrWhiteSpace(request.Body))
@@ -77,6 +97,11 @@ public static class TicketEndpoints
         // Both stages record their own failure and neither blocks the other.
         await embeddings.TryEmbedAsync(ticket, ct);
         await classification.TryClassifyAsync(ticket, ct);
+
+        // Last, because it reads what the two above produced. Either one
+        // missing is a failed gate rather than an error: a ticket the system
+        // could not classify is exactly one a human should look at.
+        await routing.TryEvaluateAsync(ticket, ct);
 
         var response = TicketResponse.FromDomain(ticket);
         return TypedResults.Created($"/tickets/{ticket.Id}", response);
