@@ -19,6 +19,65 @@ public static class TicketEndpoints
         app.MapGet("/tickets/{id:guid}/similar", GetSimilarTickets);
         app.MapGet("/tickets/{id:guid}/classification", GetClassification);
         app.MapGet("/tickets/{id:guid}/routing", GetRouting);
+        app.MapPost("/tickets/{id:guid}/draft", CreateDraft);
+        app.MapGet("/tickets/{id:guid}/draft", GetDraft);
+    }
+
+    /// Generation is a reviewer action rather than part of ingest: it is the
+    /// most expensive call in the system, and drafting for tickets nobody
+    /// opens is wasted money. Idempotent per ticket — asking twice returns
+    /// the draft that already exists rather than paying for a second one.
+    private static async Task<Results<Created<TicketDraftResponse>, Ok<TicketDraftResponse>, NotFound, Conflict<string>, ProblemHttpResult>> CreateDraft(
+        Guid id,
+        SupportTicketTriageDbContext db,
+        TicketDraftService drafts,
+        CancellationToken ct)
+    {
+        var ticket = await db.Tickets.FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (ticket is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var result = await drafts.GenerateAsync(ticket, ct);
+
+        return result.Outcome switch
+        {
+            DraftOutcome.Created =>
+                TypedResults.Created(
+                    $"/tickets/{id}/draft", TicketDraftResponse.FromEntity(result.Draft!)),
+
+            DraftOutcome.AlreadyExists =>
+                TypedResults.Ok(TicketDraftResponse.FromEntity(result.Draft!)),
+
+            // The routing gate is load-bearing: a ticket sent to manual triage
+            // does not get a draft however the caller asks.
+            DraftOutcome.NotEligible =>
+                TypedResults.Conflict(
+                    "This ticket was routed for manual triage, so no draft is generated."),
+
+            DraftOutcome.NotConfigured =>
+                TypedResults.Problem(
+                    "No Azure OpenAI chat deployment is configured.", statusCode: 503),
+
+            _ => TypedResults.Problem("Draft generation failed.", statusCode: 502),
+        };
+    }
+
+    private static async Task<Results<Ok<TicketDraftResponse>, NotFound>> GetDraft(
+        Guid id,
+        SupportTicketTriageDbContext db,
+        CancellationToken ct)
+    {
+        var draft = await db.TicketDrafts
+            .Include(d => d.Sources)
+            .Where(d => d.TicketId == id)
+            .OrderByDescending(d => d.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+
+        return draft is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(TicketDraftResponse.FromEntity(draft));
     }
 
     /// Returns the most recent routing decision, on the same 404-rather-than-

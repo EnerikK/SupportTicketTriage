@@ -67,6 +67,14 @@ public static class InfrastructureServiceCollectionExtensions
             sp.GetRequiredService<SupportTicketTriageDbContext>(),
             sp.GetRequiredService<ILogger<TicketClassificationService>>()));
 
+        services.AddScoped(sp => new TicketDraftService(
+            sp.GetService<IChatClient>(),
+            azureOpenAi.ChatDeployment,
+            sp.GetRequiredService<PiiRedactor>(),
+            sp.GetRequiredService<SupportTicketTriageDbContext>(),
+            sp.GetRequiredService<TicketRetrievalService>(),
+            sp.GetRequiredService<ILogger<TicketDraftService>>()));
+
         return services;
     }
 
