@@ -21,16 +21,10 @@ public sealed record TicketRoutingResponse(
     public static TicketRoutingResponse FromEntity(TicketRoutingDecision decision) =>
         new(
             decision.IsDraftEligible,
-            Describe(decision.FailedGates),
+            RoutingGates.Describe(decision.FailedGates),
             decision.ClassificationScore,
             decision.TopSimilarity,
             decision.MinimumClassificationScore,
             decision.MinimumSimilarity,
             decision.CreatedAt);
-
-    private static IReadOnlyList<string> Describe(RoutingGate gates) =>
-        Enum.GetValues<RoutingGate>()
-            .Where(gate => gate != RoutingGate.None && gates.HasFlag(gate))
-            .Select(gate => gate.ToString())
-            .ToArray();
 }

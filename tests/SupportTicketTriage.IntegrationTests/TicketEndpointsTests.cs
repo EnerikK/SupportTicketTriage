@@ -31,7 +31,7 @@ public class TicketEndpointsTests(TicketApiFactory factory)
         var fetched = await getResponse.Content.ReadFromJsonAsync<TicketResponse>();
         Assert.Equal(created, fetched);
 
-        var listResponse = await _client.GetFromJsonAsync<List<TicketResponse>>("/tickets");
+        var listResponse = await _client.GetFromJsonAsync<List<TicketQueueItemResponse>>("/tickets");
         Assert.Contains(listResponse!, t => t.Id == created.Id);
     }
 

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using SupportTicketTriage.Api.Contracts;
+using SupportTicketTriage.Application.Routing;
 using SupportTicketTriage.Application.Review;
 using SupportTicketTriage.Domain;
 using SupportTicketTriage.Infrastructure.Ai;
@@ -242,13 +243,71 @@ public static class TicketEndpoints
         return TypedResults.Created($"/tickets/{ticket.Id}", response);
     }
 
-    private static async Task<Ok<List<TicketResponse>>> ListTickets(SupportTicketTriageDbContext db, CancellationToken ct)
+    /// The review queue.
+    ///
+    /// Composed server-side rather than returning bare tickets and letting the
+    /// UI fetch classification, routing, draft and review per row: at fifty
+    /// tickets that is two hundred requests to render one screen.
+    ///
+    /// Each signal is append-only with most-recent-wins semantics, so each
+    /// contributes a correlated subquery ordered by CreatedAt. Three
+    /// subqueries per row is fine at this size and would not be at a much
+    /// larger one — but it is one round trip, and an integration test asserts
+    /// that by reading the SQL EF Core actually sends.
+    private static async Task<Ok<List<TicketQueueItemResponse>>> ListTickets(
+        SupportTicketTriageDbContext db,
+        CancellationToken ct)
     {
-        var tickets = await db.Tickets
+        var rows = await db.Tickets
             .OrderByDescending(t => t.CreatedAt)
+            .Select(t => new
+            {
+                t.Id,
+                t.Subject,
+                t.CreatedAt,
+                t.Resolution,
+                Classification = db.TicketClassifications
+                    .Where(c => c.TicketId == t.Id)
+                    .OrderByDescending(c => c.CreatedAt)
+                    .Select(c => new { c.Category, c.Priority })
+                    .FirstOrDefault(),
+                Routing = db.TicketRoutingDecisions
+                    .Where(r => r.TicketId == t.Id)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Select(r => new { r.IsDraftEligible, r.FailedGates })
+                    .FirstOrDefault(),
+                // Only the validity flag, never the text: the queue has no
+                // business carrying a draft body it will not render, and a
+                // draft that failed validation must not leak one anywhere.
+                DraftCitationsValid = db.TicketDrafts
+                    .Where(d => d.TicketId == t.Id)
+                    .OrderByDescending(d => d.CreatedAt)
+                    .Select(d => (bool?)d.CitationsValid)
+                    .FirstOrDefault(),
+                Review = db.TicketReviews
+                    .Where(v => v.TicketId == t.Id)
+                    .Select(v => new { v.Decision })
+                    .FirstOrDefault(),
+            })
             .ToListAsync(ct);
 
-        return TypedResults.Ok(tickets.Select(TicketResponse.FromDomain).ToList());
+        // Mapped here rather than inside the projection because naming the
+        // failed gates is a flags-enum walk that no provider can translate.
+        var queue = rows
+            .Select(r => TicketQueueItemResponse.Create(
+                r.Id,
+                r.Subject,
+                r.CreatedAt,
+                isResolved: r.Resolution is not null,
+                r.Classification?.Category,
+                r.Classification?.Priority,
+                r.Routing?.IsDraftEligible,
+                r.Routing?.FailedGates ?? RoutingGate.None,
+                r.DraftCitationsValid,
+                r.Review?.Decision))
+            .ToList();
+
+        return TypedResults.Ok(queue);
     }
 
     private static async Task<Results<Ok<TicketResponse>, NotFound>> GetTicket(
