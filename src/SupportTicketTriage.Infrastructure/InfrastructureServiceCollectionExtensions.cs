@@ -8,6 +8,7 @@ using SupportTicketTriage.Application.Routing;
 using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Infrastructure.Persistence;
 using SupportTicketTriage.Infrastructure.Retrieval;
+using SupportTicketTriage.Infrastructure.Review;
 using SupportTicketTriage.Infrastructure.Routing;
 
 namespace SupportTicketTriage.Infrastructure;
@@ -66,6 +67,12 @@ public static class InfrastructureServiceCollectionExtensions
             sp.GetRequiredService<PiiRedactor>(),
             sp.GetRequiredService<SupportTicketTriageDbContext>(),
             sp.GetRequiredService<ILogger<TicketClassificationService>>()));
+
+        services.AddScoped(sp => new TicketReviewService(
+            sp.GetRequiredService<SupportTicketTriageDbContext>(),
+            sp.GetRequiredService<TicketEmbeddingService>(),
+            azureOpenAi.EmbeddingDeployment,
+            sp.GetRequiredService<ILogger<TicketReviewService>>()));
 
         services.AddScoped(sp => new TicketDraftService(
             sp.GetService<IChatClient>(),
