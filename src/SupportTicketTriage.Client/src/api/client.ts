@@ -102,3 +102,14 @@ export async function post<T>(path: string, body?: unknown): Promise<T> {
 
   return (await response.json()) as T
 }
+
+/// The API's OpenAPI document types every double as number-or-numeric-string:
+/// System.Text.Json will read a number out of a string, and the generated
+/// schema says so honestly. In practice the server always writes a JSON
+/// number, but the contract permits both, so the client normalises at the
+/// boundary instead of casting the inconvenient half away. This is the
+/// generated types earning their place - a hand-written `similarity: number`
+/// would have asserted something the contract never promised.
+export function toNumber(value: number | string): number {
+  return typeof value === 'number' ? value : Number(value)
+}

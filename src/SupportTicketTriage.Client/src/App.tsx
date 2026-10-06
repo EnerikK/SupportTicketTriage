@@ -1,5 +1,6 @@
 import { Link, Route, Routes } from 'react-router'
 import { TicketQueue } from './features/queue/TicketQueue'
+import { TicketDetail } from './features/ticket/TicketDetail'
 
 export function App() {
   return (
@@ -16,6 +17,7 @@ export function App() {
       <main>
         <Routes>
           <Route path="/" element={<TicketQueue />} />
+          <Route path="/tickets/:id" element={<TicketDetail />} />
         </Routes>
       </main>
     </div>
