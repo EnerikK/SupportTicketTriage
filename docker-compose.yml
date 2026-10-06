@@ -33,7 +33,13 @@ services:
     ports:
       - "8080:8080"
 
-  # ui service added in phase 4 (React review UI)
+  ui:
+    build:
+      context: src/SupportTicketTriage.Client
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
 
 volumes:
   postgres-data:

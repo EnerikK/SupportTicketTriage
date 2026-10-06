@@ -1,0 +1,135 @@
+/* One stylesheet. The specification asks for no design system, so there is no
+   token layer, no component library and no utility framework - just enough
+   styling for a reviewer to read a queue and act on a ticket. */
+
+:root {
+  --bg: #fbfbfc;
+  --surface: #ffffff;
+  --border: #dfe1e6;
+  --text: #1b1d21;
+  --muted: #6b7280;
+  --accent: #1f4fd8;
+  --ready: #0f7b3f;
+  --blocked: #a4502a;
+  --rejected: #a32b2b;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.app {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.app__header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.app__title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.app__tagline {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.status {
+  color: var(--muted);
+}
+
+.status--error {
+  color: var(--rejected);
+}
+
+.queue {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.queue__caption {
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding-bottom: 0.5rem;
+}
+
+.queue th,
+.queue td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.queue th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.queue tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.queue a {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.gates {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+}
+
+.state {
+  font-weight: 500;
+}
+
+.state--ready {
+  color: var(--ready);
+}
+
+.state--blocked {
+  color: var(--blocked);
+}
+
+.state--rejected {
+  color: var(--rejected);
+}
+
+.state--reviewed {
+  color: var(--ready);
+}
+
+.state--pending {
+  color: var(--muted);
+}

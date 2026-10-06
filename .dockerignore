@@ -23,6 +23,10 @@ tools/
 eval/
 docs/
 
+# The React app is its own image with its own build context. Without this,
+# `COPY src/ src/` would sweep src/SupportTicketTriage.Client/node_modules into the API image.
+src/SupportTicketTriage.Client/
+
 # Secrets never belong in an image layer, even an intermediate one.
 .env
 .env.*
