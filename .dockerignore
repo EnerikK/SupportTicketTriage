@@ -1,0 +1,29 @@
+# Build output must never enter the image.
+#
+# The Dockerfile restores inside the container and then publishes with
+# --no-restore. Without this file, `COPY src/ src/` drops the host's obj/
+# directories on top of that restore, and their project.assets.json points at
+# C:\Users\...\.nuget\packages - paths that do not exist in a Linux container.
+# publish then fails with NETSDK1064 on packages it cannot find.
+#
+# The nastier version of the bug is when it *works*: if the host happens to
+# have a compatible restore, the image builds from the host's state rather
+# than its own, and the build is no longer reproducible.
+**/bin/
+**/obj/
+
+# Not part of the API image. The Dockerfile copies only src/, nuget.config and
+# the two Directory.*.props files, so these just bloat the build context.
+.git/
+.github/
+.idea/
+.vs/
+tests/
+tools/
+eval/
+docs/
+
+# Secrets never belong in an image layer, even an intermediate one.
+.env
+.env.*
+!.env.example
