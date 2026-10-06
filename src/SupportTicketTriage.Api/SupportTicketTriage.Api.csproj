@@ -7,6 +7,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Generates the OpenAPI document from the endpoint signatures. The
+         handlers return TypedResults unions, so every status code and payload
+         shape comes from the method signature rather than from attributes
+         that can drift away from the code. -->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Renders that document as a browsable reference. -->
+    <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <!-- Not used directly - pins the version so it matches Infrastructure's
          Npgsql provider instead of drifting to whatever floor version NuGet
