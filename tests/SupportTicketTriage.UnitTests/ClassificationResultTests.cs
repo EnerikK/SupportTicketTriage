@@ -1,3 +1,4 @@
+using System.Globalization;
 using SupportTicketTriage.Application.Classification;
 using SupportTicketTriage.Domain;
 
@@ -82,7 +83,11 @@ public class ClassificationResultTests
     [InlineData(1.1)]
     public void ScoreOutsideZeroToOne_IsRejectedRatherThanClamped(double score)
     {
-        var json = $$"""{"category": "Billing", "priority": "Normal", "score": {{score}}}""";
+        // Formatted invariantly: on a locale that writes decimals with a comma,
+        // interpolating the double directly yields "1,1", the JSON is malformed,
+        // and the parser rejects it for the wrong reason.
+        var literal = score.ToString(CultureInfo.InvariantCulture);
+        var json = $$"""{"category": "Billing", "priority": "Normal", "score": {{literal}}}""";
 
         Assert.False(ClassificationResult.TryParse(json, out _, out var failure));
         Assert.Contains("outside the range", failure);
