@@ -15,13 +15,15 @@ public sealed class EmbeddingApiFactory : WebApplicationFactory<Program>, IAsync
 
     public FakeEmbeddingGenerator Generator { get; } = new();
 
+    public const string EmbeddingDeployment = "test-embedding-model";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("ConnectionStrings:Default", _postgres.GetConnectionString());
 
         // Names the deployment without endpoint or key, so the real client is
         // never constructed and the fake below is what gets resolved.
-        builder.UseSetting("AzureOpenAi:EmbeddingDeployment", "test-embedding-model");
+        builder.UseSetting("AzureOpenAi:EmbeddingDeployment", EmbeddingDeployment);
 
         builder.ConfigureServices(services =>
             services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(Generator));

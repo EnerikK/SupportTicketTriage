@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using SupportTicketTriage.Api.Contracts;
+using SupportTicketTriage.Application.Routing;
+using SupportTicketTriage.Application.Review;
 using SupportTicketTriage.Domain;
 using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Infrastructure.Persistence;
 using SupportTicketTriage.Infrastructure.Retrieval;
+using SupportTicketTriage.Infrastructure.Review;
 using SupportTicketTriage.Infrastructure.Routing;
 
 namespace SupportTicketTriage.Api.Endpoints;
@@ -21,6 +24,8 @@ public static class TicketEndpoints
         app.MapGet("/tickets/{id:guid}/routing", GetRouting);
         app.MapPost("/tickets/{id:guid}/draft", CreateDraft);
         app.MapGet("/tickets/{id:guid}/draft", GetDraft);
+        app.MapPost("/tickets/{id:guid}/review", SubmitReview);
+        app.MapGet("/tickets/{id:guid}/review", GetReview);
     }
 
     /// Generation is a reviewer action rather than part of ingest: it is the
@@ -78,6 +83,78 @@ public static class TicketEndpoints
         return draft is null
             ? TypedResults.NotFound()
             : TypedResults.Ok(TicketDraftResponse.FromEntity(draft));
+    }
+
+    /// Records a reviewer's decision.
+    ///
+    /// All three review actions are this one endpoint. Approve, edit and
+    /// approve, and reject differ by what the reviewer submits, not by which
+    /// verb they reach for — and there is no fourth action, because approving
+    /// is the end of the line. Nothing sends anything.
+    private static async Task<Results<Created<TicketReviewResponse>, NotFound, Conflict<string>, ValidationProblem>> SubmitReview(
+        Guid id,
+        SubmitReviewRequest request,
+        TicketReviewService reviews,
+        CancellationToken ct)
+    {
+        // Matched against the names themselves rather than parsed with
+        // Enum.TryParse, which would also accept "1" and "2". The wire format
+        // is a closed set of words, the same stance the domain takes on
+        // category and priority labels.
+        ReviewDecision? decision = request.Decision?.Trim() switch
+        {
+            var value when string.Equals(value, nameof(ReviewDecision.Approved), StringComparison.OrdinalIgnoreCase)
+                => ReviewDecision.Approved,
+            var value when string.Equals(value, nameof(ReviewDecision.Rejected), StringComparison.OrdinalIgnoreCase)
+                => ReviewDecision.Rejected,
+            _ => null,
+        };
+
+        if (decision is null)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["decision"] = ["Decision must be either Approved or Rejected."],
+            });
+        }
+
+        var result = await reviews.SubmitAsync(id, decision.Value, request.FinalText, request.RejectionReason, ct);
+
+        return result.Outcome switch
+        {
+            ReviewOutcome.Recorded =>
+                TypedResults.Created($"/tickets/{id}/review", TicketReviewResponse.FromEntity(result.Review!)),
+
+            ReviewOutcome.TicketNotFound => TypedResults.NotFound(),
+
+            ReviewOutcome.AlreadyReviewed =>
+                TypedResults.Conflict("This ticket has already been reviewed."),
+
+            // A conflict rather than a 404: the ticket is real, it just has
+            // nothing a reviewer is allowed to act on. A draft that failed
+            // citation validation is withheld, not approved around.
+            ReviewOutcome.NoReviewableDraft =>
+                TypedResults.Conflict("This ticket has no draft whose citations were validated."),
+
+            _ => TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["review"] = [result.Failure ?? "The review could not be recorded."],
+            }),
+        };
+    }
+
+    /// The one review this ticket has, if it has been reviewed. 404 rather
+    /// than an empty 200, on the same basis as classification and routing.
+    private static async Task<Results<Ok<TicketReviewResponse>, NotFound>> GetReview(
+        Guid id,
+        SupportTicketTriageDbContext db,
+        CancellationToken ct)
+    {
+        var review = await db.TicketReviews.FirstOrDefaultAsync(r => r.TicketId == id, ct);
+
+        return review is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(TicketReviewResponse.FromEntity(review));
     }
 
     /// Returns the most recent routing decision, on the same 404-rather-than-
@@ -166,13 +243,71 @@ public static class TicketEndpoints
         return TypedResults.Created($"/tickets/{ticket.Id}", response);
     }
 
-    private static async Task<Ok<List<TicketResponse>>> ListTickets(SupportTicketTriageDbContext db, CancellationToken ct)
+    /// The review queue.
+    ///
+    /// Composed server-side rather than returning bare tickets and letting the
+    /// UI fetch classification, routing, draft and review per row: at fifty
+    /// tickets that is two hundred requests to render one screen.
+    ///
+    /// Each signal is append-only with most-recent-wins semantics, so each
+    /// contributes a correlated subquery ordered by CreatedAt. Three
+    /// subqueries per row is fine at this size and would not be at a much
+    /// larger one — but it is one round trip, and an integration test asserts
+    /// that by reading the SQL EF Core actually sends.
+    private static async Task<Ok<List<TicketQueueItemResponse>>> ListTickets(
+        SupportTicketTriageDbContext db,
+        CancellationToken ct)
     {
-        var tickets = await db.Tickets
+        var rows = await db.Tickets
             .OrderByDescending(t => t.CreatedAt)
+            .Select(t => new
+            {
+                t.Id,
+                t.Subject,
+                t.CreatedAt,
+                t.Resolution,
+                Classification = db.TicketClassifications
+                    .Where(c => c.TicketId == t.Id)
+                    .OrderByDescending(c => c.CreatedAt)
+                    .Select(c => new { c.Category, c.Priority })
+                    .FirstOrDefault(),
+                Routing = db.TicketRoutingDecisions
+                    .Where(r => r.TicketId == t.Id)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Select(r => new { r.IsDraftEligible, r.FailedGates })
+                    .FirstOrDefault(),
+                // Only the validity flag, never the text: the queue has no
+                // business carrying a draft body it will not render, and a
+                // draft that failed validation must not leak one anywhere.
+                DraftCitationsValid = db.TicketDrafts
+                    .Where(d => d.TicketId == t.Id)
+                    .OrderByDescending(d => d.CreatedAt)
+                    .Select(d => (bool?)d.CitationsValid)
+                    .FirstOrDefault(),
+                Review = db.TicketReviews
+                    .Where(v => v.TicketId == t.Id)
+                    .Select(v => new { v.Decision })
+                    .FirstOrDefault(),
+            })
             .ToListAsync(ct);
 
-        return TypedResults.Ok(tickets.Select(TicketResponse.FromDomain).ToList());
+        // Mapped here rather than inside the projection because naming the
+        // failed gates is a flags-enum walk that no provider can translate.
+        var queue = rows
+            .Select(r => TicketQueueItemResponse.Create(
+                r.Id,
+                r.Subject,
+                r.CreatedAt,
+                isResolved: r.Resolution is not null,
+                r.Classification?.Category,
+                r.Classification?.Priority,
+                r.Routing?.IsDraftEligible,
+                r.Routing?.FailedGates ?? RoutingGate.None,
+                r.DraftCitationsValid,
+                r.Review?.Decision))
+            .ToList();
+
+        return TypedResults.Ok(queue);
     }
 
     private static async Task<Results<Ok<TicketResponse>, NotFound>> GetTicket(

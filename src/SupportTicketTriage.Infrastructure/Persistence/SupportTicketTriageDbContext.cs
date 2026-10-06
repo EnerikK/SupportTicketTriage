@@ -11,6 +11,7 @@ public sealed class SupportTicketTriageDbContext(DbContextOptions<SupportTicketT
     public DbSet<TicketClassification> TicketClassifications => Set<TicketClassification>();
     public DbSet<TicketRoutingDecision> TicketRoutingDecisions => Set<TicketRoutingDecision>();
     public DbSet<TicketDraft> TicketDrafts => Set<TicketDraft>();
+    public DbSet<TicketReview> TicketReviews => Set<TicketReview>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
