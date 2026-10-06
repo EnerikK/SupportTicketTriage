@@ -4,11 +4,13 @@ import {
   useClassification,
   useDraft,
   useRouting,
+  useReview,
   useSimilar,
   useTicket,
 } from '../../api/queries'
 import { describeGate } from '../queue/ticketState'
 import { DraftPanel } from './DraftPanel'
+import { ReviewActions } from './ReviewActions'
 
 function RoutingSummary({ routing }: { routing: TicketRouting | null }) {
   if (!routing) {
@@ -63,6 +65,7 @@ export function TicketDetail() {
   const routing = useRouting(id)
   const similar = useSimilar(id)
   const draft = useDraft(id)
+  const review = useReview(id)
 
   if (ticket.isPending) {
     return <p className="status">Loading…</p>
@@ -142,6 +145,16 @@ export function TicketDetail() {
         <DraftPanel
           draft={draft.data ?? null}
           evidence={similar.data ?? []}
+          draftEligible={routing.data?.isDraftEligible ?? null}
+        />
+      </section>
+
+      <section>
+        <h3 className="subheading">Review</h3>
+        <ReviewActions
+          ticketId={id}
+          draft={draft.data ?? null}
+          review={review.data ?? null}
           draftEligible={routing.data?.isDraftEligible ?? null}
         />
       </section>

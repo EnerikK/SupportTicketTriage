@@ -235,3 +235,73 @@ body {
   color: var(--muted);
   font-size: 0.92rem;
 }
+
+/* Review actions */
+
+.review__label {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 600;
+  margin: 0.9rem 0 0.35rem;
+}
+
+.review__label:first-child {
+  margin-top: 0;
+}
+
+.review__text,
+.review__reason {
+  width: 100%;
+  font: inherit;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  resize: vertical;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.review__actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.button,
+button {
+  font: inherit;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button--approve {
+  border-color: var(--ready);
+  color: var(--ready);
+  font-weight: 500;
+}
+
+.button--reject {
+  border-color: var(--rejected);
+  color: var(--rejected);
+}
+
+.link-button {
+  border: none;
+  background: none;
+  padding: 0.3rem 0;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
