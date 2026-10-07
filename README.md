@@ -6,7 +6,7 @@ An incoming ticket is classified, matched against resolved tickets by vector sim
 
 It is built to demonstrate the parts of an LLM-backed system that are usually skipped: measured retrieval quality, guardrails that hold against a hostile model, and a documented account of what has and has not been proven. Features were cut before any of that was.
 
-**Status:** backend complete through grounded generation and human review. The React review UI is not built yet; the API is exercised through the OpenAPI reference at `/scalar`. Evaluation currently covers retrieval only — see [What has actually been measured](#what-has-actually-been-measured), which is deliberately blunt about what carries no number.
+**Status:** feature-complete through grounded generation, human review and the React review UI. Evaluation currently covers retrieval only — see [What has actually been measured](#what-has-actually-been-measured), which is deliberately blunt about what carries no number.
 
 ---
 
@@ -105,6 +105,24 @@ Both required injection tests drive a fake model that **obeys** the injection �
 
 ---
 
+## The review UI
+
+Deliberately minimal: a queue, a ticket page, three actions, one stylesheet, no design system. It exists to demonstrate the workflow and nothing else.
+
+**The queue is one request.** Category, priority, the routing outcome and the draft's state all come from a single projection rather than four requests per row.
+
+**A ticket page issues five independent requests** — ticket, classification, routing, retrieved evidence, draft. Four of them answer 404 when the ticket has not reached that stage, which is a state rather than a failure, so each section renders "not yet" instead of an error.
+
+**TypeScript types are generated from the API's own OpenAPI document**, so a renamed field on the server is a compile error in the client rather than `undefined` in a browser. That caught a real looseness during development: the generator types every `double` as number-or-numeric-string, because `System.Text.Json` will read a number out of a string. Hand-written types would have asserted `number` and been wrong about what the contract actually promises.
+
+**A withheld draft is explained, not hidden.** When citation validation fails the API returns no text and no citations, and the UI says the draft cited evidence it was never shown and that the ticket needs manual triage. No action approves around it.
+
+**There is no send button, because there is no send endpoint.** One test scans every rendered action for send-shaped wording and asserts there are none — the guarantee is an absence, and absences are easy to lose to a well-meaning addition.
+
+Nothing in the UI shows a score as a percentage. A gated ticket names the gate that stopped it ("classifier was unsure", "nothing similar resolved"); similarity is shown as the raw cosine value, because "91% similar" reads as a calibrated claim and is not one.
+
+---
+
 ## Decisions and trade-offs
 
 **PostgreSQL with pgvector, not a dedicated vector database.** The corpus is small and PostgreSQL is already a required dependency. Qdrant or Pinecone would buy a second datastore, a second operational story and a second consistency problem for no benefit at this scale. If the corpus outgrew exact search, that is the point to reconsider — and the recall cost of an approximate index would be measured and published rather than absorbed quietly.
@@ -144,6 +162,7 @@ Blank Azure values are a supported configuration, not a broken one: tickets inge
 
 | | |
 |---|---|
+| Review UI | http://localhost:3000 |
 | API | http://localhost:8080 |
 | API reference | http://localhost:8080/scalar |
 | OpenAPI document | http://localhost:8080/openapi/v1.json |
@@ -169,10 +188,13 @@ GET  /tickets/{id}/review             the recorded decision
 ### Tests
 
 ```bash
-dotnet test
+dotnet test                                   # 141 unit, 76 integration
+npm --prefix src/SupportTicketTriage.Client test   # 33 component
 ```
 
-141 unit tests and 76 integration tests. The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
+**Backend: 141 unit tests and 76 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
+
+**Frontend: 33 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, and what each review action actually sends. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
 
 ### Evaluation harness
 
@@ -191,9 +213,9 @@ With no Azure credentials it falls back to a lexical stand-in embedder, which is
 
 Named here rather than left for a reader to discover:
 
-- **The React review UI.** The API supports the full workflow; the frontend is the next piece of work.
 - **Classification and generation metrics**, the groundedness judge and its agreement figure, and the CI regression gate. Retrieval is baselined; nothing else is.
 - **Observability and resilience** — OpenTelemetry tracing, per-request token and cost recording, and timeouts with bounded retry on model calls.
 - **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval backfills, which closes this for reviewed tickets and leaves it open for the rest.
+- **The review workflow has never been exercised against a live model.** Generating a draft needs an Azure OpenAI chat deployment; without one no draft exists to approve. The actions are covered by component tests and verified against the API's refusals, but no approval has been round-tripped end to end.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.
 - **No authentication.** See the OpenAPI note above.
