@@ -94,8 +94,24 @@ public sealed class EvalRunner(
     public async Task<bool> HasExistingDataAsync(CancellationToken ct = default) =>
         await db.Tickets.AnyAsync(ct);
 
+    /// The order here is load-bearing, and the database enforces it.
+    ///
+    /// Reviews first: a review points at the draft it judged with NoAction,
+    /// so deleting drafts underneath one is refused. Drafts next, which
+    /// cascades to their source rows - and those are what actually block a
+    /// bare "delete the tickets": TicketDraftSources references the source
+    /// ticket with Restrict, deliberately, so that removing a historical
+    /// ticket can never silently rewrite the evidence an existing draft was
+    /// grounded on. Classifications, routing decisions and embeddings all
+    /// cascade from the ticket and need no help.
+    ///
+    /// This only ever mattered once a draft existed, which is why it went
+    /// unnoticed until the pipeline was first run against a real chat
+    /// deployment.
     public async Task ResetAsync(CancellationToken ct = default)
     {
+        await db.TicketReviews.ExecuteDeleteAsync(ct);
+        await db.TicketDrafts.ExecuteDeleteAsync(ct);
         await db.TicketEmbeddings.ExecuteDeleteAsync(ct);
         await db.Tickets.ExecuteDeleteAsync(ct);
     }
