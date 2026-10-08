@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using SupportTicketTriage.Eval.Embedding;
@@ -60,7 +61,18 @@ public sealed record RetrievalReport(
         md.AppendLine("|---|---|");
         foreach (var (k, recall) in RecallAtK.OrderBy(kv => kv.Key))
         {
-            md.AppendLine($"| {k} | {recall:P1} |");
+            // Formatted invariantly, and that is not a detail. This report is an
+            // artifact compared across machines and pasted into the README; on a
+            // locale whose decimal separator is a comma, plain interpolation
+            // renders 75.9% as "75,9%" and the same run reads differently
+            // depending on who ran it. The JSON beside it escapes this only
+            // because System.Text.Json is always invariant.
+            //
+            // Not ":P1" even invariantly: InvariantCulture renders a percentage
+            // as "75.9 %", with a space, and the README quotes "75.9%".
+            // Scaling and appending the sign keeps the artifact identical
+            // everywhere and identical to how the number is quoted elsewhere.
+            md.AppendLine(CultureInfo.InvariantCulture, $"| {k} | {recall * 100:F1}% |");
         }
 
         md.AppendLine();
