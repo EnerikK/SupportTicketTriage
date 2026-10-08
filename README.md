@@ -6,7 +6,7 @@ An incoming ticket is classified, matched against resolved tickets by vector sim
 
 It is built to demonstrate the parts of an LLM-backed system that are usually skipped: measured retrieval quality, guardrails that hold against a hostile model, and a documented account of what has and has not been proven. Features were cut before any of that was.
 
-**Status:** feature-complete through grounded generation, human review and the React review UI. Evaluation currently covers retrieval only — see [What has actually been measured](#what-has-actually-been-measured), which is deliberately blunt about what carries no number.
+**Status:** feature-complete through grounded generation, human review and the React review UI, and exercised end to end against a live Azure OpenAI deployment (see [Verified end to end](#verified-end-to-end)). Evaluation currently covers retrieval only — see [What has actually been measured](#what-has-actually-been-measured), which is deliberately blunt about what carries no number.
 
 ---
 
@@ -86,6 +86,33 @@ An earlier 31-ticket version of this dataset scored 100% at k=3, 5 and 10. That 
 Classification accuracy and macro-F1, groundedness, citation validity as a rate, latency percentiles, and cost per ticket are **not measured**. The code paths exist; the harness does not score them yet. In particular there is **no groundedness judge and therefore no judge-agreement figure** — when there is one, the agreement against hand-labelled pairs will be published next to the score, because for an LLM-as-judge metric the agreement number is worth more than the score.
 
 No figure for any of these appears anywhere in this repository. That is deliberate.
+
+---
+
+## Verified end to end
+
+Run against a live Azure OpenAI deployment (`text-embedding-3-small` and `gpt-4.1-mini`) on 2026-10-08, through the compose stack rather than in tests:
+
+| Step | Observed |
+|---|---|
+| Ingest | `201`, ticket persisted |
+| PII redaction | the stored audit record reads `…reach me at [EMAIL] or [PHONE].` — the raw address and number never left the process |
+| Classification | `Billing` / `High`, self-reported `0.95` |
+| Gate A | `0.95 ≥ 0.70` passes |
+| Gate B, empty corpus | `topSimilarity: null` → fails → manual triage, **no draft attempted** |
+| Gate B, seeded corpus | `0.720 ≥ 0.60` passes |
+| Draft | `201`, `citationsValid: true`, `invalidCitationCount: 0`, cited 3 of the 5 sources it was given |
+| Approve | review recorded, `wasEdited: false` |
+| Resolution | equals the draft text exactly — approving as written stores the server's own record |
+| Re-embedding on approval | **none** — the ticket still has exactly one embedding row |
+| Feedback loop | the approved ticket came back as **rank 1** for the next similar ticket, one minute later |
+
+The retrieval baseline also reproduced **bit-identically** — `0.7592592592592593 / 0.8981481481481481 / 0.9444444444444444 / 0.9907407407407407`, the same doubles as the figures committed three weeks earlier on a different machine and a different Azure resource. Deterministic embeddings over exact search should give that; it had simply never been demonstrated.
+
+Two defects surfaced only because the system was finally run for real, both now fixed with tests:
+
+- The Markdown report formatted percentages with the ambient culture, so it rendered `75,9%` on a comma-decimal locale and `75.9%` in CI. The JSON beside it was unaffected, because `System.Text.Json` is always invariant.
+- `--reset` in the evaluation harness deleted tickets directly, which the `Restrict` foreign key from a draft's sources correctly refused once any draft existed. The guardrail was right; the reset now clears reviews and drafts first.
 
 ---
 
@@ -188,11 +215,11 @@ GET  /tickets/{id}/review             the recorded decision
 ### Tests
 
 ```bash
-dotnet test                                   # 141 unit, 76 integration
+dotnet test                                   # 146 unit, 77 integration
 npm --prefix src/SupportTicketTriage.Client test   # 33 component
 ```
 
-**Backend: 141 unit tests and 76 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
+**Backend: 146 unit tests and 77 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
 
 **Frontend: 33 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, and what each review action actually sends. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
 
@@ -216,6 +243,5 @@ Named here rather than left for a reader to discover:
 - **Classification and generation metrics**, the groundedness judge and its agreement figure, and the CI regression gate. Retrieval is baselined; nothing else is.
 - **Observability and resilience** — OpenTelemetry tracing, per-request token and cost recording, and timeouts with bounded retry on model calls.
 - **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval backfills, which closes this for reviewed tickets and leaves it open for the rest.
-- **The review workflow has never been exercised against a live model.** Generating a draft needs an Azure OpenAI chat deployment; without one no draft exists to approve. The actions are covered by component tests and verified against the API's refusals, but no approval has been round-tripped end to end.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.
 - **No authentication.** See the OpenAPI note above.
