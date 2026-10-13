@@ -1,4 +1,5 @@
 using System.Globalization;
+using SupportTicketTriage.Eval.Metrics;
 using SupportTicketTriage.Eval.Reporting;
 
 namespace SupportTicketTriage.UnitTests;
@@ -7,19 +8,22 @@ namespace SupportTicketTriage.UnitTests;
 /// different machines and pasted into the README. It must therefore render
 /// identically regardless of who ran it, which is a property of the report
 /// rather than of the process that happened to produce it.
-public class RetrievalReportTests
+public class EvaluationReportTests
 {
-    private static RetrievalReport Report() =>
+    private static EvaluationReport Report() =>
         new(
             DatasetVersion: "1.0",
             EmbeddingModel: "text-embedding-3-small",
             EmbeddingModelIsReal: true,
+            ChatModel: "gpt-4.1-mini",
             GeneratedAt: new DateTimeOffset(2026, 10, 8, 17, 6, 52, TimeSpan.Zero),
             CorpusCount: 240,
             QueryCount: 60,
             ScoredQueryCount: 54,
             UnscoredQueryCount: 6,
             RecallAtK: new Dictionary<int, double> { [1] = 0.7592592592592593, [3] = 0.8981481481481481 },
+            Classification: null,
+            Citations: null,
             TraitCoverage: new Dictionary<string, int> { ["hard-negative"] = 75 });
 
     /// Runs the renderer under a comma-decimal culture, which is what this was

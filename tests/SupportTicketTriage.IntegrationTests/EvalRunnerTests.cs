@@ -4,6 +4,7 @@ using Pgvector.EntityFrameworkCore;
 using SupportTicketTriage.Application.Generation;
 using SupportTicketTriage.Application.Redaction;
 using SupportTicketTriage.Application.Review;
+using SupportTicketTriage.Application.Routing;
 using SupportTicketTriage.Domain;
 using SupportTicketTriage.Eval;
 using SupportTicketTriage.Eval.Dataset;
@@ -11,6 +12,7 @@ using SupportTicketTriage.Eval.Embedding;
 using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Infrastructure.Persistence;
 using SupportTicketTriage.Infrastructure.Retrieval;
+using SupportTicketTriage.Infrastructure.Routing;
 using Testcontainers.PostgreSql;
 
 namespace SupportTicketTriage.IntegrationTests;
@@ -170,4 +172,108 @@ public sealed class EvalRunnerTests : IAsyncLifetime
         Assert.False(await _db.TicketEmbeddings.AnyAsync());
         Assert.False(await _db.Set<TicketDraftSource>().AnyAsync());
     }
+
+    /// A run with embeddings but no chat deployment is a supported
+    /// configuration, not a degraded one - it is the state this project was in
+    /// for three phases. The unscored sections must come back null so the
+    /// report can say "not measured" rather than printing a zero that reads as
+    /// a failure.
+    [Fact]
+    public async Task ARunWithoutAChatDeployment_LeavesClassificationAndCitationsUnscored()
+    {
+        var report = await _runner.RunAsync(Dataset());
+
+        Assert.Null(report.Classification);
+        Assert.Null(report.Citations);
+        Assert.Null(report.ChatModel);
+        Assert.NotEmpty(report.RecallAtK);
+    }
+
+    private EvalRunner ChatRunner(FakeChatClient chat)
+    {
+        var retrieval = new TicketRetrievalService(_db);
+        var redactor = new PiiRedactor();
+
+        return new EvalRunner(
+            _db,
+            new TicketEmbeddingService(
+                new LexicalEmbeddingGenerator(TicketEmbedding.Dimensions),
+                LexicalEmbeddingGenerator.ModelName,
+                redactor,
+                _db,
+                NullLogger<TicketEmbeddingService>.Instance),
+            retrieval,
+            LexicalEmbeddingGenerator.ModelName,
+            new ChatStages(
+                new TicketClassificationService(
+                    chat, "fake-chat", redactor, _db, NullLogger<TicketClassificationService>.Instance),
+                new TicketRoutingService(
+                    _db, retrieval, RoutingThresholds.Default, NullLogger<TicketRoutingService>.Instance),
+                new TicketDraftService(
+                    chat, "fake-chat", redactor, _db, retrieval, NullLogger<TicketDraftService>.Instance),
+                "fake-chat"));
+    }
+
+    /// Drives a classifier that is right about one category and wrong about
+    /// the other, so the scored result is checkable by hand rather than being
+    /// whatever the fake happened to return.
+    [Fact]
+    public async Task AChatRun_ScoresClassificationAgainstTheDatasetLabels()
+    {
+        var chat = new FakeChatClient
+        {
+            // Always answers "Billing". The dataset below has one Billing
+            // ticket and one Technical Fault, so exactly half are correct.
+            Responder = _ => """{"category": "Billing", "priority": "High", "score": 0.95}""",
+        };
+
+        var report = await ChatRunner(chat).RunAsync(TwoCategoryDataset(), skipGeneration: true);
+
+        Assert.NotNull(report.Classification);
+        Assert.Equal("fake-chat", report.ChatModel);
+        Assert.Equal(0.5, report.Classification!.Accuracy, 10);
+        Assert.Equal(0, report.Classification.Unclassified);
+
+        // Classification covers every ticket, corpus and query alike - that is
+        // what buys ~50 examples a category instead of ~10.
+        Assert.Equal(TwoCategoryDataset().Tickets.Count, report.Classification.Total);
+
+        // Generation was skipped, so citations stay unmeasured rather than zero.
+        Assert.Null(report.Citations);
+    }
+
+    /// An unparseable response is not an error for the harness: it is a case
+    /// that counts as wrong, which is what makes the accuracy figure honest
+    /// about a model that refuses.
+    [Fact]
+    public async Task AClassifierThatAlwaysFails_ScoresZeroRatherThanThrowing()
+    {
+        var chat = new FakeChatClient { Responder = _ => "I'm afraid I can't do that." };
+
+        var report = await ChatRunner(chat).RunAsync(TwoCategoryDataset(), skipGeneration: true);
+
+        Assert.Equal(0, report.Classification!.Accuracy);
+        Assert.Equal(report.Classification.Total, report.Classification.Unclassified);
+    }
+
+    /// Two tickets with different labels, one of each role, so classification
+    /// covers both and retrieval still has a corpus entry to find.
+    private static EvalDataset TwoCategoryDataset() =>
+        new(
+            "test-1.0",
+            ["Billing", "Technical Fault"],
+            [
+                new EvalTicket(
+                    "corpus-billing", TicketRole.Corpus, "Billing", "Normal",
+                    "Charged twice", "My card shows two charges for one order.")
+                {
+                    Resolution = "The duplicate authorisation was released.",
+                },
+                new EvalTicket(
+                    "query-technical", TicketRole.Query, "Technical Fault", "High",
+                    "App crashes on launch", "The application closes immediately when I open it.")
+                {
+                    RelevantIds = ["corpus-billing"],
+                },
+            ]);
 }

@@ -35,5 +35,6 @@ public sealed record EmbeddingSelection(
         Endpoint = Environment.GetEnvironmentVariable("AzureOpenAi__Endpoint"),
         ApiKey = Environment.GetEnvironmentVariable("AzureOpenAi__ApiKey"),
         EmbeddingDeployment = Environment.GetEnvironmentVariable("AzureOpenAi__EmbeddingDeployment"),
+        ChatDeployment = Environment.GetEnvironmentVariable("AzureOpenAi__ChatDeployment"),
     };
 }
