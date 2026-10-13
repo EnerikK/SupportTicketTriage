@@ -12,6 +12,20 @@ namespace SupportTicketTriage.Eval.Reporting;
 /// deployment — the harness still scores retrieval offline against the
 /// lexical stand-in, and a null section says "not measured" rather than
 /// reporting a zero that would read as a failure.
+public sealed record GateCalibration(
+    string Gate,
+    string ScoreName,
+    string SuccessName,
+    double? Separation,
+    int AbsentScore,
+    IReadOnlyList<FloorOutcome> Floors,
+    /// Scores of observations excluded from the table because success is
+    /// undefined for them - a malformed ticket has no correct answer, so
+    /// "retrieval succeeded" cannot be evaluated. They are not evidence of
+    /// where the floor belongs, but they are exactly what the gate exists to
+    /// catch, so a floor above all of them is doing its job.
+    IReadOnlyList<double> UndefinedOutcomeScores);
+
 public sealed record EvaluationReport(
     string DatasetVersion,
     string EmbeddingModel,
@@ -25,6 +39,7 @@ public sealed record EvaluationReport(
     IReadOnlyDictionary<int, double> RecallAtK,
     ClassificationScore? Classification,
     CitationScore? Citations,
+    IReadOnlyList<GateCalibration> Calibration,
     IReadOnlyDictionary<string, int> TraitCoverage)
 {
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
@@ -69,6 +84,7 @@ public sealed record EvaluationReport(
         AppendRetrieval(md);
         AppendClassification(md);
         AppendCitations(md);
+        AppendCalibration(md);
         AppendTraits(md);
 
         return md.ToString();
@@ -173,6 +189,78 @@ public sealed record EvaluationReport(
         md.AppendLine();
     }
 
+
+    /// The table a threshold decision actually needs.
+    ///
+    /// Not "accuracy per bucket" but "if the floor were here, what would it
+    /// keep and what would it throw away" — because pass rate alone always
+    /// improves as the floor rises, and a gate chosen on pass rate alone ends
+    /// up refusing everything.
+    private void AppendCalibration(StringBuilder md)
+    {
+        if (Calibration.Count == 0)
+        {
+            return;
+        }
+
+        md.AppendLine("## Gate calibration");
+        md.AppendLine();
+        md.AppendLine(
+            "These tables are the evidence for choosing the routing floors. Each row is a candidate "
+            + "floor; floors are inclusive, matching the gate itself.");
+        md.AppendLine();
+
+        foreach (var gate in Calibration)
+        {
+            md.AppendLine($"### Gate {gate.Gate}");
+            md.AppendLine();
+            md.AppendLine($"Score: {gate.ScoreName}. Success: {gate.SuccessName}.");
+            md.AppendLine();
+
+            // The number that decides whether this gate can work at all.
+            md.AppendLine(gate.Separation is null
+                ? "**Separation: not computable** — every observation went the same way."
+                : string.Format(
+                    CultureInfo.InvariantCulture,
+                    "**Separation: {0:F3}** — the mean score of the cases that succeeded minus the mean "
+                    + "of those that did not. Near zero means the score carries no information about the "
+                    + "outcome and no floor will help.",
+                    gate.Separation));
+            md.AppendLine();
+
+            if (gate.AbsentScore > 0)
+            {
+                md.AppendLine(CultureInfo.InvariantCulture,
+                    $"{gate.AbsentScore} observation(s) had no score at all. Those fail every floor and are excluded from the table - they say nothing about where the floor belongs.");
+                md.AppendLine();
+            }
+
+            if (gate.UndefinedOutcomeScores.Count > 0)
+            {
+                var scores = string.Join(", ", gate.UndefinedOutcomeScores.Select(
+                    v => v.ToString("F3", CultureInfo.InvariantCulture)));
+                var highest = gate.UndefinedOutcomeScores[^1];
+
+                md.AppendLine(CultureInfo.InvariantCulture,
+                    $"{gate.UndefinedOutcomeScores.Count} observation(s) have no defined outcome - a query with no correct answer cannot succeed or fail at retrieval - so they are excluded from the table. Their scores were: {scores}. These are precisely what this gate exists to refuse, so **a floor above {highest:F3} refuses all of them**.");
+                md.AppendLine();
+            }
+
+            md.AppendLine("| floor | passes | success among passed | gated | gated that would have worked | % gated |");
+            md.AppendLine("|---|---|---|---|---|---|");
+
+            foreach (var row in gate.Floors)
+            {
+                md.AppendLine(CultureInfo.InvariantCulture,
+                    $"| {row.Floor:F2} | {row.Passed} | {Rate(row.PassRate)} | {row.Gated} | {row.GatedButWouldHaveSucceeded} | {row.GatedShare * 100:F0}% |");
+            }
+
+            md.AppendLine();
+        }
+    }
+
+    private static string Rate(double? rate) =>
+        rate is null ? "—" : string.Format(CultureInfo.InvariantCulture, "{0:F1}%", rate * 100);
     private void AppendTraits(StringBuilder md)
     {
         if (TraitCoverage.Count == 0)

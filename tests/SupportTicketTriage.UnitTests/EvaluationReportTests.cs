@@ -24,6 +24,7 @@ public class EvaluationReportTests
             RecallAtK: new Dictionary<int, double> { [1] = 0.7592592592592593, [3] = 0.8981481481481481 },
             Classification: null,
             Citations: null,
+            Calibration: [],
             TraitCoverage: new Dictionary<string, int> { ["hard-negative"] = 75 });
 
     /// Runs the renderer under a comma-decimal culture, which is what this was
@@ -80,5 +81,39 @@ public class EvaluationReportTests
 
         Assert.Contains("not a baseline", standIn.ToMarkdown());
         Assert.DoesNotContain("not a baseline", Report().ToMarkdown());
+    }
+
+    /// The calibration section carries the evidence a threshold decision is
+    /// made from, including the scores of observations whose outcome is
+    /// undefined - those are not evidence of where the floor belongs, but a
+    /// floor above all of them refuses every unanswerable query, which is the
+    /// clearest signal the table has.
+    [Fact]
+    public void TheCalibrationSectionNamesTheFloorThatRefusesEveryUndefinedCase()
+    {
+        var gate = new GateCalibration(
+            Gate: "B - retrieval similarity",
+            ScoreName: "top-1 cosine similarity",
+            SuccessName: "a relevant ticket in the top 5",
+            Separation: 0.141,
+            AbsentScore: 0,
+            Floors: CalibrationMetrics.AtEachFloor(
+                [new CalibrationCase("q1", 0.72, true), new CalibrationCase("q2", 0.40, false)],
+                [0.60]),
+            UndefinedOutcomeScores: [0.258, 0.531, 0.598]);
+
+        var markdown = (Report() with { Calibration = [gate] }).ToMarkdown();
+
+        Assert.Contains("Gate calibration", markdown);
+        Assert.Contains("Separation: 0.141", markdown);
+        Assert.Contains("a floor above 0.598 refuses all of them", markdown);
+        // Invariant formatting here too - this table is diffed between runs.
+        Assert.DoesNotContain("0,598", markdown);
+    }
+
+    [Fact]
+    public void TheCalibrationSectionIsOmittedWhenThereIsNothingToCalibrate()
+    {
+        Assert.DoesNotContain("Gate calibration", Report().ToMarkdown());
     }
 }

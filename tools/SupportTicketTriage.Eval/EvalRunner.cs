@@ -43,14 +43,22 @@ public sealed class EvalRunner(
         CancellationToken ct = default)
     {
         var ticketIds = await SeedAsync(dataset, ct);
-        var retrievalCases = await EvaluateRetrievalAsync(dataset, ticketIds, ct);
+        var scoredRetrieval = await EvaluateRetrievalAsync(dataset, ticketIds, ct);
+        var retrievalCases = scoredRetrieval.Select(s => s.Case).ToList();
 
         ClassificationScore? classification = null;
         CitationScore? citations = null;
+        var calibration = new List<GateCalibration>
+        {
+            CalibrateRetrievalGate(scoredRetrieval),
+        };
 
         if (chat is not null)
         {
-            classification = ClassificationMetrics.Summarise(await ClassifyAsync(dataset, ticketIds, ct));
+            var scoredClassification = await ClassifyAsync(dataset, ticketIds, ct);
+            classification = ClassificationMetrics.Summarise(
+                scoredClassification.Select(s => s.Case).ToList());
+            calibration.Insert(0, CalibrateClassificationGate(scoredClassification));
 
             if (!skipGeneration)
             {
@@ -71,6 +79,7 @@ public sealed class EvalRunner(
             RecallAtK: KValues.ToDictionary(k => k, k => RetrievalMetrics.MeanRecallAt(retrievalCases, k)),
             Classification: classification,
             Citations: citations,
+            Calibration: calibration,
             TraitCoverage: dataset.Tickets
                 .SelectMany(t => t.Traits)
                 .GroupBy(trait => trait)
@@ -108,23 +117,32 @@ public sealed class EvalRunner(
         return ids;
     }
 
-    private async Task<List<RetrievalCase>> EvaluateRetrievalAsync(
+    private sealed record ScoredRetrieval(RetrievalCase Case, double? TopSimilarity);
+
+    private sealed record ScoredClassification(ClassificationCase Case, double? SelfReportedScore);
+
+    private async Task<List<ScoredRetrieval>> EvaluateRetrievalAsync(
         EvalDataset dataset,
         IReadOnlyDictionary<string, Guid> ticketIds,
         CancellationToken ct)
     {
         var datasetIdByTicketId = ticketIds.ToDictionary(kv => kv.Value, kv => kv.Key);
         var maxK = KValues.Max();
-        var cases = new List<RetrievalCase>();
+        var cases = new List<ScoredRetrieval>();
 
         foreach (var query in dataset.Queries)
         {
             var results = await retrieval.FindSimilarAsync(ticketIds[query.Id], maxK, ct);
 
-            cases.Add(new RetrievalCase(
-                query.Id,
-                query.RelevantIds,
-                results.Select(r => datasetIdByTicketId[r.TicketId]).ToList()));
+            cases.Add(new ScoredRetrieval(
+                new RetrievalCase(
+                    query.Id,
+                    query.RelevantIds,
+                    results.Select(r => datasetIdByTicketId[r.TicketId]).ToList()),
+                // What Gate B compares against its floor. Null when nothing was
+                // retrieved at all, which is an absent input rather than a
+                // similarity of zero.
+                results.Count == 0 ? null : results[0].Similarity));
         }
 
         return cases;
@@ -143,7 +161,7 @@ public sealed class EvalRunner(
     /// resolution.
     ///
     /// The cost is one chat call per ticket, sequentially.
-    private async Task<List<ClassificationCase>> ClassifyAsync(
+    private async Task<List<ScoredClassification>> ClassifyAsync(
         EvalDataset dataset,
         IReadOnlyDictionary<string, Guid> ticketIds,
         CancellationToken ct)
@@ -161,13 +179,23 @@ public sealed class EvalRunner(
         var stored = await db.TicketClassifications
             .GroupBy(c => c.TicketId)
             .Select(g => g.OrderByDescending(c => c.CreatedAt).First())
-            .ToDictionaryAsync(c => c.TicketId, c => c.Category.ToLabel(), ct);
+            .ToDictionaryAsync(
+                c => c.TicketId,
+                c => new { Label = c.Category.ToLabel(), c.SelfReportedScore },
+                ct);
 
         return dataset.Tickets
-            .Select(entry => new ClassificationCase(
-                entry.Id,
-                entry.Category,
-                stored.GetValueOrDefault(ticketIds[entry.Id])))
+            .Select(entry =>
+            {
+                var row = stored.GetValueOrDefault(ticketIds[entry.Id]);
+
+                return new ScoredClassification(
+                    new ClassificationCase(entry.Id, entry.Category, row?.Label),
+                    // Null when the ticket was never classified: Gate A has no
+                    // input to compare, which is a failed gate rather than a
+                    // score of zero.
+                    row?.SelfReportedScore);
+            })
             .ToList();
     }
 
@@ -224,6 +252,82 @@ public sealed class EvalRunner(
             _ => new CitationCase(queryId, DraftOutcomeKind.Failed, 0, 0),
         };
 
+
+    /// Gate A: does the classifier's self-reported score predict whether it
+    /// was right?
+    ///
+    /// Success is "classified correctly", which is what the gate is nominally
+    /// protecting - a ticket the classifier got wrong should ideally have been
+    /// sent to a human instead.
+    private static GateCalibration CalibrateClassificationGate(
+        IReadOnlyCollection<ScoredClassification> scored)
+    {
+        var cases = scored
+            .Select(s => new CalibrationCase(s.Case.QueryId, s.SelfReportedScore, s.Case.IsCorrect))
+            .ToList();
+
+        return new GateCalibration(
+            Gate: "A - classification score",
+            ScoreName: "classifier self-reported score",
+            SuccessName: "classified correctly",
+            Separation: CalibrationMetrics.Separation(cases),
+            AbsentScore: CalibrationMetrics.AbsentScoreCount(cases),
+            Floors: CalibrationMetrics.AtEachFloor(cases),
+            // Every ticket carries a category label, so classification
+            // success is always defined.
+            UndefinedOutcomeScores: []);
+    }
+
+    /// Gate B: does top-1 similarity predict whether retrieval actually found
+    /// something worth grounding on?
+    ///
+    /// Success is "at least one labelled-relevant ticket appeared in the top
+    /// k", using the same k the draft is grounded on - the gate exists to stop
+    /// a draft being attempted when nothing useful came back, so the question
+    /// is about the set the model would have been given.
+    ///
+    /// Queries with no labels are excluded rather than counted as failures.
+    /// A malformed ticket legitimately has no correct answer, so "retrieval
+    /// succeeded" is undefined for it - the same reason RecallAt returns null.
+    /// They are exactly the cases the gate should catch, but they are not
+    /// evidence about where the floor belongs.
+    private static GateCalibration CalibrateRetrievalGate(
+        IReadOnlyCollection<ScoredRetrieval> scored)
+    {
+        // The k a draft is actually grounded on, not KValues.Max(). Gate B
+        // exists to stop a draft being attempted when the set the model would
+        // receive holds nothing useful, so the question has to be asked about
+        // that set. Calibrating against the top 10 measures a retrieval depth
+        // no draft ever sees, and at 10 almost every query succeeds - which
+        // leaves no variance to calibrate against at all.
+        var k = TicketRetrievalService.DefaultK;
+
+        var cases = scored
+            .Where(s => s.Case.RelevantIds.Count > 0)
+            .Select(s => new CalibrationCase(
+                s.Case.QueryId,
+                s.TopSimilarity,
+                s.Case.RetrievedIds.Take(k).Intersect(s.Case.RelevantIds).Any()))
+            .ToList();
+
+        return new GateCalibration(
+            Gate: "B - retrieval similarity",
+            ScoreName: "top-1 cosine similarity",
+            SuccessName: $"a relevant ticket in the top {k}",
+            Separation: CalibrationMetrics.Separation(cases),
+            AbsentScore: CalibrationMetrics.AbsentScoreCount(cases),
+            Floors: CalibrationMetrics.AtEachFloor(cases),
+            // The unlabelled queries. Excluded from the table above because
+            // success is undefined for them, but reported here because a
+            // floor above all of them refuses every query that has no
+            // answer - which is the clearest evidence there is for where
+            // this floor belongs.
+            UndefinedOutcomeScores: scored
+                .Where(s => s.Case.RelevantIds.Count == 0 && s.TopSimilarity is not null)
+                .Select(s => s.TopSimilarity!.Value)
+                .OrderBy(v => v)
+                .ToList());
+    }
     public async Task<bool> HasExistingDataAsync(CancellationToken ct = default) =>
         await db.Tickets.AnyAsync(ct);
 
