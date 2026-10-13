@@ -32,7 +32,7 @@ public class EmbeddingSelectionTests
             EmbeddingDeployment = "text-embedding-3-small",
         });
 
-        Assert.True(RetrievalReport.IsRealEmbeddingModel(selection.ModelName));
+        Assert.True(EvaluationReport.IsRealEmbeddingModel(selection.ModelName));
     }
 
     [Theory]
@@ -55,6 +55,6 @@ public class EmbeddingSelectionTests
 
         Assert.Equal(LexicalEmbeddingGenerator.ModelName, selection.ModelName);
         Assert.IsType<LexicalEmbeddingGenerator>(selection.Generator);
-        Assert.False(RetrievalReport.IsRealEmbeddingModel(selection.ModelName));
+        Assert.False(EvaluationReport.IsRealEmbeddingModel(selection.ModelName));
     }
 }

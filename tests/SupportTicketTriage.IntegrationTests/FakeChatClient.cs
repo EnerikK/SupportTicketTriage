@@ -26,6 +26,12 @@ public sealed class FakeChatClient : IChatClient
     public string ResponseText { get; set; } =
         """{"category": "Billing", "priority": "High", "score": 0.91}""";
 
+    /// Answers based on the prompt instead of a fixed string, for flows that
+    /// make more than one kind of call - the evaluation harness classifies and
+    /// then generates against the same client, and a single ResponseText
+    /// cannot be valid for both schemas. Falls back to ResponseText when unset.
+    public Func<IReadOnlyList<ChatMessage>, string>? Responder { get; set; }
+
     public bool ShouldThrow { get; set; }
 
     public void Reset()
@@ -37,6 +43,7 @@ public sealed class FakeChatClient : IChatClient
 
         ResponseText = """{"category": "Billing", "priority": "High", "score": 0.91}""";
         ShouldThrow = false;
+        Responder = null;
     }
 
     /// Every message of every call, flattened. Used to assert that no raw
@@ -58,7 +65,10 @@ public sealed class FakeChatClient : IChatClient
             throw new InvalidOperationException("Simulated Azure OpenAI failure.");
         }
 
-        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, ResponseText)));
+        var sent = messages.ToList();
+        var reply = Responder?.Invoke(sent) ?? ResponseText;
+
+        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, reply)));
     }
 
     public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
