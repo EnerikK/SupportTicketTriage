@@ -116,4 +116,42 @@ public class EvaluationReportTests
     {
         Assert.DoesNotContain("Gate calibration", Report().ToMarkdown());
     }
+
+    /// A report must not state something false about the run that produced it.
+    ///
+    /// `Citations` is null for two different reasons - no chat deployment, or
+    /// `--skip-generation` with one present - and the renderer used to claim
+    /// the first unconditionally. That made the report contradict its own
+    /// header, which names the chat deployment it had just said did not exist.
+    ///
+    /// The report built here is the exact shape `--skip-generation` produces
+    /// against a real deployment: classification scored, citations not.
+    [Fact]
+    public void SkippedGenerationIsReportedAsSkippedRatherThanAsAMissingDeployment()
+    {
+        var markdown = (Report() with { Classification = Classified() }).ToMarkdown();
+
+        Assert.Contains("`gpt-4.1-mini`", markdown);
+        Assert.Contains("generation was skipped", markdown);
+        Assert.DoesNotContain("this run had no chat deployment", markdown);
+    }
+
+    /// The other half of the same branch: with no chat deployment at all, the
+    /// original message is the true one and must survive.
+    [Fact]
+    public void AMissingChatDeploymentIsStillReportedAsSuch()
+    {
+        var markdown = (Report() with { ChatModel = null }).ToMarkdown();
+
+        Assert.Contains("this run had no chat deployment", markdown);
+        Assert.DoesNotContain("generation was skipped", markdown);
+    }
+
+    private static ClassificationScore Classified() =>
+        new(
+            Accuracy: 0.92,
+            MacroF1: 0.928,
+            Total: 300,
+            Unclassified: 5,
+            PerLabel: [new LabelScore("Billing", 0.94, 0.94, 0.94, 50)]);
 }

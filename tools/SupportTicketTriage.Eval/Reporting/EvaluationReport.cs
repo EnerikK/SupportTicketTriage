@@ -6,12 +6,9 @@ using SupportTicketTriage.Eval.Metrics;
 
 namespace SupportTicketTriage.Eval.Reporting;
 
-/// One evaluation run.
-///
-/// `Classification` and `Citations` are null when the run had no chat
-/// deployment — the harness still scores retrieval offline against the
-/// lexical stand-in, and a null section says "not measured" rather than
-/// reporting a zero that would read as a failure.
+/// What one routing gate looked like against this run's data: the floors
+/// that were considered, what each would keep and throw away, and the
+/// separation that says whether a floor on this score can work at all.
 public sealed record GateCalibration(
     string Gate,
     string ScoreName,
@@ -26,6 +23,16 @@ public sealed record GateCalibration(
     /// catch, so a floor above all of them is doing its job.
     IReadOnlyList<double> UndefinedOutcomeScores);
 
+/// One evaluation run.
+///
+/// `Classification` and `Citations` are null when the run had no chat
+/// deployment — the harness still scores retrieval offline against the
+/// lexical stand-in, and a null section says "not measured" rather than
+/// reporting a zero that would read as a failure.
+///
+/// `Citations` is additionally null when `--skip-generation` was passed with
+/// a chat deployment present, so the two reasons have to be told apart when
+/// the section is rendered. `ChatModel` is what distinguishes them.
 public sealed record EvaluationReport(
     string DatasetVersion,
     string EmbeddingModel,
@@ -167,7 +174,14 @@ public sealed record EvaluationReport(
 
         if (Citations is null)
         {
-            md.AppendLine("_Not scored: this run had no chat deployment._");
+            // Two different reasons reach here and the report used to claim
+            // the first one unconditionally - which made it contradict its own
+            // header, since that names the chat deployment it just said did
+            // not exist. A report that states something false about the run
+            // that produced it is worse than one that omits the section.
+            md.AppendLine(ChatModel is null
+                ? "_Not scored: this run had no chat deployment._"
+                : "_Not scored: generation was skipped (`--skip-generation`)._");
             md.AppendLine();
             return;
         }
