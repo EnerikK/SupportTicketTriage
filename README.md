@@ -81,11 +81,55 @@ The dataset is built to be hard rather than large: 75 hard negatives (tickets sh
 
 An earlier 31-ticket version of this dataset scored 100% at k=3, 5 and 10. That looked like success and was the opposite: with 22 corpus tickets the right answer could barely *avoid* the top three, so the test could not fail, and a CI gate built on it would have guarded nothing. Fixing it needed two separate things — corpus size to remove saturation, and query count to buy resolution. At 8 scored queries each is worth 12.5% of the mean, so any regression smaller than one whole query is invisible; at 54 each is worth about 1.9%.
 
-### What carries no number yet
+### Classification
 
-Classification accuracy and macro-F1, groundedness, citation validity as a rate, latency percentiles, and cost per ticket are **not measured**. The code paths exist; the harness does not score them yet. In particular there is **no groundedness judge and therefore no judge-agreement figure** — when there is one, the agreement against hand-labelled pairs will be published next to the score, because for an LLM-as-judge metric the agreement number is worth more than the score.
+Over all 300 labelled tickets, `gpt-4.1-mini`, across two runs of the identical dataset and deployment:
 
-No figure for any of these appears anywhere in this repository. That is deliberate.
+| | 2026-10-13 | 2026-10-16 |
+|---|---|---|
+| Accuracy | 92.3% | **92.0%** |
+| Macro-F1 | 93.1% | **92.8%** |
+| Unclassifiable | 5 of 300 | 5 of 300 |
+
+Per-category F1 runs from 89.1% to 99.0% in the later run. **Both runs are shown because the spread between them is a result in its own right** — see the caveat below.
+
+**Three caveats carry with these numbers.** An unclassifiable ticket counts as *wrong*, not excluded — the dataset carries the label, so a response that could not be parsed got it wrong, and excluding those would let a classifier that refuses half its inputs report perfect accuracy on the rest. The dataset is balanced at exactly 50 per category, which production ticket volume will not be: a balanced set makes macro-F1 and accuracy converge, and on a real skewed distribution they would not.
+
+And the third, which was found by re-running rather than by reasoning: **these figures are not reproducible to the decimal.** With nothing changed but the clock, macro-F1 moved 0.3pp and per-category F1 moved by up to 3.0pp — Account & Login fell 97.0% → 94.0% while Returns & Refunds rose 87.8% → 89.8%. Recall@k, by contrast, came back bit-identical, because embeddings are deterministic and chat completions are not. Two runs is a weak estimate of that noise floor, but it is the reason no per-category ranking is quoted here as evidence, and it is what the CI regression gate's tolerances will have to be set wider than.
+
+### Citation validity
+
+**100% over 47 generated drafts** — no draft cited a ticket outside its own retrieval set, across 75 citations. 13 of the 60 queries were refused by the routing gates and never reached the model.
+
+The denominator is drafts the model actually produced. Tickets the gates refused are excluded, because including them would make this number improve every time the gates got stricter — measuring the gates rather than the model.
+
+**Read 100% as "no evidence of a problem", not "proven safe".** The retrieval set is small and sits in the prompt, so the model has little opportunity to stray; a metric that cannot go down measures nothing, which this project has already learned once the hard way.
+
+### The routing floors, and one gate that does not work
+
+Both floors were placeholders until they were selected from this data. The two gates came out very differently, and the difference is the more interesting result.
+
+**Gate A — the classifier's self-reported score — cannot be calibrated.** The model does not emit a continuous score: across 295 classified tickets it produced six distinct values, and 239 of them — 81% — were exactly 0.85. That is a verbal tic, not an estimate. Separation (the mean score of correct classifications minus the mean of incorrect ones) is **0.043** — small, and small in a way no floor can exploit. Accuracy is 93.6% with no floor at all and 94.0% at a floor of 0.85; it reaches 95.7% only at 0.90, and buys those two points by refusing 249 of 295 tickets, **232 of which the classifier had got right**.
+
+So the floor is set low (0.50) and the gate is documented as a **tripwire against a degenerate response, not a confidence gate**. At that floor it gates exactly one ticket of 295 — and that ticket was misclassified, so the tripwire caught a real error and cost nothing. It also earns its place through the null case: a ticket that was never classified has no score at all and fails regardless of the floor, which is what routes every ticket to a human when Azure OpenAI is unreachable.
+
+Separation is quoted above as a single figure and should not be: it was 0.006 on the first run and 0.043 on the second. With 239 of 295 scores pinned at 0.85 the statistic rests on the ~19 tickets the classifier got wrong, and which tickets those are changes between runs. Both values say the same thing, and the floor table says it a third way — but the conclusion is what reproduces here, not the number.
+
+This is the specification's caution about self-reported confidence vindicated directly — it asked for calibration to be demonstrated before the score was treated as a probability, and the demonstration shows there is nothing to calibrate.
+
+**Gate B — retrieval similarity — is a real gate, at 0.60.** Separation is 0.141, twenty times Gate A's. The floor was decided by the six *malformed* queries rather than the 54 labelled ones: only one labelled query fails to retrieve a relevant ticket in the top 5, so that curve is fitted to a single example. The malformed queries — `"???"`, `"where parcel"` and the like — have no correct answer and must never receive a drafted reply. Their top-1 similarities were 0.258, 0.364, 0.531, 0.547, 0.550 and 0.598, so **0.60 is the lowest floor that refuses all six**; 0.55 lets two through.
+
+The cost is measured: 0.60 also gates 6 of 54 labelled queries that would have retrieved something relevant. Those go to a human instead of getting a draft, which is the right direction to err for a gate whose job is refusing to answer.
+
+The value did not change from the original guess. That is a result rather than an absence of one — it is now the floor the evidence points at rather than the one nobody had checked.
+
+### What still carries no number
+
+Groundedness, latency percentiles, and cost per ticket are **not measured**. In particular there is **no groundedness judge and therefore no judge-agreement figure** — when there is one, the agreement against hand-labelled pairs will be published next to the score, because for an LLM-as-judge metric the agreement number is worth more than the score.
+
+There is also **no CI regression gate yet**. CI builds and tests; it does not run the harness or compare against a baseline, so every figure above is from a local run.
+
+No figure for any unmeasured quantity appears anywhere in this repository. That is deliberate.
 
 ---
 
@@ -162,7 +206,7 @@ Nothing in the UI shows a score as a percentage. A gated ticket names the gate t
 
 **No repository layer over EF Core.** `DbContext` is already a unit of work with a change tracker. Wrapping it in an interface with one implementation, for testability that Testcontainers provides properly against a real database, would be a layer that only forwards calls.
 
-**Confidence is a routing signal, not a probability, and the UI is forbidden from showing it as a percentage.** It is two independent gates — the classifier's self-reported score, and retrieval sufficiency — rather than one blended number, because they fail for different reasons and an average would hide which. Gate B is the one that gets forgotten: if nothing similar was retrieved, a *grounded* draft is impossible no matter how certain the classifier is. The model's self-reported score is used as what it is; no calibration is implemented, so none is claimed. Both threshold values are placeholders and are labelled as such in code — they are to be chosen from evaluation data, not guessed.
+**Confidence is a routing signal, not a probability, and the UI is forbidden from showing it as a percentage.** It is two independent gates — the classifier's self-reported score, and retrieval sufficiency — rather than one blended number, because they fail for different reasons and an average would hide which. Gate B is the one that gets forgotten: if nothing similar was retrieved, a *grounded* draft is impossible no matter how certain the classifier is. The model's self-reported score is used as what it is; no calibration is implemented, so none is claimed. Both floors have now been selected from evaluation data rather than guessed, and the exercise found that only one of the two gates works: the classifier.s self-report has a separation of 0.006 and no floor on it buys accuracy, so Gate A is documented as a tripwire rather than a calibrated gate. See [What has actually been measured](#what-has-actually-been-measured).
 
 **Every routing decision is stored with both its inputs and the thresholds that were applied.** Thresholds are configuration and will change; a decision recorded without them becomes unreadable the moment they move, and "how would today's tickets route under the new floors" becomes a query instead of a guess.
 
@@ -215,11 +259,11 @@ GET  /tickets/{id}/review             the recorded decision
 ### Tests
 
 ```bash
-dotnet test                                   # 146 unit, 77 integration
+dotnet test                                   # 170 unit, 80 integration
 npm --prefix src/SupportTicketTriage.Client test   # 33 component
 ```
 
-**Backend: 146 unit tests and 77 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
+**Backend: 170 unit tests and 80 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
 
 **Frontend: 33 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, and what each review action actually sends. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
 
@@ -240,7 +284,9 @@ With no Azure credentials it falls back to a lexical stand-in embedder, which is
 
 Named here rather than left for a reader to discover:
 
-- **Classification and generation metrics**, the groundedness judge and its agreement figure, and the CI regression gate. Retrieval is baselined; nothing else is.
+- **Groundedness**, its judge and the judge-agreement figure. Classification, citation validity and the routing floors are now measured; groundedness is not, and it needs a second chat deployment so the model does not judge its own output.
+- **Latency and cost** — p50/p95 per stage, token counts, and cost per ticket against a versioned pricing file.
+- **The CI regression gate.** A baseline exists for retrieval only, and CI does not run the harness, so every figure in this README comes from a local run.
 - **Observability and resilience** — OpenTelemetry tracing, per-request token and cost recording, and timeouts with bounded retry on model calls.
 - **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval backfills, which closes this for reviewed tickets and leaves it open for the rest.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.
