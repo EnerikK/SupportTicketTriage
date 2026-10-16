@@ -49,8 +49,18 @@ public static class CalibrationMetrics
     /// the same rows and can be diffed. An observed-value grid would move
     /// every time the model's output moved, which is the opposite of what a
     /// calibration table is for.
+    ///
+    /// **The rounding is load-bearing, and it was missing.** `i * 0.05` is not
+    /// the decimal it looks like for seven of these twenty values: it yields
+    /// 0.6000000000000001 where it prints 0.60, and 0.8500000000000001 where
+    /// it prints 0.85. Since the floors are inclusive, a score of exactly 0.85
+    /// was then *gated* by this table while the real gate *passes* it — the
+    /// precise trap the comment below warns about. It mattered because the
+    /// classifier emits exactly 0.85 for 80% of tickets, so the one row
+    /// ADR-019 quotes was the one the error fell on. Rounding to the two
+    /// decimals the grid claims makes each floor the value it reports.
     public static IReadOnlyList<double> DefaultFloors { get; } =
-        Enumerable.Range(0, 20).Select(i => i * 0.05).ToList();
+        Enumerable.Range(0, 20).Select(i => Math.Round(i * 0.05, 2)).ToList();
 
     /// The floors are inclusive, matching RoutingDecision.Evaluate — a value
     /// exactly on the floor passes. A table that disagreed with the gate it
