@@ -15,9 +15,23 @@ using SupportTicketTriage.Infrastructure.Persistence;
 using SupportTicketTriage.Infrastructure.Retrieval;
 using SupportTicketTriage.Infrastructure.Routing;
 
-var arguments = ParseArguments(args);
+HarnessArguments arguments;
 
-if (arguments.TryGetValue("help", out _))
+try
+{
+    arguments = HarnessArguments.Parse(args);
+}
+catch (ArgumentException error)
+{
+    // Exit before touching anything. An unrecognised flag means the caller
+    // asked for something this harness does not do, and carrying on would
+    // run a different evaluation from the one requested - silently, and
+    // successfully, which is how a regression gate comes to guard nothing.
+    Console.Error.WriteLine(error.Message);
+    return 1;
+}
+
+if (arguments.Has("help"))
 {
     Console.WriteLine(
         """
@@ -50,14 +64,16 @@ if (arguments.TryGetValue("help", out _))
     return 0;
 }
 
-if (!arguments.TryGetValue("connection", out var connectionString) || string.IsNullOrWhiteSpace(connectionString))
+var connectionString = arguments.Value("connection");
+
+if (string.IsNullOrWhiteSpace(connectionString))
 {
     Console.Error.WriteLine("--connection is required. Run with --help for usage.");
     return 1;
 }
 
-var datasetPath = arguments.GetValueOrDefault("dataset") ?? Path.Combine("eval", "dataset", "tickets.json");
-var outputDirectory = arguments.GetValueOrDefault("output") ?? Path.Combine("eval", "results");
+var datasetPath = arguments.Value("dataset") ?? Path.Combine("eval", "dataset", "tickets.json");
+var outputDirectory = arguments.Value("output") ?? Path.Combine("eval", "results");
 
 if (!File.Exists(datasetPath))
 {
@@ -72,7 +88,7 @@ Console.WriteLine($"Loaded dataset {dataset.Version}: {dataset.Tickets.Count} ti
 // costing, and the report says "not scored" instead of reporting a run as
 // free. A file that exists but is malformed does throw - that is a mistake,
 // not a choice.
-var pricingPath = arguments.GetValueOrDefault("pricing")
+var pricingPath = arguments.Value("pricing")
     ?? Path.Combine("eval", "pricing", "model-pricing.json");
 ModelPricing? pricing = null;
 
@@ -138,7 +154,7 @@ var runner = new EvalRunner(
 
 if (await runner.HasExistingDataAsync())
 {
-    if (!arguments.ContainsKey("reset"))
+    if (!arguments.Has("reset"))
     {
         Console.Error.WriteLine(
             "The target database already contains tickets. Re-run with --reset to clear them, "
@@ -150,7 +166,7 @@ if (await runner.HasExistingDataAsync())
     await runner.ResetAsync();
 }
 
-var report = await runner.RunAsync(dataset, arguments.ContainsKey("skip-generation"));
+var report = await runner.RunAsync(dataset, arguments.Has("skip-generation"));
 
 var markdownPath = Path.Combine(outputDirectory, "evaluation-report.md");
 var jsonPath = Path.Combine(outputDirectory, "evaluation-result.json");
@@ -161,7 +177,7 @@ Console.WriteLine();
 Console.WriteLine(report.ToMarkdown());
 Console.WriteLine($"Wrote {Path.GetFullPath(markdownPath)} and {Path.GetFullPath(jsonPath)}.");
 
-if (arguments.ContainsKey("write-baseline"))
+if (arguments.Has("write-baseline"))
 {
     try
     {
@@ -181,26 +197,6 @@ if (arguments.ContainsKey("write-baseline"))
 }
 
 return 0;
-
-static Dictionary<string, string?> ParseArguments(string[] args)
-{
-    var parsed = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-
-    for (var i = 0; i < args.Length; i++)
-    {
-        if (!args[i].StartsWith("--", StringComparison.Ordinal))
-        {
-            continue;
-        }
-
-        var key = args[i][2..];
-        var hasValue = i + 1 < args.Length && !args[i + 1].StartsWith("--", StringComparison.Ordinal);
-
-        parsed[key] = hasValue ? args[++i] : null;
-    }
-
-    return parsed;
-}
 
 /// Builds the chat-dependent stages, or returns null when no chat deployment
 /// is configured.
