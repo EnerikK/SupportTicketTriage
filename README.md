@@ -64,7 +64,7 @@ Three model calls, one per stage, no autonomous loop and no tool selection anywh
 
 ## What has actually been measured
 
-**Retrieval, and only retrieval.** Against the committed baseline (`eval/baseline/retrieval-baseline.json`), dataset v1.0, `text-embedding-3-small`, 240 corpus tickets, 54 scored queries:
+**Retrieval, and only retrieval.** Against the committed baseline (`eval/baseline/evaluation-baseline.json`), dataset v1.0, `text-embedding-3-small`, 240 corpus tickets, 54 scored queries:
 
 | k | recall@k |
 |---|---|

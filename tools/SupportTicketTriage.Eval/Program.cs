@@ -5,6 +5,7 @@ using Pgvector.EntityFrameworkCore;
 using SupportTicketTriage.Application.Redaction;
 using SupportTicketTriage.Application.Routing;
 using SupportTicketTriage.Eval;
+using SupportTicketTriage.Eval.Baseline;
 using SupportTicketTriage.Eval.Dataset;
 using SupportTicketTriage.Eval.Embedding;
 using SupportTicketTriage.Eval.Instrumentation;
@@ -45,7 +46,7 @@ if (arguments.Has("help"))
                                   generation and citation calls)
           --pricing <path>        Token pricing (default: eval/pricing/model-pricing.json);
                                   costs are reported as not scored without it
-          --write-baseline        Write eval/baseline/retrieval-baseline.json;
+          --write-baseline        Write eval/baseline/evaluation-baseline.json;
                                   refused for stand-in embedders and for costs
                                   computed from unverified pricing
 
@@ -185,8 +186,15 @@ if (arguments.Has("write-baseline"))
 
         // Deliberately not alongside the per-run reports: those are disposable
         // and gitignored, while the baseline is committed and reviewed.
-        var baselinePath = Path.Combine("eval", "baseline", "retrieval-baseline.json");
-        await report.WriteJsonAsync(baselinePath);
+        //
+        // And deliberately not the report itself. The previous baseline was a
+        // full report dump and it rotted - six properties were added to the
+        // report afterwards, and the committed file can no longer be read back
+        // into the record it came from. A projection of only the gated fields
+        // cannot rot that way, and it makes the gate's scope reviewable in the
+        // file rather than only in the comparison code.
+        var baselinePath = Path.Combine("eval", "baseline", "evaluation-baseline.json");
+        await EvaluationBaseline.From(report).WriteAsync(baselinePath);
         Console.WriteLine($"Wrote {Path.GetFullPath(baselinePath)}.");
     }
     catch (InvalidOperationException ex)
