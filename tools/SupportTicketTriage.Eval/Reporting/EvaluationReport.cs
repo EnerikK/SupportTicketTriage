@@ -47,6 +47,11 @@ public sealed record EvaluationReport(
     ClassificationScore? Classification,
     CitationScore? Citations,
     IReadOnlyList<GateCalibration> Calibration,
+    IReadOnlyList<StageLatency> Latency,
+    /// Null when the run could not be priced at all - no pricing file was
+    /// loaded. A run that loaded one but could not price some stage still gets
+    /// a score, with the unpriceable stages reporting null inside it.
+    CostScore? Cost,
     IReadOnlyDictionary<string, int> TraitCoverage)
 {
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
@@ -92,6 +97,8 @@ public sealed record EvaluationReport(
         AppendClassification(md);
         AppendCitations(md);
         AppendCalibration(md);
+        AppendLatency(md);
+        AppendCost(md);
         AppendTraits(md);
 
         return md.ToString();
@@ -275,6 +282,145 @@ public sealed record EvaluationReport(
 
     private static string Rate(double? rate) =>
         rate is null ? "—" : string.Format(CultureInfo.InvariantCulture, "{0:F1}%", rate * 100);
+    private void AppendLatency(StringBuilder md)
+    {
+        if (Latency.Count == 0)
+        {
+            return;
+        }
+
+        md.AppendLine("## Latency");
+        md.AppendLine();
+        md.AppendLine(
+            "Percentiles are nearest-rank over the calls that succeeded, so each figure is a duration "
+            + "some call actually took rather than an interpolation between two of them. Failures are "
+            + "counted separately and excluded from the percentiles - a timeout spent real time, but it "
+            + "is not how long a working call takes.");
+        md.AppendLine();
+        md.AppendLine("| stage | calls | failures | p50 | p95 | total |");
+        md.AppendLine("|---|---|---|---|---|---|");
+
+        foreach (var stage in Latency)
+        {
+            md.AppendLine(CultureInfo.InvariantCulture,
+                $"| {stage.Stage} | {stage.Calls} | {stage.Failures} | {Duration(stage.P50)} | {Duration(stage.P95)} | {Duration(stage.TotalElapsed)} |");
+        }
+
+        md.AppendLine();
+        md.AppendLine(
+            "**Read p95 against the call count beside it.** At a few dozen calls the 95th percentile is "
+            + "the second- or third-slowest observation, so it moves a long way on one slow call. These "
+            + "are also whole-call latencies as the harness experienced them, which includes network "
+            + "round-trip to Azure - they describe this machine's view of the deployment, not the "
+            + "deployment alone.");
+        md.AppendLine();
+        md.AppendLine(
+            "`Retrieval` is a pgvector query rather than a model call, and is listed here because a "
+            + "reviewer waiting for a draft waits for it too.");
+        md.AppendLine();
+
+        if (!EmbeddingModelIsReal)
+        {
+            // The banner at the top of this report disclaims retrieval
+            // *quality*, which is a different thing. A stand-in that hashes
+            // strings in-process returns in microseconds, so its embedding
+            // latency is not a slow version of the real number - it is a
+            // measurement of something else entirely, and "0 ms" reads as fast
+            // rather than as absent.
+            md.AppendLine(
+                $"> **Embedding latency here is meaningless.** `{EmbeddingModel}` runs in-process and "
+                + "makes no network call, so these figures measure a hash function rather than a "
+                + "deployment. Only a run against a real embedding deployment says anything about how "
+                + "long embedding takes.");
+            md.AppendLine();
+        }
+    }
+
+    /// Fixed to the millisecond and invariant, like every other number in this
+    /// report. `TimeSpan`'s default rendering is culture-sensitive and carries
+    /// seven fractional digits, neither of which belongs in an artifact that
+    /// gets diffed between runs.
+    private static string Duration(TimeSpan? value) =>
+        value is null
+            ? "-"
+            : string.Format(CultureInfo.InvariantCulture, "{0:F0} ms", value.Value.TotalMilliseconds);
+
+    private void AppendCost(StringBuilder md)
+    {
+        md.AppendLine("## Cost");
+        md.AppendLine();
+
+        if (Cost is null)
+        {
+            md.AppendLine("_Not scored: no pricing file was loaded._");
+            md.AppendLine();
+            return;
+        }
+
+        if (!Cost.PricingVerified)
+        {
+            md.AppendLine(
+                "> **These costs are not a result.** They were computed from pricing that no one has "
+                + "checked against the Azure portal for this subscription. Rates vary by region and by "
+                + "agreement, so the figures below show the arithmetic works and say nothing reliable "
+                + $"about what a run costs. Set `\"verified\": true` in the pricing file once the rates "
+                + "are confirmed; until then a baseline is refused.");
+            md.AppendLine();
+        }
+
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- Pricing version: `{Cost.PricingVersion}`, retrieved {Cost.PricingRetrievedOn:yyyy-MM-dd}");
+        md.AppendLine(CultureInfo.InvariantCulture, $"- Currency: {Cost.Currency}");
+        md.AppendLine();
+
+        md.AppendLine("| stage | deployment | input tokens | output tokens | cost | unpriced calls |");
+        md.AppendLine("|---|---|---|---|---|---|");
+
+        foreach (var stage in Cost.PerStage)
+        {
+            md.AppendLine(CultureInfo.InvariantCulture,
+                $"| {stage.Stage} | {stage.Model ?? "-"} | {Tokens(stage.InputTokens)} | {Tokens(stage.OutputTokens)} | {Amount(stage.Cost)} | {stage.UnpricedCalls} |");
+        }
+
+        md.AppendLine();
+        md.AppendLine(CultureInfo.InvariantCulture, $"- Total: **{Amount(Cost.Total)}**");
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- Per ingested ticket ({Cost.TicketCount} tickets): **{UnitAmount(Cost.PerIngestedTicket)}**");
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- Per drafted ticket ({Cost.DraftCount} drafts): **{UnitAmount(Cost.PerDraftedTicket)}**");
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- Per 1,000 drafted tickets: **{Amount(Cost.PerDraftedTicket * 1000)}**");
+        md.AppendLine();
+        md.AppendLine(
+            "**Two per-ticket figures, not one.** Every ticket pays for embedding and classification; "
+            + "only a ticket that clears both routing gates pays for generation, which is the expensive "
+            + "call. A single blended mean would move whenever the gate ratio moved, so tightening a "
+            + "threshold would read as a saving.");
+        md.AppendLine();
+        md.AppendLine(
+            "A stage with any unpriced call reports no cost rather than a partial sum. Adding up only "
+            + "the calls that reported usage would produce a figure wrong by an unknown amount that "
+            + "looks exactly like a right one.");
+        md.AppendLine();
+    }
+
+    private static string Tokens(long? value) =>
+        value is null ? "-" : value.Value.ToString("N0", CultureInfo.InvariantCulture);
+
+    private static string Amount(decimal? value) =>
+        value is null ? "-" : value.Value.ToString("F4", CultureInfo.InvariantCulture);
+
+    /// Per-ticket costs need more decimals than stage totals do.
+    ///
+    /// At four places a real measured figure of 0.000149 renders as "0.0001",
+    /// which throws away a third of it and invites the reader to multiply the
+    /// wrong number. Six places is where these land legibly, and the per-1,000
+    /// line exists because that is the unit a human actually reasons in - "a
+    /// thousand drafts costs about eighty cents" is the sentence someone wants,
+    /// and deriving it from 0.0008 by eye goes wrong.
+    private static string UnitAmount(decimal? value) =>
+        value is null ? "-" : value.Value.ToString("F6", CultureInfo.InvariantCulture);
+
     private void AppendTraits(StringBuilder md)
     {
         if (TraitCoverage.Count == 0)
@@ -304,6 +450,19 @@ public sealed record EvaluationReport(
             throw new InvalidOperationException(
                 $"Refusing to write a baseline produced with '{EmbeddingModel}'. "
                 + "A baseline requires a real embedding deployment.");
+        }
+
+        // Same argument, applied to money. A cost figure computed from prices
+        // nobody has checked against the actual subscription is a development
+        // aid; committing it as the number CI regresses against would make the
+        // gate guard an assumption rather than a measurement.
+        if (Cost is { PricingVerified: false })
+        {
+            throw new InvalidOperationException(
+                $"Refusing to write a baseline whose costs came from unverified pricing "
+                + $"(version '{Cost.PricingVersion}', retrieved {Cost.PricingRetrievedOn:yyyy-MM-dd}). "
+                + "Check the rates against the Azure portal for this subscription and set "
+                + "\"verified\": true in the pricing file.");
         }
     }
 
