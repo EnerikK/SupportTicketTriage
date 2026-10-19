@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using SupportTicketTriage.Application.Redaction;
+using SupportTicketTriage.Application.Routing;
 using SupportTicketTriage.Domain;
 using SupportTicketTriage.Eval.Dataset;
 using SupportTicketTriage.Eval.Instrumentation;
@@ -78,6 +80,15 @@ public sealed class EvalRunner(
             EmbeddingModel: embeddingModel,
             EmbeddingModelIsReal: EvaluationReport.IsRealEmbeddingModel(embeddingModel),
             ChatModel: chat?.ChatModel,
+            ClassificationPromptVersion: ClassificationPrompt.Version,
+            GenerationPromptVersion: GenerationPrompt.Version,
+            RedactionVersion: PiiRedactor.Version,
+            // The harness uses the defaults deliberately rather than reading
+            // configuration - a baseline produced under one set of floors and
+            // compared against a run under another would report a retune as a
+            // regression. Recording them is what makes that detectable.
+            MinimumClassificationScore: RoutingThresholds.Default.MinimumClassificationScore,
+            MinimumSimilarity: RoutingThresholds.Default.MinimumSimilarity,
             GeneratedAt: DateTimeOffset.UtcNow,
             CorpusCount: dataset.Corpus.Count(),
             QueryCount: dataset.Queries.Count(),

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using SupportTicketTriage.Eval.Embedding;
 using SupportTicketTriage.Eval.Metrics;
 
@@ -38,6 +39,27 @@ public sealed record EvaluationReport(
     string EmbeddingModel,
     bool EmbeddingModelIsReal,
     string? ChatModel,
+    /// The versions a number here is only valid against.
+    ///
+    /// The specification requires a baseline to record dataset version, prompt
+    /// version and the model configuration, and the reason is that each of
+    /// these silently changes what the metrics mean. A prompt edit that lifts
+    /// classification accuracy is an improvement, not a regression - but a gate
+    /// comparing against a baseline built under the old prompt cannot tell the
+    /// two apart unless it can see that the prompt moved.
+    ///
+    /// Redaction version is here for a sharper reason: [[ADR-005]] says bumping
+    /// it makes every existing vector non-comparable, so a recall figure
+    /// carried across a redaction change is not a worse number, it is a
+    /// meaningless one.
+    string ClassificationPromptVersion,
+    string GenerationPromptVersion,
+    string RedactionVersion,
+    /// The floors that were applied. They move `NotEligible`, which is the
+    /// denominator of citation validity, so retuning a gate would otherwise
+    /// surface as a citation regression.
+    double MinimumClassificationScore,
+    double MinimumSimilarity,
     DateTimeOffset GeneratedAt,
     int CorpusCount,
     int QueryCount,
@@ -54,12 +76,35 @@ public sealed record EvaluationReport(
     CostScore? Cost,
     IReadOnlyDictionary<string, int> TraitCoverage)
 {
-    private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
+    /// String enums, deliberately, and the same converter the dataset and
+    /// pricing loaders already use.
+    ///
+    /// Without it `AiStage` serialises as 0..3, so inserting a stage member
+    /// renumbers every Latency and Cost row in a committed baseline and the
+    /// diff reads as a change in the numbers rather than in their labels.
+    /// A baseline whose meaning depends on declaration order is a baseline
+    /// nobody can review.
+    private static readonly JsonSerializerOptions Json = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() },
+    };
 
     public async Task WriteJsonAsync(string path, CancellationToken ct = default)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(this, Json), ct);
+
+        // Sorted, because the markdown already sorts and the two should not
+        // disagree - but mainly because the unsorted order is the dataset's
+        // first-appearance order, so reordering tickets would churn a committed
+        // baseline without changing a single value.
+        var stable = this with
+        {
+            TraitCoverage = TraitCoverage.OrderBy(kv => kv.Key, StringComparer.Ordinal)
+                .ToDictionary(kv => kv.Key, kv => kv.Value),
+        };
+
+        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(stable, Json), ct);
     }
 
     public async Task WriteMarkdownAsync(string path, CancellationToken ct = default)
