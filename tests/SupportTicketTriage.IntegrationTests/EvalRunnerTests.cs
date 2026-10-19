@@ -9,6 +9,7 @@ using SupportTicketTriage.Domain;
 using SupportTicketTriage.Eval;
 using SupportTicketTriage.Eval.Dataset;
 using SupportTicketTriage.Eval.Embedding;
+using SupportTicketTriage.Eval.Instrumentation;
 using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Infrastructure.Persistence;
 using SupportTicketTriage.Infrastructure.Retrieval;
@@ -42,7 +43,11 @@ public sealed class EvalRunnerTests : IAsyncLifetime
             NullLogger<TicketEmbeddingService>.Instance);
 
         _runner = new EvalRunner(
-            _db, embeddings, new TicketRetrievalService(_db), LexicalEmbeddingGenerator.ModelName);
+            _db,
+            embeddings,
+            new TicketRetrievalService(_db),
+            LexicalEmbeddingGenerator.ModelName,
+            new AiCallRecorder());
     }
 
     async Task IAsyncLifetime.DisposeAsync()
@@ -204,6 +209,7 @@ public sealed class EvalRunnerTests : IAsyncLifetime
                 NullLogger<TicketEmbeddingService>.Instance),
             retrieval,
             LexicalEmbeddingGenerator.ModelName,
+            new AiCallRecorder(),
             new ChatStages(
                 new TicketClassificationService(
                     chat, "fake-chat", redactor, _db, NullLogger<TicketClassificationService>.Instance),

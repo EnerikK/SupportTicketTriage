@@ -1,6 +1,9 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using SupportTicketTriage.Domain;
 using SupportTicketTriage.Eval.Dataset;
+using SupportTicketTriage.Eval.Instrumentation;
+using SupportTicketTriage.Eval.Pricing;
 using SupportTicketTriage.Eval.Metrics;
 using SupportTicketTriage.Eval.Reporting;
 using SupportTicketTriage.Infrastructure.Ai;
@@ -29,7 +32,11 @@ public sealed class EvalRunner(
     TicketEmbeddingService embeddings,
     TicketRetrievalService retrieval,
     string embeddingModel,
-    ChatStages? chat = null)
+    AiCallRecorder recorder,
+    ChatStages? chat = null,
+    /// Null when no pricing file was loaded, which makes the cost section read
+    /// "not scored" rather than reporting a run as free.
+    ModelPricing? pricing = null)
 {
     public static readonly int[] KValues = [1, 3, 5, 10];
 
@@ -80,6 +87,20 @@ public sealed class EvalRunner(
             Classification: classification,
             Citations: citations,
             Calibration: calibration,
+            Latency: LatencyMetrics.Summarise(recorder.Calls),
+            // Drafts are the denominator for generation cost, and the citation
+            // score already counts exactly the drafts the model produced. A run
+            // that skipped generation has none, so the per-drafted figure is
+            // withheld rather than divided by zero.
+            Cost: pricing is null
+                ? null
+                : CostMetrics.Summarise(
+                    recorder.Calls,
+                    pricing,
+                    embeddingModel,
+                    chat?.ChatModel,
+                    dataset.Tickets.Count,
+                    citations?.Attempted ?? 0),
             TraitCoverage: dataset.Tickets
                 .SelectMany(t => t.Traits)
                 .GroupBy(trait => trait)
@@ -132,7 +153,14 @@ public sealed class EvalRunner(
 
         foreach (var query in dataset.Queries)
         {
+            // Timed here rather than in a decorator because this is a pgvector
+            // query, not a model call - there is no client to wrap. It is
+            // recorded as its own stage so database time is never added to
+            // token cost, and so "why is drafting slow" can be answered with
+            // the retrieval half separated out.
+            var started = Stopwatch.GetTimestamp();
             var results = await retrieval.FindSimilarAsync(ticketIds[query.Id], maxK, ct);
+            recorder.RecordSuccess(AiStage.Retrieval, Stopwatch.GetElapsedTime(started), usage: null);
 
             cases.Add(new ScoredRetrieval(
                 new RetrievalCase(

@@ -1,5 +1,7 @@
 using System.Globalization;
+using SupportTicketTriage.Eval.Instrumentation;
 using SupportTicketTriage.Eval.Metrics;
+using SupportTicketTriage.Eval.Pricing;
 using SupportTicketTriage.Eval.Reporting;
 
 namespace SupportTicketTriage.UnitTests;
@@ -25,6 +27,8 @@ public class EvaluationReportTests
             Classification: null,
             Citations: null,
             Calibration: [],
+            Latency: [],
+            Cost: null,
             TraitCoverage: new Dictionary<string, int> { ["hard-negative"] = 75 });
 
     /// Runs the renderer under a comma-decimal culture, which is what this was
@@ -154,4 +158,175 @@ public class EvaluationReportTests
             Total: 300,
             Unclassified: 5,
             PerLabel: [new LabelScore("Billing", 0.94, 0.94, 0.94, 50)]);
+
+    private static CostScore Costed(bool verified) =>
+        new(
+            PricingVersion: "1.0",
+            Currency: "USD",
+            PricingVerified: verified,
+            PricingRetrievedOn: new DateOnly(2026, 10, 16),
+            PerStage:
+            [
+                new StageCost(
+                    AiStage.Classification, "gpt-4.1-mini", 1_234_567, 89_012, 1.2345m, UnpricedCalls: 0),
+            ],
+            Total: 1.2345m,
+            PerIngestedTicket: 0.0041m,
+            PerDraftedTicket: 0.0262m,
+            TicketCount: 300,
+            DraftCount: 47);
+
+    private static EvaluationReport Measured(bool verified = true) =>
+        Report() with
+        {
+            Latency =
+            [
+                new StageLatency(
+                    AiStage.Generation,
+                    Calls: 47,
+                    Failures: 1,
+                    // Deliberately not .5: "F0" rounds a midpoint to even, so
+                    // 1234.5 renders as "1234". That is fine for a latency
+                    // figure - nobody reads sub-millisecond precision - but
+                    // this test is about the decimal separator, and a midpoint
+                    // would make it fail for an unrelated reason.
+                    P50: TimeSpan.FromMilliseconds(1234.4),
+                    P95: TimeSpan.FromMilliseconds(2345.6),
+                    TotalElapsed: TimeSpan.FromSeconds(61.75)),
+            ],
+            Cost = Costed(verified),
+        };
+
+    /// The same artifact argument as recall: these tables get diffed between
+    /// runs and pasted into the README, so a comma-decimal machine must not
+    /// render them differently from CI.
+    [Theory]
+    [InlineData("el-GR")]
+    [InlineData("de-DE")]
+    [InlineData("fr-FR")]
+    public void LatencyAndCostRenderWithDecimalPoints_WhateverTheAmbientCulture(string culture)
+    {
+        var original = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = new CultureInfo(culture);
+
+            var markdown = Measured().ToMarkdown();
+
+            Assert.Contains("1234 ms", markdown);
+            Assert.Contains("2346 ms", markdown);
+            Assert.Contains("1.2345", markdown);
+            Assert.Contains("0.0262", markdown);
+            Assert.Contains("1,234,567", markdown);
+
+            Assert.DoesNotContain("1,2345", markdown);
+            Assert.DoesNotContain("0,0262", markdown);
+            Assert.DoesNotContain("1.234.567", markdown);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
+    }
+
+    /// Four decimal places is enough for a stage total and not for a per-ticket
+    /// figure: the real measured value of 0.000149 renders as "0.0001" at F4,
+    /// which discards a third of it and invites multiplying the wrong number.
+    [Fact]
+    public void PerTicketCostsAreRenderedWithEnoughDecimalsToBeMultipliedBy()
+    {
+        var measured = Measured() with
+        {
+            Cost = Costed(verified: true) with
+            {
+                PerIngestedTicket = 0.000149m,
+                PerDraftedTicket = 0.000796m,
+            },
+        };
+
+        var markdown = measured.ToMarkdown();
+
+        Assert.Contains("0.000149", markdown);
+        Assert.Contains("0.000796", markdown);
+
+        // And the unit a reader actually reasons in.
+        Assert.Contains("Per 1,000 drafted tickets: **0.7960**", markdown);
+    }
+
+    /// Unverified prices must announce themselves. The figures are arithmetic
+    /// against numbers nobody checked, and the whole repository's claim is that
+    /// it does not publish figures it cannot stand behind.
+    [Fact]
+    public void UnverifiedPricingCarriesAWarningInTheReport()
+    {
+        var markdown = Measured(verified: false).ToMarkdown();
+
+        Assert.Contains("These costs are not a result", markdown);
+        Assert.Contains("verified", markdown);
+    }
+
+    /// The top-of-report banner disclaims retrieval quality, which is a
+    /// different claim. A stand-in embedder returns in microseconds, so "0 ms"
+    /// reads as fast when it means "not a deployment".
+    [Fact]
+    public void AStandInEmbedderDisclaimsItsOwnLatency()
+    {
+        var standIn = Measured() with
+        {
+            EmbeddingModel = "fake-lexical-v1",
+            EmbeddingModelIsReal = false,
+        };
+
+        Assert.Contains("Embedding latency here is meaningless", standIn.ToMarkdown());
+        Assert.DoesNotContain("Embedding latency here is meaningless", Measured().ToMarkdown());
+    }
+
+    [Fact]
+    public void VerifiedPricingCarriesNoWarning()
+    {
+        Assert.DoesNotContain("These costs are not a result", Measured().ToMarkdown());
+    }
+
+    [Fact]
+    public void WithNoPricingFileTheCostSectionSaysSoRatherThanReportingZero()
+    {
+        var markdown = Report().ToMarkdown();
+
+        Assert.Contains("no pricing file was loaded", markdown);
+        Assert.DoesNotContain("0.0000", markdown);
+    }
+
+    /// A latency section is omitted entirely rather than rendered empty, the
+    /// same way a skipped stage is omitted from the table.
+    [Fact]
+    public void WithNoRecordedCallsThereIsNoLatencySection()
+    {
+        Assert.DoesNotContain("## Latency", Report().ToMarkdown());
+    }
+
+    /// The money half of the baseline guard. Prices nobody has checked would
+    /// make the regression gate compare against an assumption.
+    [Fact]
+    public void ABaselineIsRefusedWhenTheCostsCameFromUnverifiedPricing()
+    {
+        var error = Assert.Throws<InvalidOperationException>(
+            Measured(verified: false).EnsureCanBeBaseline);
+
+        Assert.Contains("unverified pricing", error.Message);
+        Assert.Contains("2026-10-16", error.Message);
+    }
+
+    [Fact]
+    public void ABaselineIsAllowedWhenPricingIsVerifiedAndTheEmbedderIsReal()
+    {
+        Measured().EnsureCanBeBaseline();
+    }
+
+    /// A run with no costing at all is still a valid baseline - latency and
+    /// cost are additions, not preconditions.
+    [Fact]
+    public void ABaselineIsAllowedWithNoCostSectionAtAll()
+    {
+        Report().EnsureCanBeBaseline();
+    }
 }

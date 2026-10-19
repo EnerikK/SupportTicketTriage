@@ -7,6 +7,8 @@ using SupportTicketTriage.Application.Routing;
 using SupportTicketTriage.Eval;
 using SupportTicketTriage.Eval.Dataset;
 using SupportTicketTriage.Eval.Embedding;
+using SupportTicketTriage.Eval.Instrumentation;
+using SupportTicketTriage.Eval.Pricing;
 using SupportTicketTriage.Eval.Reporting;
 using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Infrastructure.Persistence;
@@ -27,8 +29,11 @@ if (arguments.TryGetValue("help", out _))
           --reset                 Delete existing tickets before seeding
           --skip-generation       Score classification but not drafts (saves the
                                   generation and citation calls)
+          --pricing <path>        Token pricing (default: eval/pricing/model-pricing.json);
+                                  costs are reported as not scored without it
           --write-baseline        Write eval/baseline/retrieval-baseline.json;
-                                  refused for stand-in embedders
+                                  refused for stand-in embedders and for costs
+                                  computed from unverified pricing
 
         Deployments are read from the environment, not from arguments, so the key
         stays out of shell history.
@@ -63,6 +68,26 @@ if (!File.Exists(datasetPath))
 var dataset = await EvalDataset.LoadAsync(datasetPath);
 Console.WriteLine($"Loaded dataset {dataset.Version}: {dataset.Tickets.Count} tickets.");
 
+// Absent rather than fatal: a run can legitimately measure latency and skip
+// costing, and the report says "not scored" instead of reporting a run as
+// free. A file that exists but is malformed does throw - that is a mistake,
+// not a choice.
+var pricingPath = arguments.GetValueOrDefault("pricing")
+    ?? Path.Combine("eval", "pricing", "model-pricing.json");
+ModelPricing? pricing = null;
+
+if (File.Exists(pricingPath))
+{
+    pricing = await ModelPricing.LoadAsync(pricingPath);
+    Console.WriteLine(
+        $"Loaded pricing {pricing.Version} ({pricing.Currency}, retrieved {pricing.RetrievedOn:yyyy-MM-dd})"
+        + (pricing.Verified ? "." : " - UNVERIFIED, costs are a development aid only."));
+}
+else
+{
+    Console.WriteLine($"No pricing file at {pricingPath}: costs will not be scored.");
+}
+
 var options = new DbContextOptionsBuilder<SupportTicketTriageDbContext>()
     .UseNpgsql(connectionString, npgsql => npgsql.UseVector())
     .Options;
@@ -73,8 +98,13 @@ await db.Database.MigrateAsync();
 var embedding = EmbeddingSelection.From(EmbeddingSelection.OptionsFromEnvironment());
 Console.WriteLine($"Embedding model: {embedding.ModelName}.");
 
+// One recorder for the whole run. Every decorator writes into it and the
+// runner reads it once at the end, which keeps "what did this cost" in a
+// single place rather than threaded back through four return types.
+var recorder = new AiCallRecorder();
+
 var embeddingService = new TicketEmbeddingService(
-    embedding.Generator,
+    new RecordingEmbeddingGenerator(embedding.Generator, recorder),
     embedding.ModelName,
     new PiiRedactor(),
     db,
@@ -84,7 +114,7 @@ var embeddingService = new TicketEmbeddingService(
 // configured. Without one the harness still runs offline against the lexical
 // stand-in and reports retrieval alone, with those sections marked "not
 // measured" rather than scored zero.
-var chatStages = BuildChatStages(db);
+var chatStages = BuildChatStages(db, recorder);
 
 if (chatStages is null)
 {
@@ -98,7 +128,13 @@ else
 }
 
 var runner = new EvalRunner(
-    db, embeddingService, new TicketRetrievalService(db), embedding.ModelName, chatStages);
+    db,
+    embeddingService,
+    new TicketRetrievalService(db),
+    embedding.ModelName,
+    recorder,
+    chatStages,
+    pricing);
 
 if (await runner.HasExistingDataAsync())
 {
@@ -173,7 +209,7 @@ static Dictionary<string, string?> ParseArguments(string[] args)
 /// but no chat deployment is a supported configuration - it is the state this
 /// project was in for three phases - and it still produces a real retrieval
 /// number. The report marks the unscored sections rather than reporting zeros.
-static ChatStages? BuildChatStages(SupportTicketTriageDbContext db)
+static ChatStages? BuildChatStages(SupportTicketTriageDbContext db, AiCallRecorder recorder)
 {
     var options = EmbeddingSelection.OptionsFromEnvironment();
     var chatClient = AzureOpenAiChatFactory.Create(options);
@@ -186,9 +222,13 @@ static ChatStages? BuildChatStages(SupportTicketTriageDbContext db)
     var retrieval = new TicketRetrievalService(db);
     var redactor = new PiiRedactor();
 
+    // Wrapped twice, once per stage. One IChatClient serves both services, so
+    // a single decorator could not say whether a call was a classification or
+    // a draft - and those have very different latencies and token counts, so
+    // blending them would hide the expensive one behind 300 cheap ones.
     return new ChatStages(
         new TicketClassificationService(
-            chatClient,
+            new RecordingChatClient(chatClient, AiStage.Classification, recorder),
             options.ChatDeployment,
             redactor,
             db,
@@ -204,7 +244,7 @@ static ChatStages? BuildChatStages(SupportTicketTriageDbContext db)
             RoutingThresholds.Default,
             NullLogger<TicketRoutingService>.Instance),
         new TicketDraftService(
-            chatClient,
+            new RecordingChatClient(chatClient, AiStage.Generation, recorder),
             options.ChatDeployment,
             redactor,
             db,

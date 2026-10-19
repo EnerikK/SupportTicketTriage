@@ -123,13 +123,59 @@ The cost is measured: 0.60 also gates 6 of 54 labelled queries that would have r
 
 The value did not change from the original guess. That is a result rather than an absence of one — it is now the floor the evidence points at rather than the one nobody had checked.
 
+### Latency
+
+Measured 2026-10-16 against the live deployments, 300 tickets end to end. Percentiles are nearest-rank over calls that succeeded, so each figure is a duration some call actually took rather than an interpolation between two of them.
+
+| stage | calls | failures | p50 | p95 |
+|---|---|---|---|---|
+| Embedding | 300 | 0 | 293 ms | 615 ms |
+| Classification | 300 | 4 | 985 ms | 1,676 ms |
+| Retrieval (pgvector) | 60 | 0 | **2 ms** | 3 ms |
+| Generation | 47 | 0 | 2,349 ms | 3,937 ms |
+
+**Retrieval is roughly 500× faster than any model call**, which is the clearest argument available for not having added a dedicated vector database: the database is nowhere near being the bottleneck, and at this corpus size exact search costs 2 ms.
+
+Two caveats. These are whole-call latencies as the harness experienced them, including network round-trip to Azure — they describe this machine's view of the deployment rather than the deployment alone. And p95 over 47 generation calls is the 45th slowest, so it moves a long way on one slow call; read every percentile against the call count beside it.
+
+**Latency is deliberately not going into the CI regression gate.** It depends on Azure's load rather than on this code, and the classification figures already move between identical runs by more than a gate could safely ignore. A gate that fires on weather gets ignored, and that costs the gates that work.
+
+### The four failures, and why they matter more than they look
+
+The classification row shows **4 failures out of 300 calls** — and this run reported exactly 4 tickets that could not be classified. The two numbers are the same tickets: every unclassifiable ticket in this run was a *transient call failure*, not the model returning something unparseable.
+
+That distinction did not exist before this measurement. An unclassifiable ticket counts as wrong either way, which is the right call — the dataset carries the label, so a missing answer got it wrong. But *why* it was missing changes what to do about it: "add timeouts and bounded retry" is a different fix from "improve the prompt", and until now the two were indistinguishable in the metric. There is no retry anywhere in the system yet, and this is the first evidence of what that costs.
+
+### Cost
+
+Pricing assumptions live in `eval/pricing/model-pricing.json` — versioned, committed, stamped into every report, and never in application code. The file carries a `verified` flag: while it is false the report prints a warning and the harness **refuses to write a baseline**, exactly as it refuses one produced by a stand-in embedder. These figures come from a verified file.
+
+Rates still vary by region and agreement, so treat the money as "what this subscription paid on this date at these published rates" rather than as a universal figure. The token counts are the durable part.
+
+| stage | deployment | input tokens | output tokens |
+|---|---|---|---|
+| Embedding | text-embedding-3-small | 8,088 | — |
+| Classification | gpt-4.1-mini | 85,436 | 6,363 |
+| Generation | gpt-4.1-mini | 48,480 | 6,907 |
+
+The whole 300-ticket run cost about **$0.075**, and:
+
+| | cost |
+|---|---|
+| Per ingested ticket | $0.000149 |
+| Per drafted ticket | $0.000796 |
+
+**Two figures rather than one, and the gap between them is the point.** Every ticket pays for embedding and classification; only a ticket that clears both routing gates pays for generation. A drafted ticket therefore costs about **5.4× an ingested one**, which is what the gates are buying. A single blended average would move whenever the gate ratio moved, so tightening a threshold would read as a cost saving.
+
+A stage where any call fails to report usage is reported as unpriced rather than summed partially — adding up only the calls that did report would give a number wrong by an unknown amount that looks exactly like a right one.
+
 ### What still carries no number
 
-Groundedness, latency percentiles, and cost per ticket are **not measured**. In particular there is **no groundedness judge and therefore no judge-agreement figure** — when there is one, the agreement against hand-labelled pairs will be published next to the score, because for an LLM-as-judge metric the agreement number is worth more than the score.
+**Groundedness is not measured.** There is **no groundedness judge and therefore no judge-agreement figure** — when there is one, the agreement against hand-labelled pairs will be published next to the score, because for an LLM-as-judge metric the agreement number is worth more than the score.
 
 There is also **no CI regression gate yet**. CI builds and tests; it does not run the harness or compare against a baseline, so every figure above is from a local run.
 
-No figure for any unmeasured quantity appears anywhere in this repository. That is deliberate.
+No figure for an unmeasured quantity appears anywhere in this repository. That is deliberate, and the harness enforces it rather than relying on discipline: a baseline is refused outright from a stand-in embedder or from unverified pricing.
 
 ---
 
@@ -285,9 +331,8 @@ With no Azure credentials it falls back to a lexical stand-in embedder, which is
 Named here rather than left for a reader to discover:
 
 - **Groundedness**, its judge and the judge-agreement figure. Classification, citation validity and the routing floors are now measured; groundedness is not, and it needs a second chat deployment so the model does not judge its own output.
-- **Latency and cost** — p50/p95 per stage, token counts, and cost per ticket against a versioned pricing file.
 - **The CI regression gate.** A baseline exists for retrieval only, and CI does not run the harness, so every figure in this README comes from a local run.
-- **Observability and resilience** — OpenTelemetry tracing, per-request token and cost recording, and timeouts with bounded retry on model calls.
+- **Observability and resilience in the running application.** The evaluation harness now records per-call latency and tokens, but it does so by wrapping the model clients in its own code — the API itself still has no tracing, no per-request token recording, and no timeouts or bounded retry. The measured 4 call failures in 300 above are what the absence of retry currently costs.
 - **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval backfills, which closes this for reviewed tickets and leaves it open for the rest.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.
 - **No authentication.** See the OpenAPI note above.
