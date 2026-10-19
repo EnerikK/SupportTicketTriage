@@ -18,6 +18,11 @@ public class EvaluationReportTests
             EmbeddingModel: "text-embedding-3-small",
             EmbeddingModelIsReal: true,
             ChatModel: "gpt-4.1-mini",
+            ClassificationPromptVersion: "classify-v1",
+            GenerationPromptVersion: "draft-v1",
+            RedactionVersion: "v1",
+            MinimumClassificationScore: 0.50,
+            MinimumSimilarity: 0.60,
             GeneratedAt: new DateTimeOffset(2026, 10, 8, 17, 6, 52, TimeSpan.Zero),
             CorpusCount: 240,
             QueryCount: 60,
@@ -328,5 +333,77 @@ public class EvaluationReportTests
     public void ABaselineIsAllowedWithNoCostSectionAtAll()
     {
         Report().EnsureCanBeBaseline();
+    }
+
+    private static async Task<string> WrittenJsonAsync(EvaluationReport report)
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"report-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await report.WriteJsonAsync(path);
+            return await File.ReadAllTextAsync(path);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    /// Enums must serialise by name, not by ordinal.
+    ///
+    /// As integers, inserting a member of `AiStage` renumbers every Latency and
+    /// Cost row in a committed baseline, and the diff reads as the numbers
+    /// moving rather than their labels. A baseline whose meaning depends on
+    /// declaration order cannot be reviewed.
+    [Fact]
+    public async Task StagesSerialiseByNameSoAReorderingCannotRelabelABaseline()
+    {
+        var json = await WrittenJsonAsync(Measured());
+
+        Assert.Contains("\"Generation\"", json);
+        Assert.DoesNotContain("\"Stage\": 0", json);
+        Assert.DoesNotContain("\"Stage\": 3", json);
+    }
+
+    /// Unsorted, the keys come out in the dataset's first-appearance order, so
+    /// reordering tickets would churn a committed baseline without changing any
+    /// value. The markdown already sorts; the JSON should not disagree.
+    [Fact]
+    public async Task TraitCoverageIsSortedInTheJsonSoADatasetReorderIsNotADiff()
+    {
+        var report = Report() with
+        {
+            TraitCoverage = new Dictionary<string, int>
+            {
+                ["pii"] = 19,
+                ["ambiguous"] = 18,
+                ["hard-negative"] = 75,
+            },
+        };
+
+        var json = await WrittenJsonAsync(report);
+
+        Assert.True(
+            json.IndexOf("ambiguous", StringComparison.Ordinal)
+            < json.IndexOf("hard-negative", StringComparison.Ordinal));
+        Assert.True(
+            json.IndexOf("hard-negative", StringComparison.Ordinal)
+            < json.IndexOf("pii", StringComparison.Ordinal));
+    }
+
+    /// The versions a number is only valid against. A prompt edit that lifts
+    /// accuracy is an improvement, not a regression, and a gate cannot tell the
+    /// two apart unless it can see the prompt moved.
+    [Fact]
+    public async Task TheReportCarriesTheVersionsItsNumbersDependOn()
+    {
+        var json = await WrittenJsonAsync(Measured());
+
+        Assert.Contains("\"ClassificationPromptVersion\": \"classify-v1\"", json);
+        Assert.Contains("\"GenerationPromptVersion\": \"draft-v1\"", json);
+        Assert.Contains("\"RedactionVersion\": \"v1\"", json);
+        Assert.Contains("\"MinimumClassificationScore\": 0.5", json);
+        Assert.Contains("\"MinimumSimilarity\": 0.6", json);
     }
 }

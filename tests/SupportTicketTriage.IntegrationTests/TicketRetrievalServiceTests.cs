@@ -177,6 +177,72 @@ public class TicketRetrievalServiceTests(TicketApiFactory factory)
         Assert.Contains("<=>", search);
     }
 
+    /// Identical vectors tie on distance, and without a second sort key the
+    /// order is whatever the query plan produces - so the same request can
+    /// return a different top-k on two calls, and a tie straddling k changes
+    /// recall.
+    ///
+    /// Across the real 300-ticket evaluation set this never fired: zero exact
+    /// ties in 14,400 query-candidate pairs. The tie-break is therefore
+    /// insurance rather than a fix, and this test constructs the tie that the
+    /// dataset does not contain, because an ordering guarantee nothing
+    /// exercises is not a guarantee.
+    [Fact]
+    public async Task FindSimilar_OrdersTiedCandidatesDeterministically()
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+        var retrieval = scope.ServiceProvider.GetRequiredService<TicketRetrievalService>();
+        var model = NewModel();
+
+        var query = AddTicket(db, "query", model, VectorOf((0, 1f)), resolution: null);
+
+        // Three candidates at exactly the same distance from the query.
+        var tied = Enumerable
+            .Range(0, 3)
+            .Select(i => AddTicket(db, $"tied-{i}", model, VectorOf((0, 1f)), "resolution"))
+            .ToList();
+
+        await db.SaveChangesAsync();
+
+        var first = await retrieval.FindSimilarAsync(query.Id, k: 2);
+        var second = await retrieval.FindSimilarAsync(query.Id, k: 2);
+
+        Assert.Equal(first.Select(r => r.TicketId), second.Select(r => r.TicketId));
+
+        // Newest wins: ids are UUIDv7, so the two most recently created of the
+        // three tied candidates are the ones that survive k = 2.
+        Assert.Equal(
+            tied.Select(t => t.Id).OrderDescending().Take(2),
+            first.Select(r => r.TicketId));
+    }
+
+    /// The ordering has to be settled by the database, not by the order rows
+    /// happen to arrive in - so assert the second key reaches the SQL.
+    [Fact]
+    public async Task FindSimilar_AsksTheDatabaseForATieBreak()
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+        var retrieval = scope.ServiceProvider.GetRequiredService<TicketRetrievalService>();
+        var model = NewModel();
+
+        var query = AddTicket(db, "query", model, VectorOf((0, 1f)), resolution: null);
+        AddTicket(db, "candidate", model, VectorOf((0, 1f)), "resolution");
+        await db.SaveChangesAsync();
+
+        factory.Sql.Clear();
+        await retrieval.FindSimilarAsync(query.Id, k: 3);
+
+        var search = Assert.Single(
+            factory.Sql.Commands, c => c.Contains("TicketEmbeddings") && c.Contains("Tickets"));
+
+        // Distance first, then the id: two ORDER BY terms, not one.
+        Assert.Contains("ORDER BY", search);
+        Assert.Contains("DESC", search);
+        Assert.Matches(@"ORDER BY[^;]*<=>[^;]*,", search);
+    }
+
     [Fact]
     public async Task SimilarEndpoint_ReturnsResultsForAKnownTicketAndNotFoundOtherwise()
     {
