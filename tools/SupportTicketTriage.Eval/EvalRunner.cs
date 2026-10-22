@@ -139,8 +139,17 @@ public sealed class EvalRunner(
 
             if (!await embeddings.TryEmbedAsync(ticket, ct))
             {
+                // TryEmbedAsync returns bool and logs the real exception, so
+                // the reason lives in the log rather than here. That is right
+                // for the application - an Azure outage must not fail ticket
+                // ingest - but it means this message alone cannot say why, and
+                // a harness that dies without saying why wastes the run it
+                // just paid for. Hence the pointer.
                 throw new InvalidOperationException(
-                    $"Failed to embed '{entry.Id}'. The evaluation cannot proceed with missing vectors.");
+                    $"Failed to embed '{entry.Id}'. The evaluation cannot proceed with missing "
+                    + "vectors. The underlying error was logged by TicketEmbeddingService - look "
+                    + "for the preceding 'Failed to embed ticket' entry, which carries the "
+                    + "provider's response.");
             }
 
             ids[entry.Id] = ticket.Id;

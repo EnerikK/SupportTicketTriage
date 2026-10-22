@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Pgvector.EntityFrameworkCore;
 using SupportTicketTriage.Application.Redaction;
 using SupportTicketTriage.Application.Routing;
@@ -88,6 +88,20 @@ if (!File.Exists(datasetPath))
     return 1;
 }
 
+// A real logger, not NullLogger.
+//
+// Every service below used to be handed NullLogger<T>.Instance, which meant
+// the harness discarded the one thing it needed when a run died: the services
+// log their failures properly, and nothing was listening. A real embedding
+// failure in CI surfaced as "Failed to embed 'billing-duplicate-charge'" with
+// the Azure response nowhere to be found.
+//
+// Warning and above, so a 300-ticket run is not drowned in per-ticket
+// information logs, but anything that went wrong says why.
+using var loggerFactory = LoggerFactory.Create(builder => builder
+    .SetMinimumLevel(LogLevel.Warning)
+    .AddSimpleConsole(options => options.SingleLine = true));
+
 var dataset = await EvalDataset.LoadAsync(datasetPath);
 Console.WriteLine($"Loaded dataset {dataset.Version}: {dataset.Tickets.Count} tickets.");
 
@@ -131,13 +145,13 @@ var embeddingService = new TicketEmbeddingService(
     embedding.ModelName,
     new PiiRedactor(),
     db,
-    NullLogger<TicketEmbeddingService>.Instance);
+    loggerFactory.CreateLogger<TicketEmbeddingService>());
 
 // Classification and generation are scored only when a chat deployment is
 // configured. Without one the harness still runs offline against the lexical
 // stand-in and reports retrieval alone, with those sections marked "not
 // measured" rather than scored zero.
-var chatStages = BuildChatStages(db, recorder);
+var chatStages = BuildChatStages(db, recorder, loggerFactory);
 
 if (chatStages is null)
 {
@@ -288,7 +302,8 @@ static string LogicBaselinePath() => Path.Combine("eval", "baseline", "lexical-l
 /// but no chat deployment is a supported configuration - it is the state this
 /// project was in for three phases - and it still produces a real retrieval
 /// number. The report marks the unscored sections rather than reporting zeros.
-static ChatStages? BuildChatStages(SupportTicketTriageDbContext db, AiCallRecorder recorder)
+static ChatStages? BuildChatStages(
+    SupportTicketTriageDbContext db, AiCallRecorder recorder, ILoggerFactory loggerFactory)
 {
     var options = EmbeddingSelection.OptionsFromEnvironment();
     var chatClient = AzureOpenAiChatFactory.Create(options);
@@ -311,7 +326,7 @@ static ChatStages? BuildChatStages(SupportTicketTriageDbContext db, AiCallRecord
             options.ChatDeployment,
             redactor,
             db,
-            NullLogger<TicketClassificationService>.Instance),
+            loggerFactory.CreateLogger<TicketClassificationService>()),
         // The harness deliberately uses the default thresholds rather than
         // reading configuration. A baseline produced under one set of floors
         // and compared against a run under another would report a regression
@@ -321,13 +336,13 @@ static ChatStages? BuildChatStages(SupportTicketTriageDbContext db, AiCallRecord
             db,
             retrieval,
             RoutingThresholds.Default,
-            NullLogger<TicketRoutingService>.Instance),
+            loggerFactory.CreateLogger<TicketRoutingService>()),
         new TicketDraftService(
             new RecordingChatClient(chatClient, AiStage.Generation, recorder),
             options.ChatDeployment,
             redactor,
             db,
             retrieval,
-            NullLogger<TicketDraftService>.Instance),
+            loggerFactory.CreateLogger<TicketDraftService>()),
         options.ChatDeployment!);
 }
