@@ -335,6 +335,44 @@ public class EvaluationReportTests
         Report().EnsureCanBeBaseline();
     }
 
+    /// The two baselines refuse each other's runs, so neither can be produced
+    /// by accident from the wrong kind of evaluation. ADR-007's rule is
+    /// narrowed here rather than removed - the real baseline still refuses a
+    /// stand-in, and now the logic baseline refuses a real deployment.
+    [Fact]
+    public void ALogicBaselineIsRefusedFromARealDeployment()
+    {
+        var error = Assert.Throws<InvalidOperationException>(
+            Report().EnsureCanBeLogicBaseline);
+
+        Assert.Contains("real deployment", error.Message);
+        Assert.Contains("--write-baseline", error.Message);
+    }
+
+    [Fact]
+    public void ALogicBaselineIsAllowedFromAStandIn()
+    {
+        var standIn = Report() with
+        {
+            EmbeddingModel = "fake-lexical-v1",
+            EmbeddingModelIsReal = false,
+        };
+
+        standIn.EnsureCanBeLogicBaseline();
+    }
+
+    [Fact]
+    public void ARealBaselineIsStillRefusedFromAStandIn()
+    {
+        var standIn = Report() with
+        {
+            EmbeddingModel = "fake-lexical-v1",
+            EmbeddingModelIsReal = false,
+        };
+
+        Assert.Throws<InvalidOperationException>(standIn.EnsureCanBeBaseline);
+    }
+
     private static async Task<string> WrittenJsonAsync(EvaluationReport report)
     {
         var path = Path.Combine(Path.GetTempPath(), $"report-{Guid.NewGuid():N}.json");

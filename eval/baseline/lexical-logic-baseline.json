@@ -1,0 +1,36 @@
+{
+  "Version": "2",
+  "Provenance": {
+    "DatasetVersion": "1.0",
+    "EmbeddingModel": "fake-lexical-v1",
+    "ChatModel": null,
+    "ClassificationPromptVersion": "classify-v1",
+    "GenerationPromptVersion": "draft-v1",
+    "RedactionVersion": "v1",
+    "MinimumClassificationScore": 0.5,
+    "MinimumSimilarity": 0.6,
+    "PricingVersion": "1.0",
+    "GeneratedAt": "2026-10-21T17:13:13.6899763+00:00"
+  },
+  "Metrics": {
+    "RecallAtK": {
+      "1": 0.46296296296296297,
+      "3": 0.5925925925925926,
+      "5": 0.6759259259259259,
+      "10": 0.7870370370370371
+    },
+    "ClassificationAccuracy": null,
+    "ClassificationMacroF1": null,
+    "CitationValidityRate": null,
+    "CostTotal": null,
+    "CostPerIngestedTicket": null,
+    "CostPerDraftedTicket": null
+  },
+  "Tolerances": {
+    "RecallMaxDrop": 0.01,
+    "ClassificationAccuracyMaxDrop": 0.05,
+    "ClassificationMacroF1MaxDrop": 0.05,
+    "CitationValidityMaxDrop": 0.02,
+    "CostMaxRelativeIncrease": 0.1
+  }
+}

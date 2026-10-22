@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Lets the real gate be fired by hand on a branch before merging something
+  # that might move the numbers. That recovers most of what a per-PR real run
+  # would give, at the few moments it actually matters.
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -53,3 +57,136 @@ jobs:
 
       - name: Test
         run: npm test
+
+  # Guards retrieval LOGIC, not retrieval quality.
+  #
+  # Runs offline against the lexical stand-in, so it needs no secrets and works
+  # on forks. A broken resolved-only filter, model-stamp filter, self-exclusion,
+  # k, or tie-break all move lexical recall, and those are code bugs that belong
+  # in a pull request check. What it cannot see is a change in retrieval
+  # quality, which comes from the embedding deployment or the redaction rules -
+  # configuration, not code. The real gate below covers that.
+  gate-retrieval-logic:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: eval
+          POSTGRES_USER: postgres
+          # No password, deliberately. This container lives for the length of
+          # one job inside the runner's own network and is thrown away; the
+          # alternative is a literal password in a connection string, which is
+          # indistinguishable in shape from a real leaked credential and trips
+          # secret scanning. A security check that is permanently red is one
+          # people stop reading, which is the same failure this workflow's
+          # gates are built to avoid.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d eval"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # No AzureOpenAi__* variables, deliberately: their absence is what selects
+      # the lexical stand-in, and the harness says so in its output.
+      - name: Compare against the retrieval-logic baseline
+        run: >-
+          dotnet run --project tools/SupportTicketTriage.Eval --configuration Release --
+          --connection "Host=localhost;Port=5432;Database=eval;Username=postgres"
+          --reset
+          --compare-baseline eval/baseline/lexical-logic-baseline.json
+
+  # The real regression gate.
+  #
+  # On merge rather than per pull request: a full run is ~9 minutes of model
+  # time and real money, and paying that on every push - including README
+  # typos - is a tax people route around. It fires on main and on demand, and
+  # names the merge that moved the numbers.
+  #
+  # Skipped on pull requests, which also means a fork PR gets a green CI rather
+  # than a broken one, since forks never receive secrets.
+  gate-evaluation:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: eval
+          POSTGRES_USER: postgres
+          # No password, deliberately. This container lives for the length of
+          # one job inside the runner's own network and is thrown away; the
+          # alternative is a literal password in a connection string, which is
+          # indistinguishable in shape from a real leaked credential and trips
+          # secret scanning. A security check that is permanently red is one
+          # people stop reading, which is the same failure this workflow's
+          # gates are built to avoid.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d eval"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # Fails loudly rather than quietly falling back to the stand-in, which
+      # would turn the real gate into a second copy of the logic gate while
+      # still reporting success.
+      - name: Check the deployment configuration is present
+        env:
+          ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          CHAT: ${{ secrets.AZURE_OPENAI_CHAT_DEPLOYMENT }}
+          EMBEDDING: ${{ secrets.AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}
+        run: |
+          missing=""
+          [ -n "$ENDPOINT" ] || missing="$missing AZURE_OPENAI_ENDPOINT"
+          [ -n "$API_KEY" ] || missing="$missing AZURE_OPENAI_API_KEY"
+          [ -n "$CHAT" ] || missing="$missing AZURE_OPENAI_CHAT_DEPLOYMENT"
+          [ -n "$EMBEDDING" ] || missing="$missing AZURE_OPENAI_EMBEDDING_DEPLOYMENT"
+          if [ -n "$missing" ]; then
+            echo "Missing repository secret(s):$missing" >&2
+            echo "Without them this job would silently run against the lexical" >&2
+            echo "stand-in and compare quality numbers that mean nothing." >&2
+            exit 1
+          fi
+
+      - name: Compare against the evaluation baseline
+        env:
+          AzureOpenAi__Endpoint: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AzureOpenAi__ApiKey: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          AzureOpenAi__ChatDeployment: ${{ secrets.AZURE_OPENAI_CHAT_DEPLOYMENT }}
+          AzureOpenAi__EmbeddingDeployment: ${{ secrets.AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}
+        run: >-
+          dotnet run --project tools/SupportTicketTriage.Eval --configuration Release --
+          --connection "Host=localhost;Port=5432;Database=eval;Username=postgres"
+          --reset
+          --compare-baseline
+
+      # Kept whatever the gate decided, because the run that failed is the one
+      # worth reading.
+      - name: Upload the evaluation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-report
+          path: eval/results/
+          if-no-files-found: warn
