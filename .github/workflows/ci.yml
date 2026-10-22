@@ -183,6 +183,19 @@ jobs:
               echo "::error::$name contains whitespace. A trailing newline is invisible in the GitHub UI and produces an HTTP 401 at the first call. Re-set it with: printf '%s' \"\$VALUE\" | gh secret set $name"
               failed=1
             fi
+
+            # Non-ASCII bytes, which is what a BOM looks like. Piping a value
+            # to gh from PowerShell encodes it with the console encoding and
+            # can prepend one; the key then arrives three bytes longer and the
+            # HTTP client rejects the header outright with "Request headers
+            # must contain only ASCII characters" - after four retries, a
+            # minute, and a paid call. Set secrets from a shell that does not
+            # re-encode: printf '%s' "$VALUE" | gh secret set NAME
+            printable=$(printf '%s' "$value" | LC_ALL=C tr -d '[:print:]' | wc -c)
+            if [ "$printable" -ne 0 ]; then
+              echo "::error::$name contains $printable non-printable or non-ASCII byte(s), most likely a byte-order mark. Re-set it with: printf '%s' \"\$VALUE\" | gh secret set $name"
+              failed=1
+            fi
           }
 
           check AZURE_OPENAI_ENDPOINT "$ENDPOINT"
@@ -193,6 +206,15 @@ jobs:
           case "$ENDPOINT" in
             https://*) ;;
             *) echo "::error::AZURE_OPENAI_ENDPOINT does not start with https://."; failed=1 ;;
+          esac
+
+          # The portal shows the key and the endpoint adjacent, both masked
+          # behind the same kind of control, and one has been pasted into the
+          # other's field. A key is never a URL.
+          case "$API_KEY" in
+            http://*|https://*)
+              echo "::error::AZURE_OPENAI_API_KEY is a URL. The endpoint has probably been pasted into the key field - the portal shows them next to each other. The key has no scheme and no dots."
+              failed=1 ;;
           esac
 
           exit $failed
