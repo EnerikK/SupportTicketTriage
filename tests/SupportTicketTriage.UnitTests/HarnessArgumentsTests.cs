@@ -47,9 +47,9 @@ public class HarnessArgumentsTests
     public void AnUnrecognisedFlagIsRejectedRatherThanIgnored()
     {
         var error = Assert.Throws<ArgumentException>(
-            () => HarnessArguments.Parse(["--compare-baseline", "eval/baseline.json"]));
+            () => HarnessArguments.Parse(["--compare-baselines", "eval/baseline.json"]));
 
-        Assert.Contains("--compare-baseline", error.Message);
+        Assert.Contains("--compare-baselines", error.Message);
     }
 
     /// A near-miss is the realistic case - the flag exists, the spelling does
@@ -100,7 +100,7 @@ public class HarnessArgumentsTests
         string[] documented =
         [
             "help", "connection", "dataset", "output",
-            "pricing", "reset", "skip-generation", "write-baseline",
+            "pricing", "reset", "skip-generation", "write-baseline", "compare-baseline",
         ];
 
         Assert.Equal(documented.Order(), HarnessArguments.Recognised.Order());

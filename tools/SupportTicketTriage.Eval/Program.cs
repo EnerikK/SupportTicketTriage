@@ -46,6 +46,9 @@ if (arguments.Has("help"))
                                   generation and citation calls)
           --pricing <path>        Token pricing (default: eval/pricing/model-pricing.json);
                                   costs are reported as not scored without it
+          --compare-baseline [p]  Compare this run against a baseline and exit
+                                  non-zero on regression beyond tolerance
+                                  (default: eval/baseline/evaluation-baseline.json)
           --write-baseline        Write eval/baseline/evaluation-baseline.json;
                                   refused for stand-in embedders and for costs
                                   computed from unverified pricing
@@ -178,6 +181,47 @@ Console.WriteLine();
 Console.WriteLine(report.ToMarkdown());
 Console.WriteLine($"Wrote {Path.GetFullPath(markdownPath)} and {Path.GetFullPath(jsonPath)}.");
 
+if (arguments.Has("compare-baseline"))
+{
+    var comparisonPath = arguments.Value("compare-baseline") ?? DefaultBaselinePath();
+
+    if (!File.Exists(comparisonPath))
+    {
+        Console.Error.WriteLine(
+            $"No baseline at {Path.GetFullPath(comparisonPath)}. "
+            + "Write one with --write-baseline before gating against it.");
+        return 1;
+    }
+
+    EvaluationBaseline baseline;
+
+    try
+    {
+        baseline = await EvaluationBaseline.LoadAsync(comparisonPath);
+    }
+    catch (InvalidOperationException error)
+    {
+        // A malformed or out-of-date baseline is a failure, not a pass. The
+        // previous baseline rotted unnoticed precisely because nothing ever
+        // tried to read it.
+        Console.Error.WriteLine(error.Message);
+        return 1;
+    }
+
+    var comparison = BaselineComparison.Compare(baseline, report);
+
+    Console.WriteLine();
+    Console.WriteLine(comparison.ToMarkdown());
+
+    if (!comparison.Passed)
+    {
+        Console.Error.WriteLine(comparison.Comparable
+            ? "Regression gate failed."
+            : "Regression gate could not run: this baseline does not describe this run.");
+        return 1;
+    }
+}
+
 if (arguments.Has("write-baseline"))
 {
     try
@@ -193,7 +237,7 @@ if (arguments.Has("write-baseline"))
         // into the record it came from. A projection of only the gated fields
         // cannot rot that way, and it makes the gate's scope reviewable in the
         // file rather than only in the comparison code.
-        var baselinePath = Path.Combine("eval", "baseline", "evaluation-baseline.json");
+        var baselinePath = DefaultBaselinePath();
         await EvaluationBaseline.From(report).WriteAsync(baselinePath);
         Console.WriteLine($"Wrote {Path.GetFullPath(baselinePath)}.");
     }
@@ -205,6 +249,10 @@ if (arguments.Has("write-baseline"))
 }
 
 return 0;
+
+/// Deliberately not alongside the per-run reports: those are disposable and
+/// gitignored, while the baseline is committed and reviewed.
+static string DefaultBaselinePath() => Path.Combine("eval", "baseline", "evaluation-baseline.json");
 
 /// Builds the chat-dependent stages, or returns null when no chat deployment
 /// is configured.
