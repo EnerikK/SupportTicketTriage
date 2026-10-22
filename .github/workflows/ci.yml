@@ -150,24 +150,52 @@ jobs:
       # Fails loudly rather than quietly falling back to the stand-in, which
       # would turn the real gate into a second copy of the logic gate while
       # still reporting success.
-      - name: Check the deployment configuration is present
+      #
+      # The whitespace check is here because of a real failure: a secret
+      # pasted into the web UI picked up a trailing newline, which is
+      # invisible there, and the run died nine minutes and one paid embedding
+      # call later with an HTTP 401. A malformed secret should cost a second,
+      # not a run. Nothing about the values is printed - only which one is
+      # wrong, and how.
+      - name: Check the deployment configuration is usable
         env:
           ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
           API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
           CHAT: ${{ secrets.AZURE_OPENAI_CHAT_DEPLOYMENT }}
           EMBEDDING: ${{ secrets.AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}
         run: |
-          missing=""
-          [ -n "$ENDPOINT" ] || missing="$missing AZURE_OPENAI_ENDPOINT"
-          [ -n "$API_KEY" ] || missing="$missing AZURE_OPENAI_API_KEY"
-          [ -n "$CHAT" ] || missing="$missing AZURE_OPENAI_CHAT_DEPLOYMENT"
-          [ -n "$EMBEDDING" ] || missing="$missing AZURE_OPENAI_EMBEDDING_DEPLOYMENT"
-          if [ -n "$missing" ]; then
-            echo "Missing repository secret(s):$missing" >&2
-            echo "Without them this job would silently run against the lexical" >&2
-            echo "stand-in and compare quality numbers that mean nothing." >&2
-            exit 1
-          fi
+          failed=0
+
+          check() {
+            name="$1"
+            value="$2"
+
+            if [ -z "$value" ]; then
+              echo "::error::$name is not set. Without it this job would run against the lexical stand-in and compare quality numbers that mean nothing."
+              failed=1
+              return
+            fi
+
+            # printf %s rather than echo, so the comparison is not itself
+            # confused by a trailing newline.
+            trimmed=$(printf '%s' "$value" | tr -d '[:space:]')
+            if [ "${#trimmed}" -ne "${#value}" ]; then
+              echo "::error::$name contains whitespace. A trailing newline is invisible in the GitHub UI and produces an HTTP 401 at the first call. Re-set it with: printf '%s' \"\$VALUE\" | gh secret set $name"
+              failed=1
+            fi
+          }
+
+          check AZURE_OPENAI_ENDPOINT "$ENDPOINT"
+          check AZURE_OPENAI_API_KEY "$API_KEY"
+          check AZURE_OPENAI_CHAT_DEPLOYMENT "$CHAT"
+          check AZURE_OPENAI_EMBEDDING_DEPLOYMENT "$EMBEDDING"
+
+          case "$ENDPOINT" in
+            https://*) ;;
+            *) echo "::error::AZURE_OPENAI_ENDPOINT does not start with https://."; failed=1 ;;
+          esac
+
+          exit $failed
 
       - name: Compare against the evaluation baseline
         env:
