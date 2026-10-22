@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router'
-import { toNumber, type TicketRouting } from '../../api/client'
+import { type TicketRouting } from '../../api/client'
 import {
   useClassification,
   useDraft,
@@ -10,6 +10,7 @@ import {
 } from '../../api/queries'
 import { describeGate } from '../queue/ticketState'
 import { DraftPanel } from './DraftPanel'
+import { formatScore, similarityLabel } from './score'
 import { ReviewActions } from './ReviewActions'
 
 function RoutingSummary({ routing }: { routing: TicketRouting | null }) {
@@ -38,14 +39,22 @@ function RoutingSummary({ routing }: { routing: TicketRouting | null }) {
         <div>
           <dt>Classifier self-reported score</dt>
           <dd>
-            {routing.classificationScore ?? <span className="muted">none recorded</span>}
+            {routing.classificationScore === null || routing.classificationScore === undefined ? (
+              <span className="muted">none recorded</span>
+            ) : (
+              formatScore(routing.classificationScore)
+            )}
             <span className="muted"> (floor {routing.minimumClassificationScore})</span>
           </dd>
         </div>
         <div>
           <dt>Top retrieval similarity</dt>
           <dd>
-            {routing.topSimilarity ?? <span className="muted">nothing retrieved</span>}
+            {routing.topSimilarity === null || routing.topSimilarity === undefined ? (
+              <span className="muted">nothing retrieved</span>
+            ) : (
+              formatScore(routing.topSimilarity)
+            )}
             <span className="muted"> (floor {routing.minimumSimilarity})</span>
           </dd>
         </div>
@@ -127,7 +136,7 @@ export function TicketDetail() {
               <li key={source.ticketId} className="panel">
                 <p className="evidence__head">
                   <span className="citations__rank">#{index + 1}</span> {source.subject}{' '}
-                  <span className="muted">similarity {toNumber(source.similarity).toFixed(2)}</span>
+                  <span className="muted">{similarityLabel(source.similarity)}</span>
                 </p>
                 <p className="evidence__resolution">{source.resolution}</p>
               </li>

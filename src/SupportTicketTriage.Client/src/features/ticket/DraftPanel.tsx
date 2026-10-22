@@ -1,17 +1,10 @@
-import { toNumber, type SimilarTicket, type TicketDraft } from '../../api/client'
+import { type SimilarTicket, type TicketDraft } from '../../api/client'
+import { similarityLabel } from './score'
 
 interface Props {
   draft: TicketDraft | null
   evidence: SimilarTicket[]
   draftEligible: boolean | null
-}
-
-/// Shown as the raw cosine similarity, not as a percentage. "91% similar"
-/// reads as a calibrated claim about how alike two tickets are, and it is no
-/// such thing - it is the cosine of the angle between two embeddings. The
-/// same reason ADR-003 forbids dressing the routing signal up as confidence.
-function similarityLabel(similarity: number | string): string {
-  return `similarity ${toNumber(similarity).toFixed(2)}`
 }
 
 export function DraftPanel({ draft, evidence, draftEligible }: Props) {
