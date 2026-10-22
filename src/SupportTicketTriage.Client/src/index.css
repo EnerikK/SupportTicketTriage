@@ -78,10 +78,15 @@
   --accent-contrast: #ffffff;
 
   --ready: #0f7b3f;
+  --on-ready: #ffffff;
   --blocked: #a4502a;
   --rejected: #a32b2b;
 
   --focus-ring: #1f4fd8;
+
+  /* A tint of the accent, for row and control hovers. Deliberately barely
+     there: a hover that announces itself is a hover you stop noticing. */
+  --hover: rgb(31 79 216 / 5%);
 
   --shadow-sm: 0 1px 2px rgb(16 24 40 / 6%);
   --shadow-md: 0 1px 3px rgb(16 24 40 / 8%), 0 4px 12px rgb(16 24 40 / 5%);
@@ -119,10 +124,13 @@
     --accent-contrast: #0e1014;
 
     --ready: #4cc38a;
+    --on-ready: #0b1a12;
     --blocked: #e0924f;
     --rejected: #ef7a74;
 
     --focus-ring: #7ba2f0;
+
+    --hover: rgb(123 162 240 / 14%);
 
     /* Shadow does almost nothing on a dark ground; a lighter border carries
        elevation instead, so these stay deliberately faint rather than being
@@ -151,10 +159,16 @@
   --accent-contrast: #0e1014;
 
   --ready: #4cc38a;
+  --on-ready: #0b1a12;
   --blocked: #e0924f;
   --rejected: #ef7a74;
 
   --focus-ring: #7ba2f0;
+
+  /* Stronger than the light tint, and not for symmetry. The same 5% over a
+     near-black surface moves it by a handful of RGB points, which reads as a
+     rendering artifact rather than as a response. */
+  --hover: rgb(123 162 240 / 14%);
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
   --shadow-md: 0 1px 3px rgb(0 0 0 / 45%), 0 4px 14px rgb(0 0 0 / 35%);
@@ -162,6 +176,22 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* One focus rule, every interactive thing.
+ *
+ * :focus-visible rather than :focus, so a mouse click does not leave a ring
+ * behind while a keyboard Tab does - which is the distinction the pseudo-class
+ * exists to draw, and the reason the old blanket advice to remove outlines was
+ * wrong rather than merely unfashionable.
+ *
+ * outline rather than box-shadow: it follows border-radius, it is not clipped
+ * by overflow: hidden on the queue, and it survives forced-colours mode, where
+ * a box-shadow ring silently disappears. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 body {
@@ -256,6 +286,19 @@ body {
   border-bottom: none;
 }
 
+/* The row highlights, not the link. The whole row is what a reader is
+   scanning, and lighting only the eight words of a subject makes a
+   thirty-row table feel like it is flickering. The row is not itself
+   clickable - a nested interactive element would be worse for keyboard and
+   screen reader users than the one link it contains. */
+.queue tbody tr {
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+.queue tbody tr:hover {
+  background: var(--hover);
+}
+
 .queue a {
   color: var(--accent);
   font-weight: var(--weight-medium);
@@ -263,6 +306,13 @@ body {
      the row hover carry it; the underline returns on hover and focus, where
      it means something. */
   text-decoration: none;
+}
+
+.queue a:hover,
+.queue a:focus-visible,
+.detail__back:hover,
+.detail__back:focus-visible {
+  text-decoration: underline;
 }
 
 .muted {
@@ -430,6 +480,22 @@ body {
   resize: vertical;
   background: var(--surface-sunken);
   color: var(--text);
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+
+.review__text:hover,
+.review__reason:hover {
+  border-color: var(--border-strong);
+}
+
+/* The field a reviewer is typing in lifts out of the sunken ground, so
+   "which box has my cursor" is answerable without hunting for the ring. */
+.review__text:focus-visible,
+.review__reason:focus-visible {
+  background: var(--surface);
+  border-color: var(--accent);
 }
 
 .review__actions {
@@ -447,6 +513,22 @@ button {
   background: var(--surface-raised);
   color: var(--text);
   cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease),
+    transform var(--duration-fast) var(--ease);
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--text-muted);
+  background: var(--hover);
+}
+
+/* One pixel, on press only. Enough to feel like the control responded;
+   small enough that nothing reflows around it. */
+button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 button:disabled {
@@ -454,15 +536,38 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Approve is filled; reject is not.
+ *
+ * The two were outline-only and identical in weight, so the screen asked a
+ * reviewer to choose between two equal options. They are not equal: approving
+ * is the workflow, rejecting is the exception. Filling one of them is the
+ * cheapest way to say which, and it costs no words.
+ *
+ * It does NOT mean approve is safe to click without reading. The draft above
+ * is the thing being approved, and nothing in this interface may suggest
+ * otherwise - which is why reject stays plainly visible rather than being
+ * demoted to a link. */
 .button--approve {
   border-color: var(--ready);
-  color: var(--ready);
+  background: var(--ready);
+  color: var(--on-ready);
   font-weight: var(--weight-medium);
+}
+
+.button--approve:hover:not(:disabled) {
+  border-color: var(--ready);
+  background: var(--ready);
+  filter: brightness(1.08);
 }
 
 .button--reject {
   border-color: var(--rejected);
   color: var(--rejected);
+}
+
+.button--reject:hover:not(:disabled) {
+  border-color: var(--rejected);
+  background: color-mix(in srgb, var(--rejected) 10%, transparent);
 }
 
 .link-button {
@@ -472,6 +577,24 @@ button:disabled {
   color: var(--accent);
   text-decoration: underline;
   cursor: pointer;
+}
+
+.link-button:hover:not(:disabled) {
+  background: none;
+  border-color: transparent;
+  color: var(--text);
+}
+
+.theme-toggle {
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.theme-toggle:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text);
 }
 
 /* Theme toggle */
