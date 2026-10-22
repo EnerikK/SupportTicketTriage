@@ -101,6 +101,7 @@ public class HarnessArgumentsTests
         [
             "help", "connection", "dataset", "output",
             "pricing", "reset", "skip-generation", "write-baseline", "compare-baseline",
+            "write-logic-baseline",
         ];
 
         Assert.Equal(documented.Order(), HarnessArguments.Recognised.Order());

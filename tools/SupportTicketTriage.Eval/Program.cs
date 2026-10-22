@@ -49,6 +49,9 @@ if (arguments.Has("help"))
           --compare-baseline [p]  Compare this run against a baseline and exit
                                   non-zero on regression beyond tolerance
                                   (default: eval/baseline/evaluation-baseline.json)
+          --write-logic-baseline  Write eval/baseline/lexical-logic-baseline.json
+                                  from a stand-in run; guards retrieval logic,
+                                  not retrieval quality
           --write-baseline        Write eval/baseline/evaluation-baseline.json;
                                   refused for stand-in embedders and for costs
                                   computed from unverified pricing
@@ -222,6 +225,23 @@ if (arguments.Has("compare-baseline"))
     }
 }
 
+if (arguments.Has("write-logic-baseline"))
+{
+    try
+    {
+        report.EnsureCanBeLogicBaseline();
+
+        var logicPath = LogicBaselinePath();
+        await EvaluationBaseline.From(report).WriteAsync(logicPath);
+        Console.WriteLine($"Wrote {Path.GetFullPath(logicPath)}.");
+    }
+    catch (InvalidOperationException ex)
+    {
+        Console.Error.WriteLine(ex.Message);
+        return 1;
+    }
+}
+
 if (arguments.Has("write-baseline"))
 {
     try
@@ -253,6 +273,13 @@ return 0;
 /// Deliberately not alongside the per-run reports: those are disposable and
 /// gitignored, while the baseline is committed and reviewed.
 static string DefaultBaselinePath() => Path.Combine("eval", "baseline", "evaluation-baseline.json");
+
+/// Named so it cannot be mistaken for the real one at a glance in a diff or a
+/// CI log. The provenance check does the actual work of keeping them apart -
+/// a real run compared against this file mismatches on embedding model and is
+/// reported as inapplicable rather than failed - but the name is the first
+/// line of defence and costs nothing.
+static string LogicBaselinePath() => Path.Combine("eval", "baseline", "lexical-logic-baseline.json");
 
 /// Builds the chat-dependent stages, or returns null when no chat deployment
 /// is configured.

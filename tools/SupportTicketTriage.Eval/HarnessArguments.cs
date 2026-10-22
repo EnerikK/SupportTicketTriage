@@ -31,6 +31,7 @@ public sealed class HarnessArguments
             "skip-generation",
             "write-baseline",
             "compare-baseline",
+            "write-logic-baseline",
         };
 
     private readonly Dictionary<string, string?> _values;

@@ -511,5 +511,32 @@ public sealed record EvaluationReport(
         }
     }
 
+    /// The mirror of EnsureCanBeBaseline, and the reason the two exist
+    /// separately.
+    ///
+    /// [[ADR-007]] refuses to write the real baseline from a stand-in, because
+    /// one produced that way would silently guard nothing. That rule is
+    /// narrowed here rather than removed: the *logic* baseline is written only
+    /// from a stand-in, so the two files cannot be confused by accident and
+    /// neither can be produced by the run that belongs to the other.
+    ///
+    /// What it guards is retrieval logic - the resolved-only filter, the model
+    /// stamp, self-exclusion, k, the tie-break - all of which move lexical
+    /// recall when they break. What it cannot speak to is retrieval quality,
+    /// which changes with the embedding deployment and the redaction rules.
+    /// The README has to say so, because a recall figure that looks like the
+    /// real one is the hazard here.
+    public void EnsureCanBeLogicBaseline()
+    {
+        if (EmbeddingModelIsReal)
+        {
+            throw new InvalidOperationException(
+                $"Refusing to write a logic baseline from '{EmbeddingModel}', a real deployment. "
+                + "The logic baseline exists to be compared against offline runs; one built from "
+                + "real embeddings would carry quality numbers into a file the README describes "
+                + "as measuring logic only. Use --write-baseline for a real run.");
+        }
+    }
+
     public static bool IsRealEmbeddingModel(string model) => model != LexicalEmbeddingGenerator.ModelName;
 }
