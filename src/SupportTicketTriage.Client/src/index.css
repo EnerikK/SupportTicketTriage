@@ -1,19 +1,163 @@
-/* One stylesheet. The specification asks for no design system, so there is no
-   token layer, no component library and no utility framework - just enough
-   styling for a reviewer to read a queue and act on a ticket. */
+/* One stylesheet, now with a token layer.
+ *
+ * The specification asked for no design system until 2026-10-22, when that
+ * constraint was lifted (ADR-023) - it was a time budget taken while the
+ * backend was unproven, not a product judgement. What follows is still one
+ * file and still no framework: custom properties give tokens, theming and
+ * dark mode with no build step and no rewrite of the markup, which is the
+ * thing about this frontend worth keeping.
+ *
+ * Values are tokens because sixteen ad-hoc rem literals is how a layout comes
+ * to look accidental. A scale is what makes it look decided.
+ */
 
 :root {
-  --bg: #fbfbfc;
+  /* Spacing. A 4px base, doubling loosely - enough steps to be useful, few
+     enough that choosing one is obvious. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Type. --text-base stays 15px so the rebuild does not reflow every line
+     of a layout that already reads well. */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.625rem;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --leading-tight: 1.3;
+  --leading-normal: 1.55;
+
+  --tracking-wide: 0.04em;
+
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  /* Motion. One easing curve and two durations; anything that needs a third
+     is probably doing too much. Every use is wrapped by the
+     prefers-reduced-motion block at the end of this file. */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 110ms;
+  --duration: 180ms;
+
+  /* Layout */
+  --measure: 1060px;
+
+  color-scheme: light;
+
+  /* --- Light palette ---------------------------------------------------
+   * Semantic names, not colour names: a token called --danger survives a
+   * change of hue, one called --red does not.
+   */
+  --bg: #f7f8fa;
   --surface: #ffffff;
-  --border: #dfe1e6;
-  --text: #1b1d21;
-  --muted: #6b7280;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f1f3f6;
+  --surface-warning: #fdf6f1;
+
+  --border: #dde0e6;
+  --border-strong: #c6cad3;
+
+  --text: #16181d;
+  --text-muted: #636b78;
+
   --accent: #1f4fd8;
+  --accent-contrast: #ffffff;
+
   --ready: #0f7b3f;
   --blocked: #a4502a;
   --rejected: #a32b2b;
 
-  color-scheme: light;
+  --focus-ring: #1f4fd8;
+
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 6%);
+  --shadow-md: 0 1px 3px rgb(16 24 40 / 8%), 0 4px 12px rgb(16 24 40 / 5%);
+}
+
+/* --- Dark palette -------------------------------------------------------
+ *
+ * Declared twice on purpose. The media query serves the default "follow the
+ * system" state, guarded so an explicit light choice still wins; the
+ * attribute selector serves an explicit dark choice and must come after so
+ * it wins in both directions. Without the guard, a user on a dark OS who
+ * picks light gets dark anyway.
+ *
+ * Not simply inverted: dark surfaces need less contrast between layers than
+ * light ones, and saturated accents that read well on white glare on black,
+ * so the accent and state colours are lifted toward their lighter tints.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --bg: #0e1014;
+    --surface: #161920;
+    --surface-raised: #1c2029;
+    --surface-sunken: #11141a;
+    --surface-warning: #251c14;
+
+    --border: #272c36;
+    --border-strong: #3a414f;
+
+    --text: #e7e9ee;
+    --text-muted: #969db0;
+
+    --accent: #7ba2f0;
+    --accent-contrast: #0e1014;
+
+    --ready: #4cc38a;
+    --blocked: #e0924f;
+    --rejected: #ef7a74;
+
+    --focus-ring: #7ba2f0;
+
+    /* Shadow does almost nothing on a dark ground; a lighter border carries
+       elevation instead, so these stay deliberately faint rather than being
+       scaled up to compensate. */
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-md: 0 1px 3px rgb(0 0 0 / 45%), 0 4px 14px rgb(0 0 0 / 35%);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0e1014;
+  --surface: #161920;
+  --surface-raised: #1c2029;
+  --surface-sunken: #11141a;
+  --surface-warning: #251c14;
+
+  --border: #272c36;
+  --border-strong: #3a414f;
+
+  --text: #e7e9ee;
+  --text-muted: #969db0;
+
+  --accent: #7ba2f0;
+  --accent-contrast: #0e1014;
+
+  --ready: #4cc38a;
+  --blocked: #e0924f;
+  --rejected: #ef7a74;
+
+  --focus-ring: #7ba2f0;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-md: 0 1px 3px rgb(0 0 0 / 45%), 0 4px 14px rgb(0 0 0 / 35%);
 }
 
 * {
@@ -24,71 +168,88 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font:
+    var(--text-base) / var(--leading-normal) system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .app {
-  max-width: 1040px;
+  max-width: var(--measure);
   margin: 0 auto;
-  padding: 2rem 1.25rem 4rem;
+  padding: var(--space-6) var(--space-4) var(--space-7);
 }
 
 .app__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
   border-bottom: 1px solid var(--border);
-  padding-bottom: 1rem;
-  margin-bottom: 1.75rem;
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
 .app__title {
-  font-size: 1.3rem;
-  font-weight: 600;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
   color: var(--text);
   text-decoration: none;
+  letter-spacing: -0.01em;
 }
 
 .app__tagline {
-  margin: 0.35rem 0 0;
-  color: var(--muted);
-  font-size: 0.9rem;
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-md);
 }
 
 .status {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .status--error {
   color: var(--rejected);
 }
 
+/* Queue */
+
 .queue {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 .queue__caption {
   text-align: left;
-  color: var(--muted);
-  font-size: 0.85rem;
-  padding-bottom: 0.5rem;
+  color: var(--text-muted);
+  font-size: var(--text-md);
+  padding-bottom: var(--space-2);
 }
 
 .queue th,
 .queue td {
   text-align: left;
-  padding: 0.6rem 0.75rem;
+  padding: var(--space-3);
   border-bottom: 1px solid var(--border);
   vertical-align: top;
 }
 
 .queue th {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-muted);
+  font-weight: var(--weight-semibold);
+  background: var(--surface-sunken);
 }
 
 .queue tbody tr:last-child td {
@@ -97,21 +258,25 @@ body {
 
 .queue a {
   color: var(--accent);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
+  /* Three hundred underlined rows is noise, not affordance. The colour and
+     the row hover carry it; the underline returns on hover and focus, where
+     it means something. */
+  text-decoration: none;
 }
 
 .muted {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .gates {
   display: block;
-  font-size: 0.8rem;
-  margin-top: 0.15rem;
+  font-size: var(--text-sm);
+  margin-top: var(--space-1);
 }
 
 .state {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .state--ready {
@@ -131,7 +296,7 @@ body {
 }
 
 .state--pending {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 /* Ticket detail */
@@ -139,38 +304,41 @@ body {
 .detail__back {
   color: var(--accent);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: var(--text-md);
 }
 
 .detail__subject {
-  margin: 0.5rem 0 1.5rem;
-  font-size: 1.45rem;
+  margin: var(--space-2) 0 var(--space-5);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.015em;
 }
 
 .detail section {
-  margin-bottom: 1.75rem;
+  margin-bottom: var(--space-5);
 }
 
 .subheading {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-  font-weight: 600;
-  margin: 0 0 0.5rem;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-muted);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-2);
 }
 
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-3) var(--space-4);
   margin: 0;
 }
 
 .panel--withheld {
   border-color: var(--blocked);
-  background: #fdf6f1;
+  background: var(--surface-warning);
 }
 
 .detail__body {
@@ -179,26 +347,26 @@ body {
 
 .draft__text {
   white-space: pre-wrap;
-  margin: 0 0 1rem;
+  margin: 0 0 var(--space-4);
 }
 
 .provenance {
   display: block;
-  font-size: 0.8rem;
-  margin-top: 0.4rem;
+  font-size: var(--text-sm);
+  margin-top: var(--space-1);
 }
 
 .gates-detail {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 0.75rem;
-  margin: 0.85rem 0 0;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
 }
 
 .gates-detail dt {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin-bottom: 0.15rem;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-bottom: var(--space-1);
 }
 
 .gates-detail dd {
@@ -214,38 +382,38 @@ body {
 }
 
 .citations li {
-  padding: 0.25rem 0;
+  padding: var(--space-1) 0;
 }
 
 .evidence li {
-  margin-bottom: 0.6rem;
+  margin-bottom: var(--space-3);
 }
 
 .citations__rank {
-  font-weight: 600;
-  color: var(--muted);
+  font-weight: var(--weight-semibold);
+  color: var(--text-muted);
 }
 
 .evidence__head {
-  margin: 0 0 0.35rem;
+  margin: 0 0 var(--space-1);
 }
 
 .evidence__resolution {
   margin: 0;
-  color: var(--muted);
-  font-size: 0.92rem;
+  color: var(--text-muted);
+  font-size: var(--text-md);
 }
 
 /* Review actions */
 
 .review__label {
   display: block;
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-  font-weight: 600;
-  margin: 0.9rem 0 0.35rem;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-muted);
+  font-weight: var(--weight-semibold);
+  margin: var(--space-4) 0 var(--space-1);
 }
 
 .review__label:first-child {
@@ -256,27 +424,27 @@ body {
 .review__reason {
   width: 100%;
   font: inherit;
-  padding: 0.6rem 0.7rem;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   resize: vertical;
-  background: var(--bg);
+  background: var(--surface-sunken);
   color: var(--text);
 }
 
 .review__actions {
   display: flex;
-  gap: 0.6rem;
-  margin-top: 1rem;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
 }
 
 .button,
 button {
   font: inherit;
-  padding: 0.5rem 0.9rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
   color: var(--text);
   cursor: pointer;
 }
@@ -289,7 +457,7 @@ button:disabled {
 .button--approve {
   border-color: var(--ready);
   color: var(--ready);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .button--reject {
@@ -300,8 +468,39 @@ button:disabled {
 .link-button {
   border: none;
   background: none;
-  padding: 0.3rem 0;
+  padding: var(--space-1) 0;
   color: var(--accent);
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* Theme toggle */
+
+.theme-toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--text-md);
+}
+
+/* Motion is opt-out, everywhere, without exception.
+ *
+ * Declared here rather than beside each transition so there is exactly one
+ * place to check that it is honoured. Vestibular disorders make a decorative
+ * transition genuinely unpleasant, and the setting exists to be obeyed. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
