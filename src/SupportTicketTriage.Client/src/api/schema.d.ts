@@ -13,7 +13,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -26,7 +29,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["TicketQueueItemResponse"][];
+                        "application/json": components["schemas"]["TicketQueuePageResponse"];
                     };
                 };
             };
@@ -506,6 +509,15 @@ export interface components {
             draftState: string;
             reviewDecision: null | string;
             isResolved: boolean;
+        };
+        TicketQueuePageResponse: {
+            items: components["schemas"]["TicketQueueItemResponse"][];
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
         };
         TicketResponse: {
             /** Format: uuid */

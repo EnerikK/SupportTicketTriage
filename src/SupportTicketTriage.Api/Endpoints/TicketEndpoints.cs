@@ -243,7 +243,16 @@ public static class TicketEndpoints
         return TypedResults.Created($"/tickets/{ticket.Id}", response);
     }
 
-    /// The review queue.
+    /// Default and ceiling for the queue page size.
+    ///
+    /// The ceiling exists because the page size arrives from the client and a
+    /// request for every row is the unbounded query this endpoint was paged to
+    /// get rid of. Ten is the default because the queue is a work list, not a
+    /// report — a reviewer works the top of it.
+    private const int DefaultPageSize = 10;
+    private const int MaxPageSize = 100;
+
+    /// The review queue, one page at a time.
     ///
     /// Composed server-side rather than returning bare tickets and letting the
     /// UI fetch classification, routing, draft and review per row: at fifty
@@ -252,14 +261,56 @@ public static class TicketEndpoints
     /// Each signal is append-only with most-recent-wins semantics, so each
     /// contributes a correlated subquery ordered by CreatedAt. Three
     /// subqueries per row is fine at this size and would not be at a much
-    /// larger one — but it is one round trip, and an integration test asserts
-    /// that by reading the SQL EF Core actually sends.
-    private static async Task<Ok<List<TicketQueueItemResponse>>> ListTickets(
+    /// larger one — but it is one round trip for the page, and an integration
+    /// test asserts that by reading the SQL EF Core actually sends.
+    ///
+    /// Paging makes this two statements rather than one: a COUNT and a
+    /// windowed projection. ADR-012 recorded the queue as "one projection
+    /// query" and this amends it — the property worth protecting was never
+    /// "exactly one statement", it was "not one query per ticket per signal",
+    /// and that still holds.
+    private static async Task<Ok<TicketQueuePageResponse>> ListTickets(
         SupportTicketTriageDbContext db,
-        CancellationToken ct)
+        CancellationToken ct,
+        int page = 1,
+        int pageSize = DefaultPageSize)
     {
+        // Clamped rather than rejected. A page size of 500 is a client bug or
+        // somebody experimenting in the address bar, and answering it with a
+        // hundred rows is more useful than a 400. The envelope reports what
+        // was actually applied, so nobody is left guessing which they got.
+        page = Math.Max(page, 1);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
+        var total = await db.Tickets.CountAsync(ct);
+
+        // Computed as long before it is cast back. (page - 1) * pageSize
+        // overflows int for a large hand-typed page number, and the negative
+        // OFFSET that follows is a 500 rather than an empty page.
+        //
+        // Past the end we answer with no rows and the true total rather than
+        // clamping to the last page: clamping would hide that the caller
+        // asked for something that does not exist, and the envelope already
+        // carries everything needed to recover. It also skips a query whose
+        // only possible answer is nothing.
+        var skip = (long)(page - 1) * pageSize;
+
+        if (skip >= total)
+        {
+            return TypedResults.Ok(new TicketQueuePageResponse([], total, page, pageSize));
+        }
+
         var rows = await db.Tickets
+            // Id is the tie-break, and it is not decoration. CreatedAt is
+            // truncated to microseconds, so ties are genuinely reachable —
+            // the seeded dataset is full of them — and without a total order
+            // rows repeat and vanish across page boundaries. Ordering and
+            // windowing both happen before the projection, so LIMIT and
+            // OFFSET reach PostgreSQL rather than the paging happening here.
             .OrderByDescending(t => t.CreatedAt)
+            .ThenByDescending(t => t.Id)
+            .Skip((int)skip)
+            .Take(pageSize)
             .Select(t => new
             {
                 t.Id,
@@ -307,7 +358,7 @@ public static class TicketEndpoints
                 r.Review?.Decision))
             .ToList();
 
-        return TypedResults.Ok(queue);
+        return TypedResults.Ok(new TicketQueuePageResponse(queue, total, page, pageSize));
     }
 
     private static async Task<Results<Ok<TicketResponse>, NotFound>> GetTicket(

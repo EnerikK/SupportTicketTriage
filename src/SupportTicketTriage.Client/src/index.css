@@ -432,6 +432,67 @@ body {
   text-decoration: underline;
 }
 
+/* --- Pager ---------------------------------------------------------------
+ *
+ * Laid out with auto-fit rather than a breakpoint: the three groups sit in a
+ * row while they fit and stack when they do not, without this stylesheet
+ * naming a single device width.
+ */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.pagination__size {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pagination__label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-muted);
+  font-weight: var(--weight-semibold);
+}
+
+.pagination select {
+  font: inherit;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.pagination__range,
+.pagination__position {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.pagination__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* The page counter sits between the two buttons and changes width as the
+   numbers do. A minimum stops Previous and Next shuffling sideways every
+   time the reviewer pages. */
+.pagination__position {
+  min-width: 7.5rem;
+  text-align: center;
+}
+
 .muted {
   color: var(--text-muted);
 }

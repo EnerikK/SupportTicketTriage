@@ -3,6 +3,7 @@ import type { components } from './schema'
 type Schemas = components['schemas']
 
 export type TicketQueueItem = Schemas['TicketQueueItemResponse']
+export type TicketQueuePage = Schemas['TicketQueuePageResponse']
 export type Ticket = Schemas['TicketResponse']
 export type TicketClassification = Schemas['TicketClassificationResponse']
 export type TicketRouting = Schemas['TicketRoutingResponse']
