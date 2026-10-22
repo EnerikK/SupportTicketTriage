@@ -105,6 +105,23 @@ describe('TicketQueue', () => {
 
     renderQueue()
 
-    expect(await screen.findByText(/No tickets yet/)).toBeInTheDocument()
+    expect(await screen.findByText(/The queue is empty/)).toBeInTheDocument()
+    expect(screen.getByText(/arrive through the ingest API/)).toBeInTheDocument()
+  })
+
+  /// The skeleton is layout, not content. A screen reader gets one polite
+  /// "Loading the queue"; the eight rows of grey bars sit behind aria-hidden
+  /// and must not be exposed as a table, because announcing the shape of
+  /// data that has not arrived is worse than announcing nothing.
+  it('announces that it is loading without exposing the skeleton', () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise(() => {})),
+    )
+
+    renderQueue()
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading the queue')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 })

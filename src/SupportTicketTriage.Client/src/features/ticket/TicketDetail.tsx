@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { type TicketRouting } from '../../api/client'
 import {
@@ -8,6 +9,8 @@ import {
   useSimilar,
   useTicket,
 } from '../../api/queries'
+import { Alert } from '../../ui/Alert'
+import { LoadingRegion, Skeleton } from '../../ui/Skeleton'
 import { describeGate } from '../queue/ticketState'
 import { DraftPanel } from './DraftPanel'
 import { formatScore, similarityLabel } from './score'
@@ -63,6 +66,26 @@ function RoutingSummary({ routing }: { routing: TicketRouting | null }) {
   )
 }
 
+/// Mirrors the real page: a subject, then the stack of panels. The detail
+/// view fires five requests, so unlike the queue this skeleton is seen for a
+/// real interval against a deployed API rather than only in a screenshot.
+function DetailSkeleton() {
+  return (
+    <LoadingRegion label="Loading the ticket">
+      <Skeleton width="45%" height="1.75rem" />
+      <div className="detail-skeleton">
+        {[3, 2, 2].map((lines, panel) => (
+          <div key={panel} className="panel detail-skeleton__panel">
+            {Array.from({ length: lines }, (_, line) => (
+              <Skeleton key={line} width={line === lines - 1 ? '55%' : '100%'} />
+            ))}
+          </div>
+        ))}
+      </div>
+    </LoadingRegion>
+  )
+}
+
 export function TicketDetail() {
   const { id = '' } = useParams()
 
@@ -77,15 +100,11 @@ export function TicketDetail() {
   const review = useReview(id)
 
   if (ticket.isPending) {
-    return <p className="status">Loading…</p>
+    return <DetailSkeleton />
   }
 
   if (ticket.error) {
-    return (
-      <p className="status status--error" role="alert">
-        Could not load this ticket: {ticket.error.message}
-      </p>
-    )
+    return <Alert>Could not load this ticket: {ticket.error.message}</Alert>
   }
 
   if (!ticket.data) {
@@ -99,7 +118,8 @@ export function TicketDetail() {
   return (
     <article className="detail">
       <Link to="/" className="detail__back">
-        ← Queue
+        <ArrowLeft size={15} aria-hidden="true" focusable="false" />
+        Queue
       </Link>
 
       <h2 className="detail__subject">{ticket.data.subject}</h2>
