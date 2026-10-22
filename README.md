@@ -95,7 +95,7 @@ Per-category F1 runs from 89.1% to 99.0% in the later run. **Both runs are shown
 
 **Three caveats carry with these numbers.** An unclassifiable ticket counts as *wrong*, not excluded — the dataset carries the label, so a response that could not be parsed got it wrong, and excluding those would let a classifier that refuses half its inputs report perfect accuracy on the rest. The dataset is balanced at exactly 50 per category, which production ticket volume will not be: a balanced set makes macro-F1 and accuracy converge, and on a real skewed distribution they would not.
 
-And the third, which was found by re-running rather than by reasoning: **these figures are not reproducible to the decimal.** With nothing changed but the clock, macro-F1 moved 0.3pp and per-category F1 moved by up to 3.0pp — Account & Login fell 97.0% → 94.0% while Returns & Refunds rose 87.8% → 89.8%. Recall@k, by contrast, came back bit-identical, because embeddings are deterministic and chat completions are not. Two runs is a weak estimate of that noise floor, but it is the reason no per-category ranking is quoted here as evidence, and it is what the CI regression gate's tolerances will have to be set wider than.
+And the third, which was found by re-running rather than by reasoning: **these figures are not reproducible to the decimal.** Across five runs of the identical dataset against the identical deployment, accuracy spans **92.0–93.7%** and macro-F1 **92.8–94.4%** — a range of about 1.6 points, with nothing changed but the clock. Per-category F1 moves further still, by up to 3.0pp. Recall@k, by contrast, came back bit-identical every time, because embeddings are deterministic and chat completions are not. That is the reason no per-category ranking is quoted here as evidence, and it is the measurement the regression gate's tolerances are set against — four runs now, not two.
 
 ### Citation validity
 
@@ -173,7 +173,31 @@ A stage where any call fails to report usage is reported as unpriced rather than
 
 **Groundedness is not measured.** There is **no groundedness judge and therefore no judge-agreement figure** — when there is one, the agreement against hand-labelled pairs will be published next to the score, because for an LLM-as-judge metric the agreement number is worth more than the score.
 
-There is also **no CI regression gate yet**. CI builds and tests; it does not run the harness or compare against a baseline, so every figure above is from a local run.
+### The regression gate
+
+CI compares each run against a committed baseline and fails on regression beyond tolerance. There are **two baselines, guarding different things.**
+
+| | runs on | embedder | guards |
+|---|---|---|---|
+| `lexical-logic-baseline.json` | every pull request | the lexical stand-in | retrieval **logic** |
+| `evaluation-baseline.json` | merges to `main`, and on demand | the real deployment | everything, including quality |
+
+**The pull-request gate is not a weaker version of the real one — it answers a different question.** A broken resolved-only filter, model-stamp filter, self-exclusion, `k`, or tie-break all move *lexical* recall, because those are code defects. It needs no secrets, costs nothing, finishes in about a minute, and works on forks. What it cannot see is a change in retrieval *quality*, which comes from the embedding deployment or the redaction rules — configuration, not code.
+
+**The real gate runs on merge rather than per pull request.** A full run is ~9 minutes of model time and about $0.075; paying that on every push, README typos included, is a tax that gets routed around. It can also be fired by hand (`workflow_dispatch`) on a branch before merging something likely to move the numbers. The cost of that choice, stated plainly: a regression is already on `main` when the gate fires. It is a fast alarm, not a barrier.
+
+**Tolerances are set by consequence, not uniformly by noise:**
+
+| metric | tolerance | why |
+|---|---|---|
+| recall@k | 1.0pp drop | Deterministic — four runs bit-identical. One query is worth 1.85pp, so this fires if any single query changes. |
+| classification | 5.0pp drop | Loose on purpose — see below. Observed spread is 1.6pp. |
+| citation validity | 2.0pp drop | The safety metric. |
+| cost | 10% increase | Two runs came in 0.05% apart; what's worth catching is a prompt that doubled. |
+
+Classification is the loosest gate because **nothing downstream reads the category**: the generation prompt never mentions it, retrieval doesn't use it, and the confidence gate compares the self-reported *score* rather than the label. A wrong category changes a label in the queue beside a ticket whose text the reviewer is reading anyway. So the gate's job there is catching breakage — a mangled prompt, a swapped model — which arrives as ten points, not one.
+
+Only regressions fail; improvements never do, and cost is the one metric where *up* is the bad direction. And if the dataset version, either prompt version, the redaction rules or the routing floors have moved, the gate reports that the **baseline no longer applies** rather than calling it a regression — a deliberate prompt change is not the system getting worse. It still fails, because a baseline is never silently regenerated to make CI green.
 
 No figure for an unmeasured quantity appears anywhere in this repository. That is deliberate, and the harness enforces it rather than relying on discipline: a baseline is refused outright from a stand-in embedder or from unverified pricing.
 
@@ -331,7 +355,7 @@ With no Azure credentials it falls back to a lexical stand-in embedder, which is
 Named here rather than left for a reader to discover:
 
 - **Groundedness**, its judge and the judge-agreement figure. Classification, citation validity and the routing floors are now measured; groundedness is not, and it needs a second chat deployment so the model does not judge its own output.
-- **The CI regression gate.** A baseline exists for retrieval only, and CI does not run the harness, so every figure in this README comes from a local run.
+- **Groundedness in the gate.** The regression gate covers retrieval, classification, citation validity and cost. Groundedness is not in it because it is not measured yet.
 - **Observability and resilience in the running application.** The evaluation harness now records per-call latency and tokens, but it does so by wrapping the model clients in its own code — the API itself still has no tracing, no per-request token recording, and no timeouts or bounded retry. The measured 4 call failures in 300 above are what the absence of retry currently costs.
 - **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval backfills, which closes this for reviewed tickets and leaves it open for the rest.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.
