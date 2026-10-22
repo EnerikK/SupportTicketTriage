@@ -360,9 +360,14 @@ With no Azure credentials it falls back to a lexical stand-in embedder, which is
 
 Named here rather than left for a reader to discover:
 
-- **Groundedness**, its judge and the judge-agreement figure. Classification, citation validity and the routing floors are now measured; groundedness is not, and it needs a second chat deployment so the model does not judge its own output.
-- **Groundedness in the gate.** The regression gate covers retrieval, classification, citation validity and cost. Groundedness is not in it because it is not measured yet.
+- **Groundedness**, its judge and the judge-agreement figure. Classification, citation validity and the routing floors are now measured; groundedness is not, and it needs a second chat deployment so the model does not judge its own output. It is therefore absent from the regression gate too, which covers retrieval, classification, citation validity and cost.
 - **Observability and resilience in the running application.** The evaluation harness now records per-call latency and tokens, but it does so by wrapping the model clients in its own code — the API itself still has no tracing, no per-request token recording, and no timeouts or bounded retry. The measured 4 call failures in 300 above are what the absence of retry currently costs.
 - **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval backfills, which closes this for reviewed tickets and leaves it open for the rest.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.
 - **No authentication.** See the OpenAPI note above.
+
+---
+
+## Licence
+
+[MIT](LICENSE). The 300-ticket evaluation dataset under `eval/dataset/` is synthetic and covered by the same licence.
