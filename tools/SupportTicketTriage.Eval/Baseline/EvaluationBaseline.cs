@@ -68,12 +68,16 @@ public sealed record BaselineMetrics(
 public sealed record EvaluationBaseline(
     string Version,
     BaselineProvenance Provenance,
-    BaselineMetrics Metrics)
+    BaselineMetrics Metrics,
+    /// How far each metric may move before the gate calls it a regression.
+    /// Here rather than in a file of their own so that loosening a tolerance
+    /// and moving a number arrive in the same diff.
+    BaselineTolerances Tolerances)
 {
     /// Bumped when the shape changes, so a gate meeting an older file can say
     /// so rather than silently reading nulls - which is precisely how the
     /// previous baseline failed.
-    public const string CurrentVersion = "1";
+    public const string CurrentVersion = "2";
 
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -82,7 +86,9 @@ public sealed record EvaluationBaseline(
         Converters = { new JsonStringEnumConverter() },
     };
 
-    public static EvaluationBaseline From(EvaluationReport report) =>
+    public static EvaluationBaseline From(
+        EvaluationReport report,
+        BaselineTolerances? tolerances = null) =>
         new(
             Version: CurrentVersion,
             Provenance: new BaselineProvenance(
@@ -105,7 +111,8 @@ public sealed record EvaluationBaseline(
                 CitationValidityRate: report.Citations?.ValidityRate,
                 CostTotal: report.Cost?.Total,
                 CostPerIngestedTicket: report.Cost?.PerIngestedTicket,
-                CostPerDraftedTicket: report.Cost?.PerDraftedTicket));
+                CostPerDraftedTicket: report.Cost?.PerDraftedTicket),
+            Tolerances: tolerances ?? BaselineTolerances.Default);
 
     public async Task WriteAsync(string path, CancellationToken ct = default)
     {
@@ -147,6 +154,13 @@ public sealed record EvaluationBaseline(
         {
             throw new InvalidOperationException("Baseline records no dataset version.");
         }
+
+        if (Tolerances is null)
+        {
+            throw new InvalidOperationException("Baseline records no tolerances.");
+        }
+
+        Tolerances.Validate();
 
         if (Metrics.RecallAtK.Count == 0)
         {

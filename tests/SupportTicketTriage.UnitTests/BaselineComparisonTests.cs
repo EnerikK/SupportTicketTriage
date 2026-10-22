@@ -1,0 +1,197 @@
+using SupportTicketTriage.Eval.Baseline;
+using SupportTicketTriage.Eval.Metrics;
+using SupportTicketTriage.Eval.Reporting;
+
+namespace SupportTicketTriage.UnitTests;
+
+public class BaselineComparisonTests
+{
+    private static EvaluationReport Run(
+        double recall1 = 0.76,
+        double? accuracy = 0.92,
+        double? macroF1 = 0.93,
+        double? citationValidity = 1.0,
+        decimal? costTotal = 0.075m,
+        string classificationPrompt = "classify-v1",
+        string redaction = "v1",
+        double gateA = 0.50) =>
+        new(
+            DatasetVersion: "1.0",
+            EmbeddingModel: "text-embedding-3-small",
+            EmbeddingModelIsReal: true,
+            ChatModel: "gpt-4.1-mini",
+            ClassificationPromptVersion: classificationPrompt,
+            GenerationPromptVersion: "draft-v1",
+            RedactionVersion: redaction,
+            MinimumClassificationScore: gateA,
+            MinimumSimilarity: 0.60,
+            GeneratedAt: DateTimeOffset.UnixEpoch,
+            CorpusCount: 240,
+            QueryCount: 60,
+            ScoredQueryCount: 54,
+            UnscoredQueryCount: 6,
+            RecallAtK: new Dictionary<int, double> { [1] = recall1 },
+            Classification: accuracy is null || macroF1 is null
+                ? null
+                : new ClassificationScore(accuracy.Value, macroF1.Value, 300, 5, []),
+            Citations: citationValidity is null
+                ? null
+                : new CitationScore(citationValidity.Value, 47, 47, 0, 13, 0, 75, 0),
+            Calibration: [],
+            Latency: [],
+            Cost: costTotal is null
+                ? null
+                : new CostScore("1.0", "USD", true, new DateOnly(2026, 10, 16), [], costTotal, 0.0001m, 0.0008m, 300, 47),
+            TraitCoverage: new Dictionary<string, int>());
+
+    private static EvaluationBaseline Baseline() => EvaluationBaseline.From(Run());
+
+    private static MetricComparison Metric(BaselineComparison c, string name) =>
+        Assert.Single(c.Metrics, m => m.Metric == name);
+
+    [Fact]
+    public void AnIdenticalRunPasses()
+    {
+        var comparison = BaselineComparison.Compare(Baseline(), Run());
+
+        Assert.True(comparison.Passed);
+        Assert.True(comparison.Comparable);
+    }
+
+    /// Recall's tolerance is one point, which is just over half of what a
+    /// single query is worth at 54 scored queries.
+    [Fact]
+    public void RecallFallingPastItsToleranceIsARegression()
+    {
+        var comparison = BaselineComparison.Compare(Baseline(), Run(recall1: 0.74));
+
+        Assert.False(comparison.Passed);
+        Assert.Equal(ComparisonOutcome.Regressed, Metric(comparison, "recall@1").Outcome);
+    }
+
+    [Fact]
+    public void RecallFallingWithinItsToleranceDoesNot()
+    {
+        Assert.True(BaselineComparison.Compare(Baseline(), Run(recall1: 0.755)).Passed);
+    }
+
+    /// Classification is the loose one on purpose: nothing downstream reads the
+    /// category, so the gate is there to catch breakage rather than drift.
+    [Fact]
+    public void ClassificationDriftWellBeyondItsRunToRunRangeStillPasses()
+    {
+        // 4pp below baseline - far more than the 0.7pp four runs actually
+        // moved, and still not the ten-point drop a mangled prompt produces.
+        Assert.True(BaselineComparison.Compare(Baseline(), Run(accuracy: 0.88, macroF1: 0.89)).Passed);
+    }
+
+    [Fact]
+    public void ClassificationCollapsingIsARegression()
+    {
+        var comparison = BaselineComparison.Compare(Baseline(), Run(accuracy: 0.60, macroF1: 0.61));
+
+        Assert.Equal(ComparisonOutcome.Regressed, Metric(comparison, "classification accuracy").Outcome);
+        Assert.Equal(ComparisonOutcome.Regressed, Metric(comparison, "classification macro-F1").Outcome);
+    }
+
+    [Fact]
+    public void CitationValidityFallingThreePointsIsARegression()
+    {
+        var comparison = BaselineComparison.Compare(Baseline(), Run(citationValidity: 0.97));
+
+        Assert.Equal(ComparisonOutcome.Regressed, Metric(comparison, "citation validity").Outcome);
+    }
+
+    /// The asymmetry, and the reason for it: a gate that fires when a number
+    /// improves is one people route around.
+    [Fact]
+    public void ImprovingEveryMetricPasses()
+    {
+        var better = Run(recall1: 0.95, accuracy: 0.99, macroF1: 0.99, citationValidity: 1.0, costTotal: 0.01m);
+
+        Assert.True(BaselineComparison.Compare(Baseline(), better).Passed);
+    }
+
+    /// Cost is the one metric where up is the bad direction.
+    [Fact]
+    public void CostRisingBeyondItsToleranceIsARegression()
+    {
+        var comparison = BaselineComparison.Compare(Baseline(), Run(costTotal: 0.15m));
+
+        Assert.Equal(ComparisonOutcome.Regressed, Metric(comparison, "cost total").Outcome);
+    }
+
+    [Fact]
+    public void CostDriftingAFewPercentDoesNot()
+    {
+        Assert.True(BaselineComparison.Compare(Baseline(), Run(costTotal: 0.078m)).Passed);
+    }
+
+    /// A gate that silently covers less than it claims is the failure this
+    /// whole phase exists to prevent, so a gated metric the run did not
+    /// produce fails rather than being skipped.
+    [Fact]
+    public void AGatedMetricTheRunDidNotMeasureFails()
+    {
+        var comparison = BaselineComparison.Compare(
+            Baseline(), Run(citationValidity: null, accuracy: null, macroF1: null));
+
+        Assert.False(comparison.Passed);
+        Assert.Equal(ComparisonOutcome.NotMeasured, Metric(comparison, "citation validity").Outcome);
+        Assert.Equal(ComparisonOutcome.NotMeasured, Metric(comparison, "classification accuracy").Outcome);
+    }
+
+    /// The mirror case: a baseline written from a run that never measured
+    /// something does not start gating it later.
+    [Fact]
+    public void AMetricTheBaselineDoesNotGateIsNotRequired()
+    {
+        var retrievalOnly = EvaluationBaseline.From(
+            Run(accuracy: null, macroF1: null, citationValidity: null, costTotal: null));
+
+        Assert.True(BaselineComparison.Compare(retrievalOnly, Run()).Passed);
+    }
+
+    /// Provenance mismatches are not regressions, and conflating them would
+    /// report a deliberate prompt change as the system getting worse.
+    [Fact]
+    public void AChangedPromptMakesTheBaselineInapplicableRatherThanFailed()
+    {
+        var comparison = BaselineComparison.Compare(
+            Baseline(), Run(classificationPrompt: "classify-v2"));
+
+        Assert.False(comparison.Comparable);
+        Assert.False(comparison.Passed);
+        Assert.Contains(comparison.ProvenanceMismatches, m => m.Contains("classification prompt"));
+        Assert.Contains("no longer applies", comparison.ToMarkdown());
+    }
+
+    [Fact]
+    public void AChangedRedactionVersionIsAlsoAMismatch()
+    {
+        var comparison = BaselineComparison.Compare(Baseline(), Run(redaction: "v2"));
+
+        Assert.Contains(comparison.ProvenanceMismatches, m => m.Contains("redaction"));
+    }
+
+    /// Moving a routing floor changes NotEligible, which is citation validity's
+    /// denominator - so a retune would read as a citation regression if the
+    /// floors were not part of the provenance.
+    [Fact]
+    public void AMovedRoutingFloorIsAMismatch()
+    {
+        var comparison = BaselineComparison.Compare(Baseline(), Run(gateA: 0.70));
+
+        Assert.Contains(comparison.ProvenanceMismatches, m => m.Contains("Gate A floor"));
+    }
+
+    [Fact]
+    public void TheMarkdownNamesTheRegressedMetric()
+    {
+        var markdown = BaselineComparison.Compare(Baseline(), Run(recall1: 0.70)).ToMarkdown();
+
+        Assert.Contains("recall@1", markdown);
+        Assert.Contains("REGRESSED", markdown);
+        Assert.Contains("The gate failed", markdown);
+    }
+}
