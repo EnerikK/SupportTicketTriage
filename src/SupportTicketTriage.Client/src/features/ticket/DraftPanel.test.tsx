@@ -35,11 +35,22 @@ describe('DraftPanel', () => {
     expect(screen.getByText(DRAFT_TEXT)).toBeInTheDocument()
     expect(screen.getByText('Duplicate charge')).toBeInTheDocument()
     expect(screen.getByText('similarity 0.91')).toBeInTheDocument()
+
+    // h4, because the section containing this panel is already headed at h3.
+    // A skipped or repeated level is invisible on screen and breaks the
+    // outline a screen reader navigates by.
+    expect(screen.getByRole('heading', { level: 4, name: 'Citations' })).toBeInTheDocument()
   })
 
   /// The guarantee from ADR-010, surfaced. The API already withholds the text
   /// and the citations; the UI must explain why rather than render an empty
   /// box or imply no draft was ever attempted.
+  ///
+  /// Queried by text rather than by role since ADR-026: the panel used to
+  /// carry `role="alert"`, which is a live region for content that *appears*
+  /// and made this re-announce on every render of the branch. Both halves of
+  /// the guarantee are asserted exactly as before — the reason is named, and
+  /// the withheld text is nowhere.
   it('explains a withheld draft and never shows its text', () => {
     const withheld = draft({
       citationsValid: false,
@@ -50,9 +61,20 @@ describe('DraftPanel', () => {
 
     render(<DraftPanel draft={withheld} evidence={evidence} draftEligible={true} />)
 
-    expect(screen.getByRole('alert')).toHaveTextContent('This draft is withheld')
-    expect(screen.getByRole('alert')).toHaveTextContent('2 sources')
+    expect(screen.getByText('This draft is withheld.')).toBeInTheDocument()
+    expect(screen.getByText(/cited 2 sources/)).toBeInTheDocument()
     expect(screen.queryByText(DRAFT_TEXT)).not.toBeInTheDocument()
+  })
+
+  /// The change itself, pinned. Static content in the page flow is not an
+  /// alert, and a reader arriving at this ticket should meet the panel in
+  /// document order rather than having it shouted on first paint.
+  it('does not announce the withheld panel as a live region', () => {
+    const withheld = draft({ citationsValid: false, draftText: null, citations: [] })
+
+    render(<DraftPanel draft={withheld} evidence={evidence} draftEligible={true} />)
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('distinguishes a gated ticket from one that simply has no draft yet', () => {

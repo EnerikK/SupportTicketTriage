@@ -1,3 +1,4 @@
+import { TriangleAlert } from 'lucide-react'
 import { type SimilarTicket, type TicketDraft } from '../../api/client'
 import { similarityLabel } from './score'
 
@@ -22,9 +23,24 @@ export function DraftPanel({ draft, evidence, draftEligible }: Props) {
   // API - draftText comes back null and the citations are empty. Saying only
   // "no draft" would hide a real generation failure, and rendering an empty
   // box would look like a bug. The reviewer is told what happened instead.
+  // No `role="alert"`. This renders as part of the page rather than
+  // appearing in response to something, and an alert is a live region: with
+  // the role, assistive technology re-announced the whole panel on every
+  // render of this branch, including the first paint of the page. The text
+  // says what happened and is read in document order like everything else.
+  //
+  // The icon is the second non-colour encoding - the panel previously
+  // signalled "withheld" with a border colour and a warm ground and nothing
+  // else, which is the same defect the error states had.
   if (!draft.citationsValid) {
     return (
-      <div className="panel panel--withheld" role="alert">
+      <div className="panel panel--withheld">
+        <TriangleAlert
+          className="panel--withheld__icon"
+          size={18}
+          aria-hidden="true"
+          focusable="false"
+        />
         <p>
           <strong>This draft is withheld.</strong> It cited {draft.invalidCitationCount}{' '}
           {draft.invalidCitationCount === 1 ? 'source' : 'sources'} that were not in the
@@ -43,7 +59,9 @@ export function DraftPanel({ draft, evidence, draftEligible }: Props) {
     <div className="panel">
       <p className="draft__text">{draft.draftText}</p>
 
-      <h3 className="subheading">Citations</h3>
+      {/* h4, not h3: this sits inside a section already headed "Draft
+          reply" at h3, so an h3 here claimed to be its sibling. */}
+      <h4 className="subheading">Citations</h4>
       {draft.citations.length === 0 ? (
         <p className="muted">
           The draft cited none of the tickets it was given — nothing supports it.

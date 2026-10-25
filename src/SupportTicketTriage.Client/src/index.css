@@ -238,13 +238,26 @@ body {
   margin-bottom: var(--space-5);
 }
 
+/* An `h1` now rather than a bare link, so the default heading margin and
+   size have to go. The link inside inherits, which keeps the rendered
+   result byte-identical to what F1 established. */
 .app__title {
+  margin: 0;
   font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
   color: var(--text);
-  text-decoration: none;
   letter-spacing: -0.01em;
+}
+
+.app__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.app__title a:hover,
+.app__title a:focus-visible {
+  text-decoration: underline;
 }
 
 .app__tagline {
@@ -614,8 +627,25 @@ body {
 }
 
 .panel--withheld {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  flex-wrap: wrap;
   border-color: var(--blocked);
   background: var(--surface-warning);
+}
+
+.panel--withheld__icon {
+  flex: none;
+  margin-top: 0.15em;
+  color: var(--blocked);
+}
+
+/* The icon sits beside the first paragraph; the rest of the panel clears it
+   rather than being indented under it. */
+.panel--withheld > p {
+  flex: 1 1 16rem;
+  margin: 0 0 var(--space-2);
 }
 
 .detail__body {

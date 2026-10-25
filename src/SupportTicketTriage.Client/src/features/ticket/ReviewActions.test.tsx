@@ -31,16 +31,31 @@ function renderActions(props: Partial<Parameters<typeof ReviewActions>[0]> = {})
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   )
 
-  return render(
+  const element = (extra: Partial<Parameters<typeof ReviewActions>[0]> = {}) => (
     <ReviewActions
       ticketId={TICKET_ID}
       draft={draft()}
       review={null}
       draftEligible={true}
       {...props}
-    />,
-    { wrapper },
+      {...extra}
+    />
   )
+
+  const view = render(element(), { wrapper })
+
+  // The real prop transition: the review resource refetches after the
+  // mutation and the parent re-renders this with a decision in hand.
+  return { ...view, receiveReview: (review: TicketReview) => view.rerender(element({ review })) }
+}
+
+const approvedReview: TicketReview = {
+  decision: 'Approved',
+  finalText: 'The agreed reply.',
+  wasEdited: true,
+  rejectionReason: null,
+  draftId: 'draft-1',
+  createdAt: '2026-10-06T10:55:48Z',
 }
 
 function capturePost() {
@@ -152,15 +167,38 @@ describe('ReviewActions', () => {
     })
   })
 
+  /// Submitting replaces the form with a result panel. Without this, focus
+  /// falls to the document and a screen reader user is told nothing at all
+  /// about the thing that just happened.
+  it('moves focus to the decision once a review has been submitted', async () => {
+    const calls = capturePost()
+    const user = userEvent.setup()
+
+    const view = renderActions()
+    await user.click(screen.getByRole('button', { name: 'Approve as written' }))
+    await waitFor(() => expect(calls).toHaveLength(1))
+
+    view.receiveReview(approvedReview)
+
+    await waitFor(() => {
+      expect(document.activeElement).toHaveTextContent('Approved')
+      // Focusable on purpose, but never in the tab order.
+      expect(document.activeElement).toHaveAttribute('tabindex', '-1')
+    })
+  })
+
+  /// The other half, and the reason the flag exists. Opening a ticket that
+  /// was reviewed yesterday must not drag focus into the result panel -
+  /// that would steal it on every navigation to a reviewed ticket.
+  it('leaves focus alone when the ticket was already reviewed on arrival', () => {
+    renderActions({ review: approvedReview })
+
+    expect(screen.getByText('Approved')).toBeInTheDocument()
+    expect(document.body).toHaveFocus()
+  })
+
   it('shows a recorded decision instead of the form, with no way to change it', () => {
-    const review: TicketReview = {
-      decision: 'Approved',
-      finalText: 'The agreed reply.',
-      wasEdited: true,
-      rejectionReason: null,
-      draftId: 'draft-1',
-      createdAt: '2026-10-06T10:55:48Z',
-    }
+    const review = approvedReview
 
     renderActions({ review })
 
