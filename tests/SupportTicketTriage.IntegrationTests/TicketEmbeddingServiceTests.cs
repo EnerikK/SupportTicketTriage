@@ -86,4 +86,39 @@ public class TicketEmbeddingServiceTests(EmbeddingApiFactory factory)
             factory.Generator.Reset();
         }
     }
+
+    /// A paid call that is then thrown away, reported as an outage.
+    ///
+    /// A vector is unique per (TicketId, EmbeddingModel). Before the guard in
+    /// TryEmbedAsync, a second invocation generated an embedding, failed the
+    /// unique index on save, and the catch reported it as "failed to embed" —
+    /// so the symptom of wasting money was a log line claiming Azure was
+    /// broken. Ingest never hit it, because it only ever runs against a
+    /// ticket it just created. The triage endpoint hits it immediately.
+    [Fact]
+    public async Task TriagingATicketThatIsAlreadyEmbedded_DoesNotPayForASecondEmbedding()
+    {
+        factory.Generator.Reset();
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/tickets", new IngestTicketRequest("embed-once", "Body of embed-once."));
+
+        response.EnsureSuccessStatusCode();
+        var created = await response.Content.ReadFromJsonAsync<TicketResponse>();
+
+        var afterIngest = factory.Generator.Received.Count;
+        Assert.Equal(1, afterIngest);
+
+        var triage = await client.PostAsync($"/tickets/{created!.Id}/triage", null);
+        Assert.NotEqual(HttpStatusCode.NotFound, triage.StatusCode);
+
+        // The generator was not called again, and exactly one row exists.
+        Assert.Equal(afterIngest, factory.Generator.Received.Count);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+
+        Assert.Equal(1, await db.TicketEmbeddings.CountAsync(e => e.TicketId == created.Id));
+    }
 }

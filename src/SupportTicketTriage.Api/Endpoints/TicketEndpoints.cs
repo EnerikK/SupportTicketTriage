@@ -22,6 +22,7 @@ public static class TicketEndpoints
         app.MapGet("/tickets/{id:guid}/similar", GetSimilarTickets);
         app.MapGet("/tickets/{id:guid}/classification", GetClassification);
         app.MapGet("/tickets/{id:guid}/routing", GetRouting);
+        app.MapPost("/tickets/{id:guid}/triage", TriageTicket);
         app.MapPost("/tickets/{id:guid}/draft", CreateDraft);
         app.MapGet("/tickets/{id:guid}/draft", GetDraft);
         app.MapPost("/tickets/{id:guid}/review", SubmitReview);
@@ -241,6 +242,70 @@ public static class TicketEndpoints
 
         var response = TicketResponse.FromDomain(ticket);
         return TypedResults.Created($"/tickets/{ticket.Id}", response);
+    }
+
+    /// Runs the triage stages against a ticket that already exists.
+    ///
+    /// Until this existed, embedding, classification and routing happened
+    /// **only** inside ingest, and a ticket that missed any of them was stuck
+    /// for good: §8.8 records 4 classification failures in 300 calls, each
+    /// already past four Azure SDK retries, and every one of those tickets was
+    /// unreachable by any interface. A corpus that develops holes and offers
+    /// no way to fill them is the gap this closes.
+    ///
+    /// The same three calls ingest makes, in the same order and for the same
+    /// reasons — routing last, because it reads what the other two produced.
+    /// Embedding is skipped when the ticket already has one for the current
+    /// model; classification deliberately is not, because ADR-008 stores a
+    /// versioned row per run with most-recent-wins semantics, which makes
+    /// re-running after a prompt change a supported operation rather than a
+    /// workaround. The client only offers this on a ticket with no routing
+    /// decision, so the paid re-run is never one stray click away.
+    ///
+    /// Not a reversal of ADR-010. That entry made *generation* an on-demand
+    /// reviewer action because it is the most expensive call in the system.
+    /// Classification is roughly a fifth of the cost and gates everything
+    /// downstream of it, so the bar for letting a human trigger it is lower.
+    private static async Task<Results<Ok<TicketRoutingResponse>, NotFound, Conflict<string>>> TriageTicket(
+        Guid id,
+        SupportTicketTriageDbContext db,
+        TicketEmbeddingService embeddings,
+        TicketClassificationService classification,
+        TicketRoutingService routing,
+        CancellationToken ct)
+    {
+        var ticket = await db.Tickets.FirstOrDefaultAsync(t => t.Id == id, ct);
+
+        if (ticket is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        // A recorded human decision sits on top of the routing that produced
+        // the draft it approved. Re-routing underneath it would leave the
+        // review pointing at reasoning that no longer exists, and ADR-011
+        // makes a review final.
+        if (await db.TicketReviews.AnyAsync(r => r.TicketId == id, ct))
+        {
+            return TypedResults.Conflict("This ticket has already been reviewed; its triage is final.");
+        }
+
+        await embeddings.TryEmbedAsync(ticket, ct);
+        await classification.TryClassifyAsync(ticket, ct);
+        await routing.TryEvaluateAsync(ticket, ct);
+
+        // The routing decision is the answer worth returning: it is what the
+        // caller is waiting to see, and a failed gate is a result rather than
+        // an error. Absent means every stage failed, which is reported as
+        // such rather than as a success with nothing in it.
+        var decision = await db.TicketRoutingDecisions
+            .Where(r => r.TicketId == id)
+            .OrderByDescending(r => r.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+
+        return decision is null
+            ? TypedResults.Conflict("Triage produced no routing decision; the AI boundary is unavailable.")
+            : TypedResults.Ok(TicketRoutingResponse.FromEntity(decision));
     }
 
     /// Default and ceiling for the queue page size.

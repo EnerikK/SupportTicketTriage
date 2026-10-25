@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Pgvector;
@@ -24,6 +25,25 @@ public sealed class TicketEmbeddingService(
             logger.LogInformation(
                 "Azure OpenAI is not configured; ticket {TicketId} stored without an embedding.", ticket.Id);
             return false;
+        }
+
+        // Checked before the call, not after, because the call costs money.
+        //
+        // A vector is unique per (TicketId, EmbeddingModel). Without this
+        // guard a second invocation paid for an embedding, then failed the
+        // unique index on save, and the catch below reported it as "failed to
+        // embed" - a wasted call reported as an outage. Ingest never hit it
+        // because it only ever runs against a ticket it just created; a
+        // re-drive path hits it immediately.
+        //
+        // Returns true because the ticket *has* an embedding under this
+        // model, which is what the caller is asking about. A changed
+        // deployment name is a different model and does embed again, which is
+        // the backfill path the stamp exists for.
+        if (await db.TicketEmbeddings.AnyAsync(
+                e => e.TicketId == ticket.Id && e.EmbeddingModel == embeddingModel, ct))
+        {
+            return true;
         }
 
         // Only redacted text crosses the AI boundary.
