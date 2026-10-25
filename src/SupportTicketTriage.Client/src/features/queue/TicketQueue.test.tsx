@@ -144,6 +144,21 @@ describe('TicketQueue', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 
+  /// Five columns do not fit a phone, so the table scrolls sideways. A
+  /// scrollable region that is not focusable puts whatever is past its right
+  /// edge out of reach of a keyboard entirely (WCAG 2.1.1), so the wrapper
+  /// is a labelled region with a tab stop rather than a bare overflow div.
+  it('puts the table in a keyboard-reachable labelled region', async () => {
+    respondWith(200, queuePage([ticket]))
+
+    renderQueue()
+
+    const region = await screen.findByRole('region', { name: 'Ticket queue' })
+
+    expect(region).toHaveAttribute('tabindex', '0')
+    expect(region).toContainElement(screen.getByRole('table'))
+  })
+
   it('reports the range and the page position', async () => {
     respondWith(200, queuePage([ticket], { totalCount: 301, page: 2, pageSize: 10 }))
 
