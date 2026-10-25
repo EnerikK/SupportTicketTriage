@@ -50,6 +50,11 @@ function QueueHeader() {
 function QueueSkeleton({ rows }: { rows: number }) {
   return (
     <LoadingRegion label="Loading the queue">
+      {/* The same scroll wrapper, deliberately without `tabIndex` or the
+          region role: this sits inside an `aria-hidden` subtree, and a
+          focusable element hidden from assistive technology is a trap a
+          keyboard can reach but a screen reader cannot describe. */}
+      <div className="queue-scroll">
       <table className="queue">
         <caption className="queue__caption">
           <Skeleton width="5rem" />
@@ -67,6 +72,7 @@ function QueueSkeleton({ rows }: { rows: number }) {
           ))}
         </tbody>
       </table>
+      </div>
     </LoadingRegion>
   )
 }
@@ -157,37 +163,50 @@ export function TicketQueue() {
 
   return (
     <>
-    <table className="queue">
-      <caption className="queue__caption">
-        {totalCount} {totalCount === 1 ? 'ticket' : 'tickets'}
-      </caption>
-      <QueueHeader />
-      <tbody>
-        {data.items.map((ticket) => {
-          const state = describeState(ticket)
+    {/* A scrollable region has to be reachable by keyboard, or the content
+        past its right edge is unreachable without a mouse - WCAG 2.1.1. That
+        is what `tabIndex` and the labelled `region` role are for, not
+        decoration.
 
-          return (
-            <tr key={ticket.id}>
-              <td>
-                <Link to={`/tickets/${ticket.id}`}>{ticket.subject}</Link>
-              </td>
-              <td>{ticket.category ?? <span className="muted">unclassified</span>}</td>
-              <td>{ticket.priority ?? <span className="muted">—</span>}</td>
-              <td>
-                <span className={`state state--${state.tone}`}>
-                  <StateIcon tone={state.tone} />
-                  {state.label}
-                </span>
-                {ticket.failedGates.length > 0 && (
-                  <span className="muted gates">{ticket.failedGates.map(describeGate).join(', ')}</span>
-                )}
-              </td>
-              <td>{formatDate(ticket.createdAt)}</td>
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
+        The cost, stated honestly: on a wide screen the table does not
+        overflow and this is a tab stop that leads nowhere. Removing it only
+        when it does not scroll needs a ResizeObserver, and a stray tab stop
+        is a smaller fault than content a keyboard cannot reach. */}
+    <div className="queue-scroll" tabIndex={0} role="region" aria-label="Ticket queue">
+      <table className="queue">
+        <caption className="queue__caption">
+          {totalCount} {totalCount === 1 ? 'ticket' : 'tickets'}
+        </caption>
+        <QueueHeader />
+        <tbody>
+          {data.items.map((ticket) => {
+            const state = describeState(ticket)
+
+            return (
+              <tr key={ticket.id}>
+                <td>
+                  <Link to={`/tickets/${ticket.id}`}>{ticket.subject}</Link>
+                </td>
+                <td>{ticket.category ?? <span className="muted">unclassified</span>}</td>
+                <td>{ticket.priority ?? <span className="muted">—</span>}</td>
+                <td>
+                  <span className={`state state--${state.tone}`}>
+                    <StateIcon tone={state.tone} />
+                    {state.label}
+                  </span>
+                  {ticket.failedGates.length > 0 && (
+                    <span className="muted gates">
+                      {ticket.failedGates.map(describeGate).join(', ')}
+                    </span>
+                  )}
+                </td>
+                <td>{formatDate(ticket.createdAt)}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
 
     <Pagination
       page={page}
