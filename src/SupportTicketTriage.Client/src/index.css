@@ -206,16 +206,32 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* --- Responsive ----------------------------------------------------------
+ *
+ * There is not one `@media (max-width: …)` in this file, and that is the
+ * decision rather than an omission. Intrinsic layout - clamp, flex-wrap,
+ * auto-fit - adapts to the space available without this stylesheet naming
+ * device widths it would then have to keep true. The two media queries that
+ * do exist ask about the *user*, not the viewport: prefers-color-scheme and
+ * prefers-reduced-motion.
+ */
+
 .app {
   max-width: var(--measure);
   margin: 0 auto;
-  padding: var(--space-6) var(--space-4) var(--space-7);
+  /* The gutter shrinks with the viewport instead of switching at a
+     breakpoint: 16px of padding either side of a 320px phone is 10% of the
+     screen spent on nothing. */
+  padding: var(--space-6) clamp(var(--space-3), 4vw, var(--space-6)) var(--space-7);
 }
 
 .app__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  /* The title and the theme toggle sit side by side while they fit and
+     stack when they do not. No width needs naming for that to happen. */
+  flex-wrap: wrap;
   gap: var(--space-4);
   border-bottom: 1px solid var(--border);
   padding-bottom: var(--space-4);
@@ -363,6 +379,22 @@ body {
 }
 
 /* Queue */
+
+/* Five columns do not fit a phone, and a table is the right element for this
+ * data, so the table scrolls rather than being rebuilt as cards at some
+ * named width.
+ *
+ * The vertical padding is not spacing - it is clearance for a focus ring.
+ * `overflow-x: auto` computes `overflow-y` to `auto` as well, so without it
+ * the ring on a link in the first or last row is clipped by the scroll box.
+ * The negative margin cancels the padding visually, so this costs nothing on
+ * screens where the table fits.
+ */
+.queue-scroll {
+  overflow-x: auto;
+  padding-block: var(--space-1);
+  margin-block: calc(var(--space-1) * -1);
+}
 
 .queue {
   width: 100%;
@@ -551,7 +583,10 @@ body {
 
 .detail__subject {
   margin: var(--space-2) 0 var(--space-5);
-  font-size: var(--text-2xl);
+  /* The one place type is large enough that a fixed size is wrong on a
+     narrow screen. A long subject at 1.625rem wraps to four lines on a
+     phone; clamp lets it come down without a breakpoint. */
+  font-size: clamp(var(--text-xl), 4.5vw, var(--text-2xl));
   line-height: var(--leading-tight);
   letter-spacing: -0.015em;
 }
@@ -692,6 +727,9 @@ body {
 
 .review__actions {
   display: flex;
+  /* Approve and Reject stack rather than overflowing the panel. They keep
+     their order, so the hierarchy ADR-024 set survives the wrap. */
+  flex-wrap: wrap;
   gap: var(--space-2);
   margin-top: var(--space-4);
 }
