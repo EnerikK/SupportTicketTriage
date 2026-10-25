@@ -29,11 +29,20 @@ export function ReviewActions({ ticketId, draft, review, draftEligible }: Props)
   }
 
   if (!draft) {
-    return draftEligible ? (
-      <GenerateDraft ticketId={ticketId} />
-    ) : (
+    if (draftEligible === true) {
+      return <GenerateDraft ticketId={ticketId} />
+    }
+
+    // Three states, not two. `null` means no routing decision exists at all,
+    // and reporting that as "routed for manual triage" asserts a gate
+    // decision that was never made - worse than saying nothing, and exactly
+    // the kind of smoothing-over ADR-023 forbids. DraftPanel already drew
+    // this distinction; this branch tested truthiness and did not.
+    return (
       <p className="status">
-        Nothing to review. This ticket was routed for manual triage, so no draft is generated.
+        {draftEligible === false
+          ? 'Nothing to review. This ticket was routed for manual triage, so no draft is generated.'
+          : 'Nothing to review. This ticket has not been triaged, so nothing has decided whether it can be drafted.'}
       </p>
     )
   }
