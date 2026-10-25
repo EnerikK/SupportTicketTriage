@@ -74,9 +74,71 @@ describe('TicketDetail', () => {
     renderDetail()
 
     expect(await screen.findByText('Charged twice')).toBeInTheDocument()
-    expect(screen.getByText('Not classified.')).toBeInTheDocument()
+    expect(screen.getByText(/Not classified\./)).toBeInTheDocument()
     expect(screen.getByText('This ticket has not been triaged yet.')).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  /// The recovery path. A ticket with no classification never finished
+  /// triage, and before the endpoint existed there was nothing to be done
+  /// about it from any interface.
+  it('offers to triage a ticket that was never classified', async () => {
+    routeResponses({
+      [`/tickets/${TICKET_ID}`]: { status: 200, body: ticketBody },
+      '/similar': { status: 200, body: [] },
+    })
+
+    renderDetail()
+
+    expect(await screen.findByRole('button', { name: 'Triage this ticket' })).toBeInTheDocument()
+  })
+
+  /// Absent classification is the signal, not absent routing: ingest routes
+  /// whether or not classification succeeded, so a stuck ticket has a routing
+  /// decision with its gates failed. Keying off routing would miss it.
+  it('still offers triage when routing exists but classification does not', async () => {
+    routeResponses({
+      [`/tickets/${TICKET_ID}`]: { status: 200, body: ticketBody },
+      '/similar': { status: 200, body: [] },
+      '/routing': {
+        status: 200,
+        body: {
+          isDraftEligible: false,
+          failedGates: ['ClassificationScore'],
+          classificationScore: null,
+          topSimilarity: null,
+          minimumClassificationScore: 0.5,
+          minimumSimilarity: 0.6,
+          createdAt: '2026-10-06T10:55:48Z',
+        },
+      },
+    })
+
+    renderDetail()
+
+    expect(await screen.findByRole('button', { name: 'Triage this ticket' })).toBeInTheDocument()
+  })
+
+  it('offers no triage once the ticket has been classified', async () => {
+    routeResponses({
+      [`/tickets/${TICKET_ID}`]: { status: 200, body: ticketBody },
+      '/similar': { status: 200, body: [] },
+      '/classification': {
+        status: 200,
+        body: {
+          category: 'Billing',
+          priority: 'High',
+          chatModel: 'gpt-4o-mini',
+          promptVersion: 'v1',
+          createdAt: '2026-10-06T10:55:48Z',
+        },
+      },
+    })
+
+    renderDetail()
+
+    expect(await screen.findByText('Billing')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Triage this ticket' })).not.toBeInTheDocument()
   })
 
   it('says so when the ticket itself does not exist', async () => {

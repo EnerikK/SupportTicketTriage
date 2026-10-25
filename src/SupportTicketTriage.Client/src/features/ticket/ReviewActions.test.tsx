@@ -224,6 +224,17 @@ describe('ReviewActions', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
+  /// `null` is a third state: no routing decision exists at all. Reporting
+  /// that as "routed for manual triage" asserts a gate decision nothing ever
+  /// made, which is worse than saying nothing.
+  it('does not claim a gate fired on a ticket that was never routed', () => {
+    renderActions({ draft: null, draftEligible: null })
+
+    expect(screen.getByText(/has not been triaged/)).toBeInTheDocument()
+    expect(screen.queryByText(/routed for manual triage/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
   it('offers generation for an eligible ticket with no draft yet', async () => {
     const calls = capturePost()
     const user = userEvent.setup()

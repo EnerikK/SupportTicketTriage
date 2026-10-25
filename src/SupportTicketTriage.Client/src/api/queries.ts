@@ -111,6 +111,25 @@ export function useGenerateDraft(id: string) {
   })
 }
 
+/// Runs classification and routing against a ticket that already exists.
+///
+/// The recovery path for a ticket whose classification failed at ingest,
+/// which the evaluation run showed happens to roughly 1.3% of them. Before
+/// this there was no way to retry from anywhere.
+export function useTriage(id: string) {
+  const client = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => post<TicketRouting>(`/tickets/${id}/triage`),
+    onSuccess: () => {
+      // The whole ticket subtree: triage writes a classification and a
+      // routing decision, and either can change whether a draft is offered.
+      void client.invalidateQueries({ queryKey: keys.ticket(id) })
+      void client.invalidateQueries({ queryKey: keys.queue })
+    },
+  })
+}
+
 /// Approve, edit-and-approve and reject are all this one call; they differ by
 /// what is sent, not by which endpoint is used.
 export function useSubmitReview(id: string) {

@@ -6,6 +6,7 @@ import {
   useDraft,
   useRouting,
   useReview,
+  useTriage,
   useSimilar,
   useTicket,
 } from '../../api/queries'
@@ -62,6 +63,33 @@ function RoutingSummary({ routing }: { routing: TicketRouting | null }) {
           </dd>
         </div>
       </dl>
+    </div>
+  )
+}
+
+/// A ticket with no classification never finished triage, and until the
+/// triage endpoint existed it never would have.
+///
+/// Absent classification is the signal, not absent routing. Ingest routes
+/// whether or not classification succeeded - a ticket it could not classify
+/// is exactly one a human should look at - so a stuck ticket has a routing
+/// decision with its gates failed and no classification at all. Keying off
+/// routing would miss every ticket this control exists to rescue.
+function UntriagedTicket({ ticketId }: { ticketId: string }) {
+  const triage = useTriage(ticketId)
+
+  return (
+    <div className="panel">
+      <p className="untriaged__text">
+        Not classified. This ticket did not finish triage, so it has no category, no
+        priority, and no routing decision that means anything.
+      </p>
+
+      <button type="button" onClick={() => triage.mutate()} disabled={triage.isPending}>
+        {triage.isPending ? 'Triaging…' : 'Triage this ticket'}
+      </button>
+
+      {triage.error && <Alert>{triage.error.message}</Alert>}
     </div>
   )
 }
@@ -139,7 +167,7 @@ export function TicketDetail() {
             </span>
           </p>
         ) : (
-          <p className="status">Not classified.</p>
+          <UntriagedTicket ticketId={id} />
         )}
       </section>
 
