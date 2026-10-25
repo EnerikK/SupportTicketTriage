@@ -52,6 +52,24 @@ const ticketBody = {
   createdAt: '2026-10-06T10:55:48Z',
 }
 
+const classificationBody = {
+  category: 'Billing',
+  priority: 'High',
+  chatModel: 'gpt-4o-mini',
+  promptVersion: 'v1',
+  createdAt: '2026-10-06T10:55:48Z',
+}
+
+const routingBody = {
+  isDraftEligible: true,
+  failedGates: [],
+  classificationScore: 0.91,
+  topSimilarity: 0.78,
+  minimumClassificationScore: 0.5,
+  minimumSimilarity: 0.6,
+  createdAt: '2026-10-06T10:55:48Z',
+}
+
 describe('TicketDetail', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn())
@@ -74,8 +92,8 @@ describe('TicketDetail', () => {
     renderDetail()
 
     expect(await screen.findByText('Charged twice')).toBeInTheDocument()
-    expect(screen.getByText(/Not classified\./)).toBeInTheDocument()
-    expect(screen.getByText('This ticket has not been triaged yet.')).toBeInTheDocument()
+    expect(screen.getByText('Not classified.')).toBeInTheDocument()
+    expect(screen.getByText(/did not finish triage/)).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
@@ -119,20 +137,32 @@ describe('TicketDetail', () => {
     expect(await screen.findByRole('button', { name: 'Triage this ticket' })).toBeInTheDocument()
   })
 
-  it('offers no triage once the ticket has been classified', async () => {
+  /// The case the first version of this control missed entirely.
+  ///
+  /// The evaluation harness classifies every ticket it seeds and routes only
+  /// the handful it scores, so a seeded corpus is full of tickets that are
+  /// classified and unrouted. Keying the control off absent classification
+  /// alone left every one of them a dead end.
+  it('offers triage when the ticket was classified but never routed', async () => {
     routeResponses({
       [`/tickets/${TICKET_ID}`]: { status: 200, body: ticketBody },
       '/similar': { status: 200, body: [] },
-      '/classification': {
-        status: 200,
-        body: {
-          category: 'Billing',
-          priority: 'High',
-          chatModel: 'gpt-4o-mini',
-          promptVersion: 'v1',
-          createdAt: '2026-10-06T10:55:48Z',
-        },
-      },
+      '/classification': { status: 200, body: classificationBody },
+    })
+
+    renderDetail()
+
+    expect(await screen.findByText('Billing')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Triage this ticket' })).toBeInTheDocument()
+    expect(screen.getByText(/classified but never routed/)).toBeInTheDocument()
+  })
+
+  it('offers no triage once both stages have run', async () => {
+    routeResponses({
+      [`/tickets/${TICKET_ID}`]: { status: 200, body: ticketBody },
+      '/similar': { status: 200, body: [] },
+      '/classification': { status: 200, body: classificationBody },
+      '/routing': { status: 200, body: routingBody },
     })
 
     renderDetail()
