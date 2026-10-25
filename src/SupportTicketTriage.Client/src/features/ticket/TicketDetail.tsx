@@ -17,11 +17,7 @@ import { DraftPanel } from './DraftPanel'
 import { formatScore, similarityLabel } from './score'
 import { ReviewActions } from './ReviewActions'
 
-function RoutingSummary({ routing }: { routing: TicketRouting | null }) {
-  if (!routing) {
-    return <p className="status">This ticket has not been triaged yet.</p>
-  }
-
+function RoutingSummary({ routing }: { routing: TicketRouting }) {
   return (
     <div className="panel">
       <p>
@@ -67,22 +63,36 @@ function RoutingSummary({ routing }: { routing: TicketRouting | null }) {
   )
 }
 
-/// A ticket with no classification never finished triage, and until the
-/// triage endpoint existed it never would have.
+/// Triage is classification *and* routing, so a ticket missing either one
+/// has not finished it.
 ///
-/// Absent classification is the signal, not absent routing. Ingest routes
-/// whether or not classification succeeded - a ticket it could not classify
-/// is exactly one a human should look at - so a stuck ticket has a routing
-/// decision with its gates failed and no classification at all. Keying off
-/// routing would miss every ticket this control exists to rescue.
-function UntriagedTicket({ ticketId }: { ticketId: string }) {
+/// The first version of this keyed off absent classification alone. That was
+/// right for the case it was built from - a classification call that failed
+/// at ingest - and wrong in general, because the two stages go missing
+/// independently:
+///
+///   ingest failure   routing present, classification absent
+///   harness-seeded   classification present, routing absent
+///
+/// Ingest routes unconditionally, so it produces the first. The evaluation
+/// harness classifies every ticket and routes only the handful it scores, so
+/// it produces the second. Keying off one of the two missed every ticket
+/// produced by the other.
+function TriageNeeded({
+  ticketId,
+  hasClassification,
+}: {
+  ticketId: string
+  hasClassification: boolean
+}) {
   const triage = useTriage(ticketId)
 
   return (
     <div className="panel">
       <p className="untriaged__text">
-        Not classified. This ticket did not finish triage, so it has no category, no
-        priority, and no routing decision that means anything.
+        {hasClassification
+          ? 'This ticket was classified but never routed, so nothing has decided whether a draft can be grounded for it.'
+          : 'This ticket did not finish triage: it has no category, no priority and no routing decision.'}
       </p>
 
       <button type="button" onClick={() => triage.mutate()} disabled={triage.isPending}>
@@ -143,6 +153,10 @@ export function TicketDetail() {
     )
   }
 
+  // Either stage missing means triage did not finish. Both go missing
+  // independently - see TriageNeeded.
+  const needsTriage = !classification.data || !routing.data
+
   return (
     <article className="detail">
       <Link to="/" className="detail__back">
@@ -167,13 +181,16 @@ export function TicketDetail() {
             </span>
           </p>
         ) : (
-          <UntriagedTicket ticketId={id} />
+          <p className="status">Not classified.</p>
         )}
       </section>
 
       <section>
         <h3 className="subheading">Routing</h3>
-        <RoutingSummary routing={routing.data ?? null} />
+        {routing.data && <RoutingSummary routing={routing.data} />}
+        {needsTriage && (
+          <TriageNeeded ticketId={id} hasClassification={Boolean(classification.data)} />
+        )}
       </section>
 
       <section>
