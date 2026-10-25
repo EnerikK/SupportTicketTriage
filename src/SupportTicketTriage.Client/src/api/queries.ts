@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   get,
   getOrNull,
@@ -8,7 +8,7 @@ import {
   type Ticket,
   type TicketClassification,
   type TicketDraft,
-  type TicketQueueItem,
+  type TicketQueuePage,
   type TicketReview,
   type TicketRouting,
 } from './client'
@@ -21,8 +21,13 @@ import {
 /// prefix of every per-ticket key and invalidating the queue would quietly
 /// refetch all five queries of every ticket anyone had open. A ticket id is a
 /// GUID, so it can never collide with the literal 'queue'.
+///
+/// `queue` stays the prefix and each page hangs below it, so the existing
+/// invalidations after a draft or a review still clear every cached page
+/// without having to know which ones exist.
 export const keys = {
   queue: ['tickets', 'queue'] as const,
+  queuePage: (page: number, pageSize: number) => ['tickets', 'queue', page, pageSize] as const,
   ticket: (id: string) => ['tickets', id] as const,
   classification: (id: string) => ['tickets', id, 'classification'] as const,
   routing: (id: string) => ['tickets', id, 'routing'] as const,
@@ -31,10 +36,16 @@ export const keys = {
   review: (id: string) => ['tickets', id, 'review'] as const,
 }
 
-export function useQueue() {
+export function useQueue(page: number, pageSize: number) {
   return useQuery({
-    queryKey: keys.queue,
-    queryFn: () => get<TicketQueueItem[]>('/tickets'),
+    queryKey: keys.queuePage(page, pageSize),
+    queryFn: () => get<TicketQueuePage>(`/tickets?page=${page}&pageSize=${pageSize}`),
+    // The previous page stays on screen while the next one loads, rather
+    // than the table collapsing to a skeleton on every click. This is a
+    // per-query choice, not the global cache tuning main.tsx deliberately
+    // left alone - it changes what this one screen does between two known
+    // states, which is explainable in a sentence.
+    placeholderData: keepPreviousData,
   })
 }
 

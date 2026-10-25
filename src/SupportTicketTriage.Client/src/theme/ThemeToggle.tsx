@@ -1,3 +1,4 @@
+import { Moon, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
   applyTheme,
@@ -61,7 +62,17 @@ export function ThemeToggle() {
       // the one place it can be stated without cluttering the control.
       aria-label={`Theme: ${describePreference(preference)}. Activate to change.`}
     >
-      <span aria-hidden="true">{resolved === 'dark' ? '◗' : '◖'}</span>
+      {/* The icon reports what is on screen; the word reports what was
+          chosen. That split is why the media-query listener above is not
+          decoration - under `system` the OS can flip on a schedule, and the
+          icon is the only thing in the interface that would be left stale.
+          "System" beside a moon is the honest reading: following the
+          machine, currently dark. */}
+      {resolved === 'dark' ? (
+        <Moon size={15} aria-hidden="true" focusable="false" />
+      ) : (
+        <Sun size={15} aria-hidden="true" focusable="false" />
+      )}
       {describePreference(preference)}
     </button>
   )

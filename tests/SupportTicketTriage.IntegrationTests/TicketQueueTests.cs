@@ -1,4 +1,6 @@
+using System.Net;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SupportTicketTriage.Api.Contracts;
 using SupportTicketTriage.Application.Generation;
@@ -16,6 +18,7 @@ namespace SupportTicketTriage.IntegrationTests;
 public class TicketQueueTests(TicketApiFactory factory)
 {
     private const string DraftText = "Both charges relate to a single order.";
+    private const int MaxPageSize = 100;
 
     private readonly HttpClient _client = factory.CreateClient();
 
@@ -64,10 +67,30 @@ public class TicketQueueTests(TicketApiFactory factory)
         return draft;
     }
 
+    private async Task<TicketQueuePageResponse> QueuePageAsync(int page = 1, int pageSize = MaxPageSize) =>
+        (await _client.GetFromJsonAsync<TicketQueuePageResponse>(
+            $"/tickets?page={page}&pageSize={pageSize}"))!;
+
+    /// Six test classes share one database and the queue is now paged, so a
+    /// ticket seeded here is not reliably on any particular page. Walking
+    /// keeps every assertion below about the projection rather than about how
+    /// many tickets happened to exist by the time it ran.
     private async Task<TicketQueueItemResponse> QueueItemAsync(Guid ticketId)
     {
-        var queue = await _client.GetFromJsonAsync<List<TicketQueueItemResponse>>("/tickets");
-        return Assert.Single(queue!, item => item.Id == ticketId);
+        for (var page = 1; ; page++)
+        {
+            var response = await QueuePageAsync(page);
+            var match = response.Items.SingleOrDefault(item => item.Id == ticketId);
+
+            if (match is not null)
+            {
+                return match;
+            }
+
+            Assert.True(
+                (long)page * response.PageSize < response.TotalCount,
+                $"Ticket {ticketId} never appeared in the queue.");
+        }
     }
 
     [Fact]
@@ -186,6 +209,8 @@ public class TicketQueueTests(TicketApiFactory factory)
     [Fact]
     public async Task TheQueueNeverCarriesDraftText()
     {
+        Guid ticketId;
+
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
@@ -193,22 +218,31 @@ public class TicketQueueTests(TicketApiFactory factory)
             var source = AddTicket(db, "queue-text-source");
             source.Resolve("A resolution.");
 
-            var ticketId = AddTicket(db, "queue-text").Id;
+            ticketId = AddTicket(db, "queue-text").Id;
             await db.SaveChangesAsync();
 
             AddDraft(db, ticketId, source.Id, citationsValid: true);
             await db.SaveChangesAsync();
         }
 
-        var json = await _client.GetStringAsync("/tickets");
+        var json = await _client.GetStringAsync($"/tickets?pageSize={MaxPageSize}");
 
+        // Asserted first so the test cannot pass vacuously: now that the
+        // queue is paged, a drafted ticket that simply fell off the page
+        // would satisfy the real assertion below without proving anything.
+        Assert.Contains(ticketId.ToString(), json);
         Assert.DoesNotContain(DraftText, json);
     }
 
-    /// The property no behavioural test can see: the queue is one database
-    /// round trip, not one per ticket per signal.
+    /// The property no behavioural test can see: the rows come back in one
+    /// database round trip, not one per ticket per signal.
+    ///
+    /// Paging makes this two statements rather than one — a COUNT and the
+    /// windowed projection — which amends ADR-012's "one projection query".
+    /// What that entry was protecting is intact and is what this asserts: the
+    /// statement count is fixed, and does not grow with tickets or signals.
     [Fact]
-    public async Task TheQueueIsOneRoundTrip()
+    public async Task TheQueueIsOneRoundTripForTheRowsAndOneForTheCount()
     {
         using (var scope = factory.Services.CreateScope())
         {
@@ -235,12 +269,141 @@ public class TicketQueueTests(TicketApiFactory factory)
             .Where(c => c.Contains("FROM \"Tickets\""))
             .ToList();
 
-        var query = Assert.Single(queries);
+        Assert.Equal(2, queries.Count);
 
-        // All four signals resolved inside that one statement.
-        Assert.Contains("TicketClassifications", query);
-        Assert.Contains("TicketRoutingDecisions", query);
-        Assert.Contains("TicketDrafts", query);
-        Assert.Contains("TicketReviews", query);
+        // All four signals resolved inside the one projection statement.
+        var projection = Assert.Single(queries, q => q.Contains("TicketClassifications"));
+
+        Assert.Contains("TicketRoutingDecisions", projection);
+        Assert.Contains("TicketDrafts", projection);
+        Assert.Contains("TicketReviews", projection);
+    }
+
+    /// "Page in the database, not in memory" as something a test can see.
+    ///
+    /// Page two specifically: EF omits OFFSET when the skip is zero, so
+    /// asking for page one would prove only half of it.
+    [Fact]
+    public async Task TheQueueIsPagedInTheDatabaseRatherThanInMemory()
+    {
+        factory.Sql.Clear();
+        await _client.GetStringAsync("/tickets?page=2&pageSize=5");
+
+        var projection = Assert.Single(
+            factory.Sql.Commands, c => c.Contains("TicketClassifications"));
+
+        Assert.Contains("LIMIT", projection);
+        Assert.Contains("OFFSET", projection);
+    }
+
+    [Fact]
+    public async Task TheQueueDefaultsToTenRowsPerPage()
+    {
+        // Ten of our own guarantees a full page regardless of what the other
+        // five classes sharing this database have left behind.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+
+            for (var i = 0; i < 10; i++)
+            {
+                AddTicket(db, $"queue-default-{i}");
+            }
+
+            await db.SaveChangesAsync();
+        }
+
+        var response = (await _client.GetFromJsonAsync<TicketQueuePageResponse>("/tickets"))!;
+
+        Assert.Equal(1, response.Page);
+        Assert.Equal(10, response.PageSize);
+        Assert.Equal(10, response.Items.Count);
+        Assert.True(response.TotalCount >= 10);
+    }
+
+    /// Clamped rather than rejected, and the envelope reports what was
+    /// applied — which is the only way a caller finds out it did not get
+    /// what it asked for.
+    [Theory]
+    [InlineData(1000, MaxPageSize)]
+    [InlineData(0, 1)]
+    [InlineData(-5, 1)]
+    public async Task APageSizeOutsideTheAllowedRangeIsClamped(int requested, int applied)
+    {
+        var response = (await _client.GetFromJsonAsync<TicketQueuePageResponse>(
+            $"/tickets?pageSize={requested}"))!;
+
+        Assert.Equal(applied, response.PageSize);
+        Assert.True(response.Items.Count <= applied);
+    }
+
+    [Fact]
+    public async Task APageBeyondTheEndIsEmptyAndStillReportsTheTotal()
+    {
+        var response = (await _client.GetFromJsonAsync<TicketQueuePageResponse>(
+            "/tickets?page=100000&pageSize=10"))!;
+
+        Assert.Empty(response.Items);
+        Assert.Equal(100_000, response.Page);
+        Assert.True(response.TotalCount > 0);
+    }
+
+    /// A page number large enough to overflow (page - 1) * pageSize as an
+    /// int. Without the long arithmetic this is a negative OFFSET, which
+    /// PostgreSQL rejects — a 500 on a hand-typed URL rather than an empty
+    /// page.
+    [Fact]
+    public async Task APageNumberLargeEnoughToOverflowIsStillAnEmptyPage()
+    {
+        var response = await _client.GetAsync($"/tickets?page={int.MaxValue}&pageSize={MaxPageSize}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var page = await response.Content.ReadFromJsonAsync<TicketQueuePageResponse>();
+
+        Assert.Empty(page!.Items);
+    }
+
+    /// The defect offset paging has whenever its sort is not a total order.
+    ///
+    /// CreatedAt is truncated to microseconds, so ties are genuinely
+    /// reachable — the seeded evaluation dataset is full of them, because 300
+    /// tickets are ingested in a tight loop. With no tie-break PostgreSQL is
+    /// free to order tied rows differently for each query, and rows then
+    /// repeat on one page while vanishing from another.
+    ///
+    /// Forced through raw SQL rather than by opening up the domain: CreatedAt
+    /// is `private init` and should not gain a setter for a test's benefit.
+    [Fact]
+    public async Task TiedCreatedAtTimestampsStillPageWithoutRepeatingOrLosingRows()
+    {
+        var marker = $"queue-tie-{Guid.CreateVersion7()}";
+        var seeded = new List<Guid>();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+
+            for (var i = 0; i < 6; i++)
+            {
+                seeded.Add(AddTicket(db, $"{marker}-{i}").Id);
+            }
+
+            await db.SaveChangesAsync();
+
+            // One timestamp for all six, far enough ahead that they sit at
+            // the top of the queue whatever else is in the database.
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"""UPDATE "Tickets" SET "CreatedAt" = {DateTimeOffset.UtcNow.AddYears(1)} WHERE "Subject" LIKE {marker + "%"}""");
+        }
+
+        var first = await QueuePageAsync(page: 1, pageSize: 3);
+        var second = await QueuePageAsync(page: 2, pageSize: 3);
+
+        var returned = first.Items.Concat(second.Items).Select(item => item.Id).ToList();
+
+        Assert.Equal(6, returned.Count);
+        Assert.Equal(6, returned.Distinct().Count());
+        Assert.Equal(seeded.OrderBy(id => id), returned.OrderBy(id => id));
     }
 }

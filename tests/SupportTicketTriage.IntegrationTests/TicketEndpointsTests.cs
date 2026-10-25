@@ -31,8 +31,11 @@ public class TicketEndpointsTests(TicketApiFactory factory)
         var fetched = await getResponse.Content.ReadFromJsonAsync<TicketResponse>();
         Assert.Equal(created, fetched);
 
-        var listResponse = await _client.GetFromJsonAsync<List<TicketQueueItemResponse>>("/tickets");
-        Assert.Contains(listResponse!, t => t.Id == created.Id);
+        // The ticket was just created and the queue is newest-first, so it is
+        // on page one — but the page size is asked for explicitly rather than
+        // relying on the default staying large enough to cover it.
+        var listResponse = await _client.GetFromJsonAsync<TicketQueuePageResponse>("/tickets?pageSize=100");
+        Assert.Contains(listResponse!.Items, t => t.Id == created.Id);
     }
 
     [Fact]

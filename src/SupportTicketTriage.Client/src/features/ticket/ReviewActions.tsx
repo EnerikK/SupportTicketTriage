@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { TicketDraft, TicketReview } from '../../api/client'
 import { useGenerateDraft, useSubmitReview } from '../../api/queries'
+import { Alert } from '../../ui/Alert'
 
 interface Props {
   ticketId: string
@@ -69,11 +70,7 @@ function GenerateDraft({ ticketId }: { ticketId: string }) {
       <button type="button" onClick={() => generate.mutate()} disabled={generate.isPending}>
         {generate.isPending ? 'Generating…' : 'Generate a draft'}
       </button>
-      {generate.error && (
-        <p className="status status--error" role="alert">
-          {generate.error.message}
-        </p>
-      )}
+      {generate.error && <Alert>{generate.error.message}</Alert>}
     </div>
   )
 }
@@ -156,11 +153,7 @@ function ReviewForm({ ticketId, draft }: { ticketId: string; draft: TicketDraft 
         </button>
       </div>
 
-      {submit.error && (
-        <p className="status status--error" role="alert">
-          {submit.error.message}
-        </p>
-      )}
+      {submit.error && <Alert>{submit.error.message}</Alert>}
     </div>
   )
 }

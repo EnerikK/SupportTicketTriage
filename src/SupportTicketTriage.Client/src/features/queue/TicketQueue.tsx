@@ -1,5 +1,12 @@
-import { Link } from 'react-router'
+import { Inbox } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router'
+import { toNumber } from '../../api/client'
 import { useQueue } from '../../api/queries'
+import { Alert } from '../../ui/Alert'
+import { LoadingRegion, Skeleton } from '../../ui/Skeleton'
+import { Pagination } from './Pagination'
+import { readPage, readPageSize } from './paging'
+import { StateIcon } from './StateIcon'
 import { describeGate, describeState } from './ticketState'
 
 function formatDate(iso: string): string {
@@ -9,41 +16,154 @@ function formatDate(iso: string): string {
   })
 }
 
+/// Shared by the table and its skeleton so the two cannot drift apart and
+/// make the layout jump on load, which is the only thing a skeleton is for.
+const columns = ['Subject', 'Category', 'Priority', 'State', 'Received'] as const
+
+/// Fixed, not random. Varied widths read as text; widths that reshuffle on
+/// every render read as flicker.
+const skeletonWidths: Record<(typeof columns)[number], string> = {
+  Subject: '72%',
+  Category: '45%',
+  Priority: '35%',
+  State: '58%',
+  Received: '66%',
+}
+
+function QueueHeader() {
+  return (
+    <thead>
+      <tr>
+        {columns.map((column) => (
+          <th key={column} scope="col">
+            {column}
+          </th>
+        ))}
+      </tr>
+    </thead>
+  )
+}
+
+/// Rows follow the page size, so the skeleton is the shape of the page that
+/// is actually coming rather than a fixed eight that would resize under the
+/// reader on anything but the default.
+function QueueSkeleton({ rows }: { rows: number }) {
+  return (
+    <LoadingRegion label="Loading the queue">
+      <table className="queue">
+        <caption className="queue__caption">
+          <Skeleton width="5rem" />
+        </caption>
+        <QueueHeader />
+        <tbody>
+          {Array.from({ length: rows }, (_, row) => (
+            <tr key={row}>
+              {columns.map((column) => (
+                <td key={column}>
+                  <Skeleton width={skeletonWidths[column]} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </LoadingRegion>
+  )
+}
+
+/// Deliberately not "POST one to /tickets to get started", which was shell
+/// copy in a user-facing state. It still names the ingest API, because there
+/// is no new-ticket action in this interface and inventing one to make the
+/// sentence friendlier would promise a screen that does not exist.
+function EmptyQueue() {
+  return (
+    <div className="empty">
+      <Inbox className="empty__icon" size={28} aria-hidden="true" focusable="false" />
+      <p className="empty__title">The queue is empty.</p>
+      <p className="empty__detail">
+        Tickets arrive through the ingest API. None have been received yet.
+      </p>
+    </div>
+  )
+}
+
 export function TicketQueue() {
-  const { data, isPending, error } = useQueue()
+  // Paging lives in the URL rather than in component state: the back button
+  // works, a page is a link somebody can send, and a refresh does not throw
+  // a reviewer back to the top of a queue they were working through. ADR-015
+  // already put navigation in react-router rather than in selection state,
+  // and this is the same call.
+  const [params, setParams] = useSearchParams()
+
+  const page = readPage(params.get('page'))
+  const pageSize = readPageSize(params.get('pageSize'))
+
+  const { data, isPending, error } = useQueue(page, pageSize)
+
+  function update(next: { page?: number; pageSize?: number }) {
+    const updated = new URLSearchParams(params)
+
+    if (next.pageSize !== undefined) {
+      updated.set('pageSize', String(next.pageSize))
+      // Page size changing resets to the first page. Holding page 9 while
+      // moving from 10 rows to 100 lands the reviewer somewhere they never
+      // asked to be, and on a short queue it lands them past the end.
+      updated.delete('page')
+    }
+
+    if (next.page !== undefined) {
+      // Page one is the absence of the parameter, so it has exactly one
+      // URL rather than two that render identically.
+      if (next.page <= 1) {
+        updated.delete('page')
+      } else {
+        updated.set('page', String(next.page))
+      }
+    }
+
+    setParams(updated)
+  }
 
   if (isPending) {
-    return <p className="status">Loading the queue…</p>
+    return <QueueSkeleton rows={pageSize} />
   }
 
   if (error) {
+    return <Alert>Could not load the queue: {error.message}</Alert>
+  }
+
+  const totalCount = toNumber(data.totalCount)
+
+  if (totalCount === 0) {
+    return <EmptyQueue />
+  }
+
+  // Reachable by typing a page number past the end. The API answers it with
+  // an empty page and the true total rather than silently clamping, so the
+  // interface says what happened instead of pretending page 400 was page 31.
+  if (data.items.length === 0) {
     return (
-      <p className="status status--error" role="alert">
-        Could not load the queue: {error.message}
-      </p>
+      <div className="empty">
+        <p className="empty__title">There is nothing on page {page}.</p>
+        <p className="empty__detail">
+          The queue holds {totalCount} {totalCount === 1 ? 'ticket' : 'tickets'}.{' '}
+          <button type="button" className="link-button" onClick={() => update({ page: 1 })}>
+            Back to the first page
+          </button>
+        </p>
+      </div>
     )
   }
 
-  if (data.length === 0) {
-    return <p className="status">No tickets yet. POST one to /tickets to get started.</p>
-  }
-
   return (
+    <>
     <table className="queue">
       <caption className="queue__caption">
-        {data.length} {data.length === 1 ? 'ticket' : 'tickets'}
+        {totalCount} {totalCount === 1 ? 'ticket' : 'tickets'}
       </caption>
-      <thead>
-        <tr>
-          <th scope="col">Subject</th>
-          <th scope="col">Category</th>
-          <th scope="col">Priority</th>
-          <th scope="col">State</th>
-          <th scope="col">Received</th>
-        </tr>
-      </thead>
+      <QueueHeader />
       <tbody>
-        {data.map((ticket) => {
+        {data.items.map((ticket) => {
           const state = describeState(ticket)
 
           return (
@@ -54,7 +174,10 @@ export function TicketQueue() {
               <td>{ticket.category ?? <span className="muted">unclassified</span>}</td>
               <td>{ticket.priority ?? <span className="muted">—</span>}</td>
               <td>
-                <span className={`state state--${state.tone}`}>{state.label}</span>
+                <span className={`state state--${state.tone}`}>
+                  <StateIcon tone={state.tone} />
+                  {state.label}
+                </span>
                 {ticket.failedGates.length > 0 && (
                   <span className="muted gates">{ticket.failedGates.map(describeGate).join(', ')}</span>
                 )}
@@ -65,5 +188,14 @@ export function TicketQueue() {
         })}
       </tbody>
     </table>
+
+    <Pagination
+      page={page}
+      pageSize={pageSize}
+      totalCount={totalCount}
+      onPage={(next) => update({ page: next })}
+      onPageSize={(next) => update({ pageSize: next })}
+    />
+    </>
   )
 }
