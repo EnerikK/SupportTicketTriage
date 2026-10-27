@@ -9,6 +9,7 @@ using SupportTicketTriage.Eval.Baseline;
 using SupportTicketTriage.Eval.Dataset;
 using SupportTicketTriage.Eval.Embedding;
 using SupportTicketTriage.Eval.Instrumentation;
+using SupportTicketTriage.Eval.Judging;
 using SupportTicketTriage.Eval.Pricing;
 using SupportTicketTriage.Eval.Reporting;
 using SupportTicketTriage.Infrastructure.Ai;
@@ -46,6 +47,15 @@ if (arguments.Has("help"))
                                   generation and citation calls)
           --pricing <path>        Token pricing (default: eval/pricing/model-pricing.json);
                                   costs are reported as not scored without it
+          --export-judge-pairs <p> Write each valid draft with the sources it
+                                  cited, for hand-labelling. ADR-018 requires
+                                  those labels to come from a human: the figure
+                                  exists to validate an LLM judge against
+                                  something that is not one.
+          --judge-labels <path>   Read hand labels back and report the judge's
+                                  agreement and Cohen's kappa. Without this the
+                                  groundedness score is withheld rather than
+                                  printed.
           --compare-baseline [p]  Compare this run against a baseline and exit
                                   non-zero on regression beyond tolerance
                                   (default: eval/baseline/evaluation-baseline.json)
@@ -67,6 +77,11 @@ if (arguments.Has("help"))
           AzureOpenAi__ChatDeployment        classification and citation validity;
                                              without it those are reported as not
                                              measured rather than scored zero
+          AzureOpenAi__JudgeDeployment       groundedness. Must be a different and
+                                             stronger deployment than the drafting
+                                             one - a model scoring its own output
+                                             exhibits self-preference, so the same
+                                             name is refused rather than honoured
         """);
     return 0;
 }
@@ -164,6 +179,23 @@ else
     Console.WriteLine($"Chat model: {chatStages.ChatModel}.");
 }
 
+// The judge is a second, stronger deployment, never the one that wrote the
+// drafts: ADR-018 rests on the model not marking its own homework. Absent, the
+// groundedness section reads "not measured" exactly as the chat-dependent
+// sections do without a chat deployment.
+var judge = BuildJudge(recorder);
+
+if (judge is null)
+{
+    Console.WriteLine(
+        "No judge deployment configured: groundedness will not be measured. "
+        + "Set AzureOpenAi__JudgeDeployment to a stronger deployment than the one drafting.");
+}
+else
+{
+    Console.WriteLine($"Judge model: {judge.Deployment} (rubric {GroundednessPrompt.Version}).");
+}
+
 var runner = new EvalRunner(
     db,
     embeddingService,
@@ -171,7 +203,8 @@ var runner = new EvalRunner(
     embedding.ModelName,
     recorder,
     chatStages,
-    pricing);
+    pricing,
+    judge);
 
 if (await runner.HasExistingDataAsync())
 {
@@ -187,7 +220,20 @@ if (await runner.HasExistingDataAsync())
     await runner.ResetAsync();
 }
 
-var report = await runner.RunAsync(dataset, arguments.Has("skip-generation"));
+IReadOnlyDictionary<string, bool>? humanLabels = null;
+var labelPath = arguments.Value("judge-labels");
+
+if (labelPath is not null)
+{
+    humanLabels = await JudgePairFile.ReadLabelsAsync(labelPath);
+    Console.WriteLine($"Loaded {humanLabels.Count} hand labels from {labelPath}.");
+}
+
+var report = await runner.RunAsync(
+    dataset,
+    arguments.Has("skip-generation"),
+    arguments.Value("export-judge-pairs"),
+    humanLabels);
 
 var markdownPath = Path.Combine(outputDirectory, "evaluation-report.md");
 var jsonPath = Path.Combine(outputDirectory, "evaluation-result.json");
@@ -302,6 +348,47 @@ static string LogicBaselinePath() => Path.Combine("eval", "baseline", "lexical-l
 /// but no chat deployment is a supported configuration - it is the state this
 /// project was in for three phases - and it still produces a real retrieval
 /// number. The report marks the unscored sections rather than reporting zeros.
+/// The judge client.
+///
+/// Built from the same endpoint and key as the drafting client but a
+/// different deployment, by handing the existing factory an options object
+/// whose ChatDeployment is the judge's. That keeps the whole judge inside the
+/// harness - ADR-007 puts evaluation machinery in tools/ and out of src/ -
+/// and needs no change to the shipped application.
+static GroundednessJudge? BuildJudge(AiCallRecorder recorder)
+{
+    var options = EmbeddingSelection.OptionsFromEnvironment();
+    var deployment = Environment.GetEnvironmentVariable("AzureOpenAi__JudgeDeployment");
+
+    if (string.IsNullOrWhiteSpace(deployment))
+    {
+        return null;
+    }
+
+    // Refused rather than silently honoured. A judge pointed at the drafting
+    // deployment is the exact configuration ADR-018 exists to prevent, and it
+    // would produce a plausible number with a structural bias nobody could
+    // see from the report.
+    if (deployment == options.ChatDeployment)
+    {
+        throw new InvalidOperationException(
+            "AzureOpenAi__JudgeDeployment is the same deployment that writes the drafts. "
+            + "ADR-018 requires a different and stronger deployment, because a model scoring its "
+            + "own output exhibits self-preference.");
+    }
+
+    var client = AzureOpenAiChatFactory.Create(new AzureOpenAiOptions
+    {
+        Endpoint = options.Endpoint,
+        ApiKey = options.ApiKey,
+        ChatDeployment = deployment,
+    });
+
+    return client is null
+        ? null
+        : new GroundednessJudge(new RecordingChatClient(client, AiStage.Judging, recorder), deployment);
+}
+
 static ChatStages? BuildChatStages(
     SupportTicketTriageDbContext db, AiCallRecorder recorder, ILoggerFactory loggerFactory)
 {

@@ -6,6 +6,7 @@ using SupportTicketTriage.Domain;
 using SupportTicketTriage.Eval.Dataset;
 using SupportTicketTriage.Eval.Instrumentation;
 using SupportTicketTriage.Eval.Pricing;
+using SupportTicketTriage.Eval.Judging;
 using SupportTicketTriage.Eval.Metrics;
 using SupportTicketTriage.Eval.Reporting;
 using SupportTicketTriage.Infrastructure.Ai;
@@ -38,7 +39,10 @@ public sealed class EvalRunner(
     ChatStages? chat = null,
     /// Null when no pricing file was loaded, which makes the cost section read
     /// "not scored" rather than reporting a run as free.
-    ModelPricing? pricing = null)
+    ModelPricing? pricing = null,
+    /// Null when no judge deployment is configured, which makes groundedness
+    /// read "not measured" rather than reporting an unjudged run as zero.
+    GroundednessJudge? judge = null)
 {
     public static readonly int[] KValues = [1, 3, 5, 10];
 
@@ -49,6 +53,8 @@ public sealed class EvalRunner(
     public async Task<EvaluationReport> RunAsync(
         EvalDataset dataset,
         bool skipGeneration = false,
+        string? exportJudgePairsTo = null,
+        IReadOnlyDictionary<string, bool>? humanLabels = null,
         CancellationToken ct = default)
     {
         var ticketIds = await SeedAsync(dataset, ct);
@@ -57,6 +63,8 @@ public sealed class EvalRunner(
 
         ClassificationScore? classification = null;
         CitationScore? citations = null;
+        GroundednessScore? groundedness = null;
+        JudgeAgreement? agreement = null;
         var calibration = new List<GateCalibration>
         {
             CalibrateRetrievalGate(scoredRetrieval),
@@ -71,7 +79,28 @@ public sealed class EvalRunner(
 
             if (!skipGeneration)
             {
-                citations = CitationMetrics.Summarise(await GenerateAsync(dataset, ticketIds, ct));
+                var generation = await GenerateAsync(dataset, ticketIds, ct);
+                citations = CitationMetrics.Summarise(generation.Cases);
+
+                if (exportJudgePairsTo is not null)
+                {
+                    await JudgePairFile.WriteAsync(exportJudgePairsTo, generation.Pairs, ct);
+                }
+
+                if (judge is not null)
+                {
+                    var judged = await JudgeAsync(generation.Pairs, ct);
+                    groundedness = GroundednessMetrics.Summarise(judged);
+
+                    // Agreement only when labels exist. ADR-018 makes the
+                    // figure a precondition for quoting the score, and the
+                    // report enforces that by refusing to print one without
+                    // the other - this is where the second half arrives.
+                    if (humanLabels is { Count: > 0 })
+                    {
+                        agreement = GroundednessMetrics.Compare(judged, humanLabels);
+                    }
+                }
             }
         }
 
@@ -97,6 +126,10 @@ public sealed class EvalRunner(
             RecallAtK: KValues.ToDictionary(k => k, k => RetrievalMetrics.MeanRecallAt(retrievalCases, k)),
             Classification: classification,
             Citations: citations,
+            Groundedness: groundedness,
+            JudgeAgreement: agreement,
+            JudgeModel: judge?.Deployment,
+            JudgeRubricVersion: judge is null ? null : GroundednessPrompt.Version,
             Calibration: calibration,
             Latency: LatencyMetrics.Summarise(recorder.Calls),
             // Drafts are the denominator for generation cost, and the citation
@@ -253,12 +286,13 @@ public sealed class EvalRunner(
     /// not clear, and the gates read what classification produced. Only
     /// queries are drafted: corpus tickets already carry a resolution, so a
     /// draft for one would be answering a question that is not being asked.
-    private async Task<List<CitationCase>> GenerateAsync(
+    private async Task<GenerationOutcome> GenerateAsync(
         EvalDataset dataset,
         IReadOnlyDictionary<string, Guid> ticketIds,
         CancellationToken ct)
     {
         var cases = new List<CitationCase>();
+        var pairs = new List<JudgePair>();
 
         foreach (var query in dataset.Queries)
         {
@@ -268,9 +302,72 @@ public sealed class EvalRunner(
             var result = await chat.Drafts.GenerateAsync(ticket, ct);
 
             cases.Add(ToCitationCase(query.Id, result));
+
+            // Only drafts whose citations validated become judge pairs. A
+            // withheld draft is not shown to a reviewer (ADR-010), so judging
+            // its groundedness would score text the system already refuses to
+            // serve, and would drag the figure down for a failure citation
+            // validity already counts.
+            if (result.Draft is { CitationsValid: true })
+            {
+                pairs.Add(await ToJudgePairAsync(query.Id, ticket.Subject, result.Draft, ct));
+            }
         }
 
-        return cases;
+        return new GenerationOutcome(cases, pairs);
+    }
+
+    private sealed record GenerationOutcome(
+        List<CitationCase> Cases,
+        List<JudgePair> Pairs);
+
+    /// One judge call per draft, in sequence.
+    ///
+    /// Sequential like every other stage here: the harness measures latency
+    /// per call and a parallel pass would report wall-clock contention as
+    /// model latency. At ~47 drafts this costs a couple of minutes.
+    private async Task<List<GroundednessCase>> JudgeAsync(
+        IReadOnlyList<JudgePair> pairs,
+        CancellationToken ct)
+    {
+        var judged = new List<GroundednessCase>();
+
+        foreach (var pair in pairs)
+        {
+            var sources = pair.CitedSources
+                .Select(s => new GroundednessPrompt.Source(s.TicketId, s.Resolution))
+                .ToList();
+
+            judged.Add(await judge!.JudgeAsync(pair.QueryId, pair.Draft, sources, ct));
+        }
+
+        return judged;
+    }
+
+    /// Pairs a draft with the resolutions it cited - the same text the model
+    /// was shown, read back from the stored draft's own source rows rather
+    /// than re-running retrieval, so the pair describes what actually
+    /// happened even if the corpus has moved on since.
+    private async Task<JudgePair> ToJudgePairAsync(
+        string queryId,
+        string ticketSubject,
+        TicketDraft draft,
+        CancellationToken ct)
+    {
+        var citedIds = draft.Sources.Where(s => s.WasCited).Select(s => s.SourceTicketId).ToList();
+
+        var sources = await db.Tickets
+            .Where(t => citedIds.Contains(t.Id))
+            .Select(t => new JudgeSource(t.Id, t.Subject, t.Resolution!))
+            .ToListAsync(ct);
+
+        return new JudgePair(
+            queryId,
+            ticketSubject,
+            draft.DraftText,
+            sources,
+            Grounded: null,
+            Note: null);
     }
 
     private static CitationCase ToCitationCase(string queryId, DraftGenerationResult result) =>

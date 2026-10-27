@@ -32,6 +32,10 @@ public class EvaluationBaselineTests
             RecallAtK: new Dictionary<int, double> { [5] = 0.944, [1] = 0.759 },
             Classification: classification,
             Citations: citations,
+            Groundedness: null,
+            JudgeAgreement: null,
+            JudgeModel: null,
+            JudgeRubricVersion: null,
             Calibration: [],
             Latency:
             [

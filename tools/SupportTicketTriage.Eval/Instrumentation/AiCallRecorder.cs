@@ -15,6 +15,11 @@ public enum AiStage
     Classification,
     Retrieval,
     Generation,
+
+    /// Kept apart from Generation so the judge's latency and tokens never
+    /// blend into the drafting figures. It runs on a different deployment at
+    /// a different rate, so averaging the two would misprice both.
+    Judging,
 }
 
 /// One call, with what it cost in time and tokens.
