@@ -68,6 +68,13 @@ public sealed record EvaluationReport(
     IReadOnlyDictionary<int, double> RecallAtK,
     ClassificationScore? Classification,
     CitationScore? Citations,
+    /// Null when no judge deployment was configured. ADR-018 makes the
+    /// agreement figure a precondition for quoting the score, so the renderer
+    /// refuses to print one without the other.
+    GroundednessScore? Groundedness,
+    JudgeAgreement? JudgeAgreement,
+    string? JudgeModel,
+    string? JudgeRubricVersion,
     IReadOnlyList<GateCalibration> Calibration,
     IReadOnlyList<StageLatency> Latency,
     /// Null when the run could not be priced at all - no pricing file was
@@ -141,6 +148,7 @@ public sealed record EvaluationReport(
         AppendRetrieval(md);
         AppendClassification(md);
         AppendCitations(md);
+        AppendGroundedness(md);
         AppendCalibration(md);
         AppendLatency(md);
         AppendCost(md);
@@ -216,6 +224,75 @@ public sealed record EvaluationReport(
             "**The dataset is balanced at 50 tickets per category, which production ticket volume will not "
             + "be.** A balanced set makes macro-F1 and accuracy converge; on a real skewed distribution they "
             + "would not, and macro-F1 would be the more honest of the two.");
+        md.AppendLine();
+    }
+
+    /// Groundedness, and the rule that it does not appear alone.
+    ///
+    /// ADR-018: "the judge is validated before its output is quoted anywhere"
+    /// and "until it exists, no groundedness figure appears in any document."
+    /// That is enforced here rather than left to discipline - a number this
+    /// easy to quote and this hard to justify should not be printable by
+    /// forgetting a flag.
+    private void AppendGroundedness(StringBuilder md)
+    {
+        md.AppendLine("## Groundedness");
+        md.AppendLine();
+
+        if (Groundedness is null)
+        {
+            md.AppendLine(ChatModel is null
+                ? "_Not measured: this run had no chat deployment._"
+                : Citations is null
+                    ? "_Not measured: generation was skipped (`--skip-generation`)._"
+                    : "_Not measured: no judge deployment configured (`AzureOpenAi__JudgeDeployment`)._");
+            md.AppendLine();
+            return;
+        }
+
+        if (JudgeAgreement is null)
+        {
+            md.AppendLine(CultureInfo.InvariantCulture,
+                $"_Withheld: {Groundedness.Judged} drafts were judged by `{JudgeModel}` under rubric "
+                + $"`{JudgeRubricVersion}`, but the judge has not been validated against hand labels._");
+            md.AppendLine();
+            md.AppendLine(
+                "ADR-018 makes the agreement figure a precondition for quoting the score, so the score is "
+                + "not printed here. Export the pairs with `--export-judge-pairs`, label them by hand, and "
+                + "pass the labelled file back with `--judge-labels`.");
+            md.AppendLine();
+            return;
+        }
+
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- Grounded: **{Groundedness.GroundedRate * 100:F1}%** of {Groundedness.Judged} judged drafts");
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- {Groundedness.Grounded} grounded, {Groundedness.Ungrounded} ungrounded, {Groundedness.Unjudged} unjudged");
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- Judge: `{JudgeModel}`, rubric `{JudgeRubricVersion}`");
+        md.AppendLine();
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- **Judge agreement with hand labels: {JudgeAgreement.RawAgreement * 100:F1}%** over "
+            + $"{JudgeAgreement.Compared} pairs");
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- **Cohen's kappa: {JudgeAgreement.Kappa:F2}**");
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- Agreed grounded {JudgeAgreement.BothGrounded}, agreed ungrounded {JudgeAgreement.BothUngrounded}; "
+            + $"judge said grounded where the human did not {JudgeAgreement.JudgeGroundedHumanNot}, "
+            + $"the reverse {JudgeAgreement.HumanGroundedJudgeNot}");
+        md.AppendLine();
+        md.AppendLine(
+            "**Read the kappa, not the agreement.** Raw agreement is inflated whenever the classes are "
+            + "skewed: if most drafts are grounded, a judge that answers \"grounded\" every time scores "
+            + "well while carrying no information. Kappa measures agreement above what that constant judge "
+            + "would reach by chance.");
+        md.AppendLine();
+        md.AppendLine(
+            "**Two caveats that belong next to these numbers.** The judge runs on a different and stronger "
+            + "deployment than the one that writes the drafts, which removes the self-preference objection "
+            + "but not the shared training lineage. And the hand-labelled pairs overlap almost entirely with "
+            + "the drafts being scored, so the agreement figure validates the judge on this sample rather "
+            + "than in general.");
         md.AppendLine();
     }
 

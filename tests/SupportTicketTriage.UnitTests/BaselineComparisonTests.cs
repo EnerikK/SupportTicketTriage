@@ -37,6 +37,10 @@ public class BaselineComparisonTests
             Citations: citationValidity is null
                 ? null
                 : new CitationScore(citationValidity.Value, 47, 47, 0, 13, 0, 75, 0),
+            Groundedness: null,
+            JudgeAgreement: null,
+            JudgeModel: null,
+            JudgeRubricVersion: null,
             Calibration: [],
             Latency: [],
             Cost: costTotal is null
