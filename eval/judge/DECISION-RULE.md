@@ -53,9 +53,35 @@ falls the same way:
 | **6** | **0.031** | **significant** |
 | 7 | 0.016 | significant |
 
-So at n = 47 a difference is only detectable when **at least six items go one way and
-none the other**. Six of 47 is about 13 percentage points of agreement. Anything smaller
-than that — including a real but modest difference — will not reach significance.
+~~So at n = 47 a difference is only detectable when **at least six items go one way and
+none the other**.~~
+
+> **Corrected 2026-10-30, after the first comparison run.** The sentence above is wrong as
+> a general statement, and the table above it is only the special case it describes. Six
+> all one way is the *minimum discordant count* at which significance is reachable — it is
+> not the only route, and more discordant pairs can be significant while split.
+>
+> What actually governs it is the split, not the count. With `d` discordant pairs and `k`
+> the smaller side, p = 2·Σ(i≤k) C(d,i) / 2^d:
+>
+> | split | discordant | p | |
+> |---|---|---|---|
+> | 6–0 | 6 | 0.031 | significant |
+> | 9–0 | 9 | 0.004 | significant |
+> | 13–6 | 19 | 0.167 | not significant |
+> | 14–5 | 19 | 0.064 | not significant |
+> | 15–4 | 19 | 0.019 | significant |
+> | 16–3 | 19 | 0.004 | significant |
+>
+> The first run produced 13–6 on 19 discordant pairs for `gpt-5-mini` against the
+> baseline — p = 0.167, not significant — which is the row that showed the original
+> wording up. A majority that large looks decisive and is not, because nineteen coin
+> flips land 13–6 or worse about one time in six.
+>
+> **The practical conclusion is unchanged and if anything stronger:** this test separates
+> configurations only when one is wrong about items the other gets right *lopsidedly*, and
+> at this sample size it will usually fail to separate them. The rule will most likely
+> select on cost.
 
 Three consequences, stated now rather than discovered later:
 
