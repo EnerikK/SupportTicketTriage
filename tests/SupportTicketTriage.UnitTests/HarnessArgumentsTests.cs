@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using SupportTicketTriage.Eval;
 
 namespace SupportTicketTriage.UnitTests;
@@ -91,19 +92,32 @@ public class HarnessArgumentsTests
         Assert.False(HarnessArguments.Parse([]).Has("connection"));
     }
 
-    /// The help text and the parser have to agree, or the harness advertises a
-    /// flag it rejects. Both are hand-maintained, so this is the only thing
-    /// holding them together.
+    /// The help text and the parser have to agree, or the harness advertises
+    /// a flag it rejects - or hides one it accepts.
+    ///
+    /// This used to compare Recognised against a hand-maintained copy of
+    /// itself in this file, which made three copies of the same facts and
+    /// guarded the wrong direction. The judge flags shipped documented but
+    /// not recognised, and the harness refused every run that used them; this
+    /// test could not see it, because neither list it compared was the help
+    /// text. It now reads the real usage string.
     [Fact]
-    public void EveryRecognisedFlagIsOneTheHelpTextDocuments()
+    public void TheHelpTextAndTheAllowlistDescribeTheSameFlags()
     {
-        string[] documented =
-        [
-            "help", "connection", "dataset", "output",
-            "pricing", "reset", "skip-generation", "write-baseline", "compare-baseline",
-            "write-logic-baseline",
-        ];
+        var documented = Regex
+            .Matches(HarnessHelp.Text, @"^\s*--([a-z-]+)", RegexOptions.Multiline)
+            .Select(m => m.Groups[1].Value)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         Assert.Equal(documented.Order(), HarnessArguments.Recognised.Order());
+    }
+
+    [Fact]
+    public void ExportJudgePairs_CarriesItsPath()
+    {
+        var arguments = HarnessArguments.Parse(
+            ["--connection", "host", "--export-judge-pairs", "eval/judge/pairs.json"]);
+
+        Assert.Equal("eval/judge/pairs.json", arguments.Value("export-judge-pairs"));
     }
 }

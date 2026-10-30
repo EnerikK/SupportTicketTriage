@@ -16,25 +16,31 @@ public class CostMetricsTests
         new(
             Version: "test-1",
             Currency: "USD",
-            RetrievedOn: new DateOnly(2026, 10, 16),
             Source: "test",
             Verified: verified,
             Models:
             [
-                new ModelPrice(ChatModel, InputPerMillionTokens: 1.00m, OutputPerMillionTokens: 10.00m),
-                new ModelPrice(EmbeddingModel, InputPerMillionTokens: 0.10m, OutputPerMillionTokens: null),
+                new ModelPrice(ChatModel, InputPerMillionTokens: 1.00m, OutputPerMillionTokens: 10.00m, new DateOnly(2026, 10, 16), "GlobalStandard"),
+                new ModelPrice(EmbeddingModel, InputPerMillionTokens: 0.10m, OutputPerMillionTokens: null, new DateOnly(2026, 10, 16), "GlobalStandard"),
+                // Deliberately dearer than the drafting model, as ADR-018
+                // requires the judge to be, so pricing it at the wrong rate
+                // is visible in the arithmetic rather than plausible.
+                new ModelPrice(JudgeModel, InputPerMillionTokens: 5.00m, OutputPerMillionTokens: 50.00m, new DateOnly(2026, 10, 16), "GlobalStandard"),
             ]);
 
     private static AiCall Call(AiStage stage, long? input, long? output, bool succeeded = true) =>
         new(stage, TimeSpan.FromMilliseconds(10), input, output, succeeded);
 
+    private const string JudgeModel = "a-stronger-judge-model";
+
     private static CostScore Summarise(
         IReadOnlyCollection<AiCall> calls,
         int ticketCount = 300,
         int draftCount = 47,
-        bool verified = true) =>
+        bool verified = true,
+        string? judgeModel = JudgeModel) =>
         CostMetrics.Summarise(
-            calls, Pricing(verified), EmbeddingModel, ChatModel, ticketCount, draftCount);
+            calls, Pricing(verified), EmbeddingModel, ChatModel, judgeModel, ticketCount, draftCount);
 
     [Fact]
     public void TokensArePricedPerMillion()
@@ -110,6 +116,7 @@ public class CostMetricsTests
             Pricing(),
             EmbeddingModel,
             chatModel: "a-deployment-nobody-priced",
+            judgeModel: null,
             ticketCount: 1,
             draftCount: 1);
 
@@ -179,5 +186,42 @@ public class CostMetricsTests
         Assert.Equal("test-1", score.PricingVersion);
         Assert.Equal("USD", score.Currency);
         Assert.Equal(new DateOnly(2026, 10, 16), score.PricingRetrievedOn);
+    }
+
+    /// The judge runs on its own deployment at its own rate.
+    ///
+    /// Judging was added as a stage without teaching this type about it, so
+    /// the row came back unpriced - and because an unpriceable component
+    /// makes the sum unreportable, the whole run reported no total at all.
+    /// A real $0.0756 became a dash.
+    [Fact]
+    public void JudgingIsPricedAtTheJudgeRateNotTheChatRate()
+    {
+        var score = Summarise([Call(AiStage.Judging, input: 1_000_000, output: 1_000_000)]);
+
+        var judging = Assert.Single(score.PerStage, s => s.Stage == AiStage.Judging);
+
+        Assert.Equal(JudgeModel, judging.Model);
+
+        // 5.00 in + 50.00 out at the judge's rate. At the chat model's it
+        // would have been 11.00, which is the number this guards against.
+        Assert.Equal(55.00m, judging.Cost);
+    }
+
+    /// The failure that actually shipped: a judge deployment absent from the
+    /// pricing file leaves its row unpriced, and one unpriceable component
+    /// suppresses the total rather than publishing a partial sum.
+    [Fact]
+    public void AnUnpricedJudgeSuppressesTheTotalRatherThanUnderstatingIt()
+    {
+        var calls = new[]
+        {
+            Call(AiStage.Classification, input: 1_000_000, output: 0),
+            Call(AiStage.Judging, input: 1_000_000, output: 1_000_000),
+        };
+
+        var score = Summarise(calls, judgeModel: "gpt-nobody-priced");
+
+        Assert.Null(score.Total);
     }
 }

@@ -11,10 +11,25 @@ namespace SupportTicketTriage.Eval.Pricing;
 /// output price were ever null, pricing it at nothing would understate every
 /// generation call in the run, so the validator rejects that case rather than
 /// letting it through as free.
+/// `RetrievedOn` and `DeploymentType` are per model, not per file.
+///
+/// They were file-level until pricing 1.1, and the single date became a
+/// fiction the moment one rate was added without re-checking the others: it
+/// claimed a freshness for all three that only one of them had. A rate is
+/// retrieved on its own day, from its own meter.
+///
+/// `DeploymentType` matters because Azure meters the same model differently -
+/// Global Standard and Data Zone differ by roughly a tenth - so a rate is only
+/// interpretable next to the meter it came from. It is the SKU name as Azure
+/// reports it (`GlobalStandard`, `DataZoneStandard`), so it can be checked
+/// against `az cognitiveservices account deployment list` rather than being a
+/// label this file invents.
 public sealed record ModelPrice(
     string Model,
     decimal InputPerMillionTokens,
-    decimal? OutputPerMillionTokens);
+    decimal? OutputPerMillionTokens,
+    DateOnly RetrievedOn,
+    string DeploymentType);
 
 /// The versioned pricing assumptions a cost figure rests on.
 ///
@@ -34,7 +49,6 @@ public sealed record ModelPrice(
 public sealed record ModelPricing(
     string Version,
     string Currency,
-    DateOnly RetrievedOn,
     string Source,
     /// False until a human has checked these figures against the actual Azure
     /// portal for the subscription in question. The harness still computes with
@@ -109,6 +123,18 @@ public sealed record ModelPricing(
             {
                 throw new InvalidOperationException(
                     $"Pricing for '{model.Model}' is negative.");
+            }
+
+            // A rate with no meter is not interpretable: the same model costs
+            // about a tenth more on one Azure deployment type than another, so
+            // a figure without one could be either and the report would not
+            // know which it had published.
+            if (string.IsNullOrWhiteSpace(model.DeploymentType))
+            {
+                throw new InvalidOperationException(
+                    $"Pricing for '{model.Model}' names no deployment type. Azure meters Global "
+                    + "Standard and Data Zone differently, so a rate without its meter cannot be "
+                    + "checked against the deployment it is supposed to price.");
             }
         }
     }

@@ -36,53 +36,7 @@ catch (ArgumentException error)
 if (arguments.Has("help"))
 {
     Console.WriteLine(
-        """
-        Retrieval evaluation harness.
-
-          --connection <string>   PostgreSQL connection string (required)
-          --dataset <path>        Dataset JSON (default: eval/dataset/tickets.json)
-          --output <dir>          Report directory (default: eval/results)
-          --reset                 Delete existing tickets before seeding
-          --skip-generation       Score classification but not drafts (saves the
-                                  generation and citation calls)
-          --pricing <path>        Token pricing (default: eval/pricing/model-pricing.json);
-                                  costs are reported as not scored without it
-          --export-judge-pairs <p> Write each valid draft with the sources it
-                                  cited, for hand-labelling. ADR-018 requires
-                                  those labels to come from a human: the figure
-                                  exists to validate an LLM judge against
-                                  something that is not one.
-          --judge-labels <path>   Read hand labels back and report the judge's
-                                  agreement and Cohen's kappa. Without this the
-                                  groundedness score is withheld rather than
-                                  printed.
-          --compare-baseline [p]  Compare this run against a baseline and exit
-                                  non-zero on regression beyond tolerance
-                                  (default: eval/baseline/evaluation-baseline.json)
-          --write-logic-baseline  Write eval/baseline/lexical-logic-baseline.json
-                                  from a stand-in run; guards retrieval logic,
-                                  not retrieval quality
-          --write-baseline        Write eval/baseline/evaluation-baseline.json;
-                                  refused for stand-in embedders and for costs
-                                  computed from unverified pricing
-
-        Deployments are read from the environment, not from arguments, so the key
-        stays out of shell history.
-
-          AzureOpenAi__Endpoint
-          AzureOpenAi__ApiKey
-          AzureOpenAi__EmbeddingDeployment   retrieval; without it the run falls
-                                             back to the lexical stand-in, which
-                                             cannot produce a baseline
-          AzureOpenAi__ChatDeployment        classification and citation validity;
-                                             without it those are reported as not
-                                             measured rather than scored zero
-          AzureOpenAi__JudgeDeployment       groundedness. Must be a different and
-                                             stronger deployment than the drafting
-                                             one - a model scoring its own output
-                                             exhibits self-preference, so the same
-                                             name is refused rather than honoured
-        """);
+        HarnessHelp.Text);
     return 0;
 }
 
@@ -132,7 +86,7 @@ if (File.Exists(pricingPath))
 {
     pricing = await ModelPricing.LoadAsync(pricingPath);
     Console.WriteLine(
-        $"Loaded pricing {pricing.Version} ({pricing.Currency}, retrieved {pricing.RetrievedOn:yyyy-MM-dd})"
+        $"Loaded pricing {pricing.Version} ({pricing.Currency}, oldest rate {pricing.Models.Min(m => m.RetrievedOn):yyyy-MM-dd})"
         + (pricing.Verified ? "." : " - UNVERIFIED, costs are a development aid only."));
 }
 else
@@ -183,7 +137,8 @@ else
 // drafts: ADR-018 rests on the model not marking its own homework. Absent, the
 // groundedness section reads "not measured" exactly as the chat-dependent
 // sections do without a chat deployment.
-var judge = BuildJudge(recorder);
+var judgeEffort = ParseEffort(arguments.Value("judge-effort"));
+var judge = BuildJudge(recorder, judgeEffort);
 
 if (judge is null)
 {
@@ -193,7 +148,9 @@ if (judge is null)
 }
 else
 {
-    Console.WriteLine($"Judge model: {judge.Deployment} (rubric {GroundednessPrompt.Version}).");
+    Console.WriteLine(
+        $"Judge model: {judge.Deployment} (rubric {GroundednessPrompt.Version}, "
+        + $"reasoning effort {judge.Effort}).");
 }
 
 var runner = new EvalRunner(
@@ -223,17 +180,30 @@ if (await runner.HasExistingDataAsync())
 IReadOnlyDictionary<string, bool>? humanLabels = null;
 var labelPath = arguments.Value("judge-labels");
 
+LabelProvenance? labelProvenance = null;
+
 if (labelPath is not null)
 {
+    // Before reading them. A label file with uncommitted changes cannot show
+    // that it predates the verdicts it is about to validate, and that
+    // ordering is the entire basis of the agreement figure.
+    labelProvenance = LabelProvenance.For(labelPath);
+
     humanLabels = await JudgePairFile.ReadLabelsAsync(labelPath);
-    Console.WriteLine($"Loaded {humanLabels.Count} hand labels from {labelPath}.");
+
+    Console.WriteLine(
+        $"Loaded {humanLabels.Count} hand labels from {labelPath} "
+        + $"(sha256 {labelProvenance.ContentSha256[..12]}, committed "
+        + $"{labelProvenance.LastCommitted:yyyy-MM-dd} in {labelProvenance.LastCommit[..8]}).");
 }
 
 var report = await runner.RunAsync(
     dataset,
-    arguments.Has("skip-generation"),
-    arguments.Value("export-judge-pairs"),
-    humanLabels);
+    skipGeneration: arguments.Has("skip-generation"),
+    exportJudgePairsTo: arguments.Value("export-judge-pairs"),
+    exportJudgeVerdictsTo: arguments.Value("judge-verdicts"),
+    humanLabels: humanLabels,
+    labelProvenance: labelProvenance);
 
 var markdownPath = Path.Combine(outputDirectory, "evaluation-report.md");
 var jsonPath = Path.Combine(outputDirectory, "evaluation-result.json");
@@ -355,10 +325,32 @@ static string LogicBaselinePath() => Path.Combine("eval", "baseline", "lexical-l
 /// whose ChatDeployment is the judge's. That keeps the whole judge inside the
 /// harness - ADR-007 puts evaluation machinery in tools/ and out of src/ -
 /// and needs no change to the shipped application.
-static GroundednessJudge? BuildJudge(AiCallRecorder recorder)
+/// Rejected rather than defaulted on a typo. "lo" silently becoming the
+/// provider default would put a run in the comparison table under a label it
+/// did not earn.
+static JudgeReasoningEffort ParseEffort(string? value) =>
+    value is null
+        ? JudgeReasoningEffort.Default
+        : Enum.TryParse<JudgeReasoningEffort>(value, ignoreCase: true, out var parsed)
+            ? parsed
+            : throw new ArgumentException(
+                $"--judge-effort '{value}' is not one of: "
+                + string.Join(", ", Enum.GetNames<JudgeReasoningEffort>()).ToLowerInvariant());
+
+static GroundednessJudge? BuildJudge(AiCallRecorder recorder, JudgeReasoningEffort effort)
 {
     var options = EmbeddingSelection.OptionsFromEnvironment();
-    var deployment = Environment.GetEnvironmentVariable("AzureOpenAi__JudgeDeployment");
+
+    // Two names for one thing, and both are read on purpose. The
+    // double-underscore form is what docker-compose binds to the AzureOpenAi
+    // section, so it matches the other three; AZURE_OPENAI_CHAT_DEPLOYMENT_STRONGER
+    // is what .env actually carries, and it says in the name what ADR-018
+    // requires of it. Accepting only one would mean a configured judge that
+    // silently does not run - the failure reads as "groundedness not
+    // measured", which is indistinguishable from not having configured it.
+    var deployment =
+        Environment.GetEnvironmentVariable("AzureOpenAi__JudgeDeployment")
+        ?? Environment.GetEnvironmentVariable("AZURE_OPENAI_CHAT_DEPLOYMENT_STRONGER");
 
     if (string.IsNullOrWhiteSpace(deployment))
     {
@@ -372,7 +364,7 @@ static GroundednessJudge? BuildJudge(AiCallRecorder recorder)
     if (deployment == options.ChatDeployment)
     {
         throw new InvalidOperationException(
-            "AzureOpenAi__JudgeDeployment is the same deployment that writes the drafts. "
+            "The judge deployment is the same one that writes the drafts. "
             + "ADR-018 requires a different and stronger deployment, because a model scoring its "
             + "own output exhibits self-preference.");
     }
@@ -386,7 +378,8 @@ static GroundednessJudge? BuildJudge(AiCallRecorder recorder)
 
     return client is null
         ? null
-        : new GroundednessJudge(new RecordingChatClient(client, AiStage.Judging, recorder), deployment);
+        : new GroundednessJudge(
+            new RecordingChatClient(client, AiStage.Judging, recorder), deployment, effort);
 }
 
 static ChatStages? BuildChatStages(

@@ -25,6 +25,11 @@ public sealed record GroundednessScore(
 /// zero exactly where raw agreement flatters.
 public sealed record JudgeAgreement(
     double RawAgreement,
+    /// Wilson score interval on the agreement rate. Describes *this*
+    /// configuration's uncertainty, and is deliberately not the instrument for
+    /// comparing two configurations - see McNemar below.
+    double AgreementLower,
+    double AgreementUpper,
     double Kappa,
     int Compared,
     int BothGrounded,
@@ -69,7 +74,7 @@ public static class GroundednessMetrics
 
         if (pairs.Count == 0)
         {
-            return new JudgeAgreement(0, 0, 0, 0, 0, 0, 0);
+            return new JudgeAgreement(0, 0, 0, 0, 0, 0, 0, 0, 0);
         }
 
         var bothGrounded = pairs.Count(p => p is { Human: true, Judge: true });
@@ -93,13 +98,138 @@ public static class GroundednessMetrics
             ? (Math.Abs(observed - 1) < 1e-12 ? 1 : 0)
             : (observed - expected) / (1 - expected);
 
+        var (lower, upper) = Wilson(bothGrounded + bothUngrounded, pairs.Count);
+
         return new JudgeAgreement(
             RawAgreement: observed,
+            AgreementLower: lower,
+            AgreementUpper: upper,
             Kappa: kappa,
             Compared: pairs.Count,
             BothGrounded: bothGrounded,
             BothUngrounded: bothUngrounded,
             JudgeGroundedHumanNot: judgeOnly,
             HumanGroundedJudgeNot: humanOnly);
+    }
+
+    /// Wilson score interval at 95%.
+    ///
+    /// Not the normal approximation, which misbehaves exactly where this
+    /// metric is expected to live: near the top of the range, on a sample of
+    /// about forty. At 45/47 the normal interval runs past 1.0, and an
+    /// agreement figure that claims an upper bound above certainty is worse
+    /// than no interval.
+    private static (double Lower, double Upper) Wilson(int successes, int total, double z = 1.96)
+    {
+        if (total == 0)
+        {
+            return (0, 0);
+        }
+
+        var n = (double)total;
+        var p = successes / n;
+        var denominator = 1 + (z * z / n);
+        var centre = p + (z * z / (2 * n));
+        var spread = z * Math.Sqrt((p * (1 - p) / n) + (z * z / (4 * n * n)));
+
+        return (Math.Max(0, (centre - spread) / denominator), Math.Min(1, (centre + spread) / denominator));
+    }
+}
+
+/// Whether two judge configurations disagree with the hand labels differently.
+///
+/// Both configurations judge the same items, so the comparison is paired and
+/// only the **discordant** pairs carry information: items where one was right
+/// and the other wrong. Items both got right, or both got wrong, say nothing
+/// about which is better and are excluded by construction.
+///
+/// Comparing two overlapping Wilson intervals instead would discard the
+/// pairing and lose most of the power - at n=47 two configurations differing
+/// by a handful of verdicts will not separate that way even when this test
+/// says they do.
+public sealed record McNemarResult(
+    int OnlyFirstCorrect,
+    int OnlySecondCorrect,
+    double PValue,
+    bool Significant)
+{
+    public int Discordant => OnlyFirstCorrect + OnlySecondCorrect;
+}
+
+public static class McNemar
+{
+    /// Exact binomial two-sided test on the discordant pairs.
+    ///
+    /// Exact rather than the chi-squared approximation, because the
+    /// approximation needs roughly 25 discordant pairs to be trustworthy and
+    /// this comparison is expected to produce single digits. A chi-squared
+    /// p-value computed on four discordant pairs is a number, not evidence.
+    public static McNemarResult Compare(
+        IReadOnlyDictionary<string, bool> labels,
+        IReadOnlyDictionary<string, bool> first,
+        IReadOnlyDictionary<string, bool> second,
+        double alpha = 0.05)
+    {
+        var onlyFirst = 0;
+        var onlySecond = 0;
+
+        foreach (var (id, label) in labels)
+        {
+            if (!first.TryGetValue(id, out var a) || !second.TryGetValue(id, out var b))
+            {
+                continue;
+            }
+
+            var firstCorrect = a == label;
+            var secondCorrect = b == label;
+
+            if (firstCorrect && !secondCorrect)
+            {
+                onlyFirst++;
+            }
+            else if (secondCorrect && !firstCorrect)
+            {
+                onlySecond++;
+            }
+        }
+
+        var n = onlyFirst + onlySecond;
+
+        // No discordant pairs means the two configurations made identical
+        // mistakes. p = 1: there is no evidence of a difference, which is not
+        // the same as evidence they are the same.
+        if (n == 0)
+        {
+            return new McNemarResult(0, 0, 1.0, false);
+        }
+
+        var smaller = Math.Min(onlyFirst, onlySecond);
+        var tail = 0.0;
+
+        for (var k = 0; k <= smaller; k++)
+        {
+            tail += Choose(n, k);
+        }
+
+        var p = Math.Min(1.0, 2 * tail / Math.Pow(2, n));
+
+        return new McNemarResult(onlyFirst, onlySecond, p, p < alpha);
+    }
+
+    /// Binomial coefficient by multiplicative recurrence, in double.
+    ///
+    /// n is the discordant count - single digits here, and bounded by 47 even
+    /// in the worst case - so the factorial overflow that usually argues for
+    /// log-space arithmetic cannot arise.
+    private static double Choose(int n, int k)
+    {
+        var result = 1.0;
+
+        for (var i = 1; i <= k; i++)
+        {
+            result = result * (n - k + i) / i;
+        }
+
+        return result;
     }
 }

@@ -11,13 +11,16 @@ public class ModelPricingTests
         new(
             Version: "1.0",
             Currency: "USD",
-            RetrievedOn: new DateOnly(2026, 10, 16),
             Source: "test",
             Verified: true,
             Models: models);
 
-    private static ModelPrice Price(string model, decimal input = 1m, decimal? output = 2m) =>
-        new(model, input, output);
+    private static ModelPrice Price(
+        string model,
+        decimal input = 1m,
+        decimal? output = 2m,
+        string deploymentType = "GlobalStandard") =>
+        new(model, input, output, new DateOnly(2026, 10, 16), deploymentType);
 
     [Fact]
     public void AValidFilePasses()
@@ -103,14 +106,15 @@ public class ModelPricingTests
             path,
             """
             {
-              "version": "1.0",
+              "version": "1.1",
               "currency": "USD",
-              "retrievedOn": "2026-10-16",
               "source": "https://example.invalid/pricing",
               "verified": false,
               "models": [
-                { "model": "gpt-4.1-mini", "inputPerMillionTokens": 0.40, "outputPerMillionTokens": 1.60 },
-                { "model": "text-embedding-3-small", "inputPerMillionTokens": 0.02, "outputPerMillionTokens": null }
+                { "model": "gpt-4.1-mini", "inputPerMillionTokens": 0.40, "outputPerMillionTokens": 1.60,
+                  "retrievedOn": "2026-10-16", "deploymentType": "GlobalStandard" },
+                { "model": "text-embedding-3-small", "inputPerMillionTokens": 0.02, "outputPerMillionTokens": null,
+                  "retrievedOn": "2026-10-16", "deploymentType": "GlobalStandard" }
               ]
             }
             """);
@@ -119,8 +123,9 @@ public class ModelPricingTests
         {
             var pricing = await ModelPricing.LoadAsync(path);
 
-            Assert.Equal("1.0", pricing.Version);
-            Assert.Equal(new DateOnly(2026, 10, 16), pricing.RetrievedOn);
+            Assert.Equal("1.1", pricing.Version);
+            Assert.Equal(new DateOnly(2026, 10, 16), pricing.For("gpt-4.1-mini")!.RetrievedOn);
+            Assert.Equal("GlobalStandard", pricing.For("gpt-4.1-mini")!.DeploymentType);
             Assert.False(pricing.Verified);
             Assert.Equal(1.60m, pricing.For("gpt-4.1-mini")!.OutputPerMillionTokens);
             Assert.Null(pricing.For("text-embedding-3-small")!.OutputPerMillionTokens);
