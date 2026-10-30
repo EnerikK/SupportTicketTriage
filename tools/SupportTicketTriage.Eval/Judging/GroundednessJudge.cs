@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.AI;
+using SupportTicketTriage.Infrastructure.Ai;
 
 namespace SupportTicketTriage.Eval.Judging;
 
@@ -41,16 +42,24 @@ public sealed class GroundednessJudge(
 
     public JudgeReasoningEffort Effort { get; } = effort;
 
+    /// judge-v2 returns every unsupported material claim, severest first.
+    ///
+    /// v1 returned the single shortest quote, which turned out to be a real
+    /// handicap when reading disagreements: the shortest unsupported phrase is
+    /// often trivial while the serious problem sits elsewhere in the draft, so
+    /// several cases were categorised by the wrong failure. The array is kept
+    /// whole and joined only for display.
     private sealed record Verdict(
         [property: JsonPropertyName("grounded")] bool Grounded,
-        [property: JsonPropertyName("unsupported_claim")] string? UnsupportedClaim);
+        [property: JsonPropertyName("unsupported_claims")] string[]? UnsupportedClaims);
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public async Task<GroundednessCase> JudgeAsync(
         string queryId,
         string draftText,
-        IReadOnlyList<GroundednessPrompt.Source> citedSources,
+        string redactedTicket,
+        IReadOnlyList<EvidenceSource> citedSources,
         CancellationToken ct = default)
     {
         // A draft that cited nothing is ungrounded by definition rather than
@@ -69,7 +78,9 @@ public sealed class GroundednessJudge(
             var response = await judge.GetResponseAsync(
                 [
                     new ChatMessage(ChatRole.System, GroundednessPrompt.System(delimiter)),
-                    new ChatMessage(ChatRole.User, GroundednessPrompt.User(delimiter, draftText, citedSources)),
+                    new ChatMessage(
+                        ChatRole.User,
+                        GroundednessPrompt.User(delimiter, draftText, redactedTicket, citedSources)),
                 ],
                 JudgeChatOptions.For(Effort),
                 ct);
@@ -83,7 +94,7 @@ public sealed class GroundednessJudge(
                     queryId, Grounded: null, "The judge response could not be read.",
                     usage?.InputTokenCount, usage?.OutputTokenCount, extra)
                 : new GroundednessCase(
-                    queryId, verdict.Grounded, Blank(verdict.UnsupportedClaim),
+                    queryId, verdict.Grounded, Claims(verdict.UnsupportedClaims),
                     usage?.InputTokenCount, usage?.OutputTokenCount, extra);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -123,6 +134,16 @@ public sealed class GroundednessJudge(
         }
     }
 
-    private static string? Blank(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    /// Joined for storage because the verdict file and every report treat
+    /// this as one human-readable field; the order carries the judge's own
+    /// severity ranking and is preserved.
+    private static string? Claims(string[]? claims)
+    {
+        var kept = (claims ?? [])
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.Trim())
+            .ToList();
+
+        return kept.Count == 0 ? null : string.Join(" | ", kept);
+    }
 }

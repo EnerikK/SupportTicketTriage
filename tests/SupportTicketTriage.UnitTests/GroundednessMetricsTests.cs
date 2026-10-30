@@ -1,4 +1,8 @@
+using System.Globalization;
 using SupportTicketTriage.Eval.Judging;
+using SupportTicketTriage.Eval.Pricing;
+using SupportTicketTriage.Eval.Reporting;
+using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Eval.Metrics;
 
 namespace SupportTicketTriage.UnitTests;
@@ -226,5 +230,97 @@ public class McNemarTests
         var result = McNemar.Compare(labels, first, second);
 
         Assert.Equal(1, result.Discordant);
+    }
+}
+
+/// The table that gets pasted into a document, formatted so two machines
+/// produce the same bytes.
+public class JudgeComparisonReportTests
+{
+    private static JudgeVerdictFile Verdicts(string model, JudgeReasoningEffort effort, params bool[] grounded) =>
+        new(model, GroundednessPrompt.Version, GroundednessPrompt.Sha256, GenerationPrompt.Sha256,
+            effort, DateTimeOffset.UnixEpoch,
+            grounded.Select((g, i) => new JudgeVerdict(i.ToString(), g, null, 100, 200, null)).ToList());
+
+    private static LabelProvenance Provenance() =>
+        new("eval/judge/pairs.json", new string('a', 64), new string('b', 40), DateTimeOffset.UnixEpoch);
+
+    private static ModelPricing Pricing() =>
+        new("test", "USD", "test", true,
+        [
+            new ModelPrice("expensive", 1.25m, 10.00m, new DateOnly(2026, 10, 30), "GlobalStandard"),
+            new ModelPrice("cheap", 0.25m, 2.00m, new DateOnly(2026, 10, 30), "GlobalStandard"),
+        ]);
+
+    /// ADR-017, and a defect this repository has now shipped twice: a report
+    /// formatted with the ambient culture renders "54,3%" on a Greek machine
+    /// and "54.3%" in CI, so two runs of identical data produce different
+    /// bytes and nothing downstream can compare them.
+    [Fact]
+    public void EveryNumberIsFormattedInvariantlyWhateverTheAmbientCulture()
+    {
+        var original = Thread.CurrentThread.CurrentCulture;
+
+        try
+        {
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("el-GR");
+
+            var report = JudgeComparisonReport.Build(
+                Provenance(),
+                new Dictionary<string, bool> { ["0"] = true, ["1"] = true, ["2"] = false },
+                [
+                    Verdicts("expensive", JudgeReasoningEffort.Default, true, false, false),
+                    Verdicts("cheap", JudgeReasoningEffort.Low, true, true, false),
+                ],
+                Pricing());
+
+            var markdown = report.ToMarkdown();
+
+            Assert.DoesNotContain(",0", markdown);
+            Assert.DoesNotContain(",3", markdown);
+            Assert.DoesNotContain("¤", markdown);
+            Assert.Contains("66.7%", markdown);
+            Assert.Contains("USD", markdown);
+        }
+        finally
+        {
+            Thread.CurrentThread.CurrentCulture = original;
+        }
+    }
+
+    /// An unpriced configuration must never render as the cheapest one.
+    [Fact]
+    public void AConfigurationMissingFromThePricingFileReadsAsNotPriced()
+    {
+        var report = JudgeComparisonReport.Build(
+            Provenance(),
+            new Dictionary<string, bool> { ["0"] = true },
+            [
+                Verdicts("expensive", JudgeReasoningEffort.Default, true),
+                Verdicts("nobody-priced-this", JudgeReasoningEffort.Default, true),
+            ],
+            Pricing());
+
+        Assert.Contains("not priced", report.ToMarkdown());
+    }
+
+    /// A judged pair with no label is excluded and named, rather than
+    /// silently counted as agreement or disagreement.
+    [Fact]
+    public void AJudgedButUnlabelledPairIsExcludedAndNamed()
+    {
+        var report = JudgeComparisonReport.Build(
+            Provenance(),
+            new Dictionary<string, bool> { ["0"] = true },
+            [
+                Verdicts("expensive", JudgeReasoningEffort.Default, true, true),
+                Verdicts("cheap", JudgeReasoningEffort.Default, true, true),
+            ],
+            Pricing());
+
+        Assert.Equal(2, report.VerdictCount);
+        Assert.Equal(1, report.LabelCount);
+        Assert.Equal("1", Assert.Single(report.JudgedButUnlabelled));
+        Assert.Contains("`1`", report.ToMarkdown());
     }
 }

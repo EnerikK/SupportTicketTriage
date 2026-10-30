@@ -4,13 +4,13 @@
     "DatasetVersion": "1.0",
     "EmbeddingModel": "fake-lexical-v1",
     "ChatModel": null,
-    "ClassificationPromptVersion": "classify-v1",
-    "GenerationPromptVersion": "draft-v1",
+    "ClassificationPromptVersion": null,
+    "GenerationPromptVersion": null,
     "RedactionVersion": "v1",
-    "MinimumClassificationScore": 0.5,
+    "MinimumClassificationScore": null,
     "MinimumSimilarity": 0.6,
-    "PricingVersion": "1.0",
-    "GeneratedAt": "2026-10-21T17:13:13.6899763+00:00"
+    "PricingVersion": null,
+    "GeneratedAt": "2026-10-30T21:57:15.2548411+00:00"
   },
   "Metrics": {
     "RecallAtK": {

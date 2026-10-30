@@ -1,6 +1,6 @@
 {
   "rubricVersion": "judge-v1",
-  "instructions": "Set \u0022grounded\u0022 on each pair to true or false. GROUNDED means every factual claim in the draft is SUPPORTED by the cited sources - a reader could point at text in a source that makes the claim true. Being true is not enough; being uncontradicted is not enough; a claim the sources do not mention is not supported however plausible. Ignore greetings, apologies and offers to help further - they assert nothing. \u0022note\u0022 is optional and is for you, not for the tool. Leave \u0022grounded\u0022 as null to skip a pair; skipped pairs are dropped from the comparison rather than counted either way.",
+  "instructions": "Set \"grounded\" on each pair to true or false. GROUNDED means every factual claim in the draft is SUPPORTED by the cited sources - a reader could point at text in a source that makes the claim true. Being true is not enough; being uncontradicted is not enough; a claim the sources do not mention is not supported however plausible. Ignore greetings, apologies and offers to help further - they assert nothing. \"note\" is optional and is for you, not for the tool. Leave \"grounded\" as null to skip a pair; skipped pairs are dropped from the comparison rather than counted either way.",
   "pairs": [
     {
       "queryId": "q-duplicate-charge",
@@ -13,8 +13,8 @@
           "resolution": "The second charge was an authorisation hold from a retried payment attempt, not a capture. Holds release automatically within five working days. We confirmed only one capture against order 88214 and sent written confirmation."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Unsupported detail: the charges were \"placed a minute apart\". Source 1 mentions neither the interval between charges nor that they were identical."
     },
     {
       "queryId": "q-pii-heavy",
@@ -32,8 +32,8 @@
           "resolution": "The order shipped in two parcels because one item was held at a different warehouse, and each parcel is charged when it dispatches. The two amounts sum to the order total shown at checkout. This is expected for split shipments."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 documents one authorisation-hold case; it does not establish that this is \"often\" the explanation for two charges. The split-shipment explanation is supported by source 2."
     },
     {
       "queryId": "q-billing-auto-renewal-surprise",
@@ -43,11 +43,11 @@
         {
           "ticketId": "01a18cb2-30d6-7d28-bb18-371f994b7837",
           "subject": "No reminder before the annual charge",
-          "resolution": "Renewal reminders go out fourteen days before the charge. The message was delivered but filtered into the customer\u0027s junk folder, which their mail provider confirmed. We refunded the term, turned off auto-renew, and added a second reminder at seven days for this account."
+          "resolution": "Renewal reminders go out fourteen days before the charge. The message was delivered but filtered into the customer's junk folder, which their mail provider confirmed. We refunded the term, turned off auto-renew, and added a second reminder at seven days for this account."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 says reminders go out \"fourteen days before the charge\" and describes delivery into the customer's junk folder by their mail provider. The account-review language is an offer to help."
     },
     {
       "queryId": "q-billing-charged-after-stopping",
@@ -65,8 +65,8 @@
           "resolution": "The cancellation was started but never confirmed on the final screen, so the plan stayed active. We treated it as cancelled from the original date, refunded the charge taken since, and closed the subscription."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 supports an unconfirmed cancellation leaving the plan active. Source 2 explicitly says \"treated it as cancelled from the original date, refunded the charge taken since\", supporting the promise to refund payments since the intended cancellation date."
     },
     {
       "queryId": "q-billing-paperwork-for-expenses",
@@ -75,12 +75,12 @@
       "citedSources": [
         {
           "ticketId": "01a18cb2-4d8e-71e3-a283-526d3c81d27c",
-          "subject": "Need a copy of last month\u0027s invoice",
+          "subject": "Need a copy of last month's invoice",
           "resolution": "Every invoice is available as a PDF under billing history and can be downloaded at any time without contacting support. A copy of the requested invoice was attached to the reply for convenience."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Downloading a PDF invoice from billing history is supported. \"This document can be used to claim the payment back at work\" is not mentioned in the cited source."
     },
     {
       "queryId": "q-billing-promo-ignored",
@@ -93,8 +93,8 @@
           "resolution": "The code was entered after the payment step had already been confirmed, so it did not reach the order. The discount was applied retrospectively and the difference refunded to the original payment method."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 says a discount \"was applied retrospectively\" and the difference refunded in one case. It does not state the general practice promised by \"In such cases, the discount is applied retrospectively\"."
     },
     {
       "queryId": "q-billing-more-people-more-cost",
@@ -107,8 +107,8 @@
           "resolution": "The plan is charged per seat, and the three seats were added on different days, so each was prorated from its own start date rather than from the start of the cycle. The following invoice settles to the flat per-seat rate for all seats."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 explicitly supports per-seat billing, seats added on different days, proration from each start date, and the following invoice settling to the flat per-seat rate."
     },
     {
       "queryId": "q-billing-bank-took-extra",
@@ -118,21 +118,21 @@
         {
           "ticketId": "01a18cb2-5ed9-774d-891e-11b1d77af0d9",
           "subject": "Charged slightly more than the price shown",
-          "resolution": "The invoice is issued in the store currency and the customer\u0027s bank converted it at its own rate, adding a foreign transaction fee. The difference is the bank\u0027s charge and does not appear on our invoice, which shows the exact amount we requested."
+          "resolution": "The invoice is issued in the store currency and the customer's bank converted it at its own rate, adding a foreign transaction fee. The difference is the bank's charge and does not appear on our invoice, which shows the exact amount we requested."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 directly describes conversion at the bank's own rate, a foreign transaction fee, and a bank charge absent from the invoice, which shows the amount requested."
     },
     {
       "queryId": "q-reset-email-missing",
       "ticketSubject": "Reset email does not come through",
-      "draft": "Thank you for reaching out. There are a few common reasons why password reset emails might not arrive. Sometimes the email address stored in the system has a trailing space, which causes the recipient\u0027s mail provider to reject the message. Correcting the stored address usually resolves this immediately. Another possibility is that the reset emails are being accepted by your mail server but are being filtered into your junk or spam folder by content rules. Adding the sender to your allowlist can help ensure the reset email arrives in your inbox. Please check these possibilities and let us know if the issue persists.",
+      "draft": "Thank you for reaching out. There are a few common reasons why password reset emails might not arrive. Sometimes the email address stored in the system has a trailing space, which causes the recipient's mail provider to reject the message. Correcting the stored address usually resolves this immediately. Another possibility is that the reset emails are being accepted by your mail server but are being filtered into your junk or spam folder by content rules. Adding the sender to your allowlist can help ensure the reset email arrives in your inbox. Please check these possibilities and let us know if the issue persists.",
       "citedSources": [
         {
           "ticketId": "01a18cb2-82f5-7535-85ee-2fbc368b3dfa",
           "subject": "Password reset email never arrives",
-          "resolution": "Reset mail was being rejected by the recipient\u0027s mail provider because the account address had a trailing space stored against it. We corrected the stored address and the reset arrived immediately."
+          "resolution": "Reset mail was being rejected by the recipient's mail provider because the account address had a trailing space stored against it. We corrected the stored address and the reset arrived immediately."
         },
         {
           "ticketId": "01a18cb2-8731-78ce-865a-6424ddd08dbe",
@@ -140,8 +140,8 @@
           "resolution": "All four messages were accepted by the recipient mail server and filed in the junk folder by a content rule. Once the sender was allowlisted the next reset arrived normally. No address change was needed."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Both possible causes are documented, but the sources do not establish that they are \"common\" or that correcting the address \"usually\" resolves the problem immediately. Source 1 reports one immediate resolution."
     },
     {
       "queryId": "q-login-reset-mail-never-came",
@@ -151,7 +151,7 @@
         {
           "ticketId": "01a18cb2-82f5-7535-85ee-2fbc368b3dfa",
           "subject": "Password reset email never arrives",
-          "resolution": "Reset mail was being rejected by the recipient\u0027s mail provider because the account address had a trailing space stored against it. We corrected the stored address and the reset arrived immediately."
+          "resolution": "Reset mail was being rejected by the recipient's mail provider because the account address had a trailing space stored against it. We corrected the stored address and the reset arrived immediately."
         },
         {
           "ticketId": "01a18cb2-8731-78ce-865a-6424ddd08dbe",
@@ -159,13 +159,13 @@
           "resolution": "All four messages were accepted by the recipient mail server and filed in the junk folder by a content rule. Once the sender was allowlisted the next reset arrived normally. No address change was needed."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "The sources document the two possible causes but do not establish their frequency as \"common reasons\". Source 2 reports the next reset arriving normally, rather than guaranteeing that allowlisting will \"ensure future messages arrive normally\"."
     },
     {
       "queryId": "q-login-phone-replaced-no-codes",
       "ticketSubject": "New handset means I cannot pass the security step",
-      "draft": "It looks like your authenticator codes are tied to your old device and do not transfer automatically to a new phone unless you used the app\u0027s own backup feature. To resolve this, we can verify your identity using your account\u0027s recovery details, after which we can remove the old authenticator enrolment and help you re-enroll on your new handset. Please provide the necessary verification details so we can assist you further.",
+      "draft": "It looks like your authenticator codes are tied to your old device and do not transfer automatically to a new phone unless you used the app's own backup feature. To resolve this, we can verify your identity using your account's recovery details, after which we can remove the old authenticator enrolment and help you re-enroll on your new handset. Please provide the necessary verification details so we can assist you further.",
       "citedSources": [
         {
           "ticketId": "01a18cb2-83ae-7d0b-8685-462c1881bacf",
@@ -175,11 +175,11 @@
         {
           "ticketId": "01a18cb2-911c-7969-b3e1-79c0d8ade788",
           "subject": "Changed phone and cannot complete sign in",
-          "resolution": "Authenticator enrolments are tied to the device and do not transfer with a phone migration unless the app\u0027s own backup was used. Identity was verified against the account\u0027s recovery details, the old enrolment was removed, and the customer re-enrolled on the new handset."
+          "resolution": "Authenticator enrolments are tied to the device and do not transfer with a phone migration unless the app's own backup was used. Identity was verified against the account's recovery details, the old enrolment was removed, and the customer re-enrolled on the new handset."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 2 directly supports device-bound enrolments, the app-backup exception, recovery-detail verification, removal of the old enrolment, and enrolment on the new handset."
     },
     {
       "queryId": "q-login-too-many-tries-now-blocked",
@@ -197,8 +197,8 @@
           "resolution": "The automatic lock releases itself after thirty minutes with no action required, and a successful reset clears it immediately. Support intervention is only needed when the lock repeats, which indicates an automated sign-in attempt against the address."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1's subject identifies failed sign-in attempts. Source 2 explicitly supports automatic release after thirty minutes, immediate clearing after a successful reset, and support intervention for repeating locks indicating automated attempts."
     },
     {
       "queryId": "q-login-company-sign-in-bounces",
@@ -211,8 +211,8 @@
           "resolution": "The provider returned an identifier that did not match the value configured on our side, so each successful authentication was rejected and restarted. Aligning the identifier attribute ended the loop immediately."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 documents an identifier mismatch and its immediate resolution in one case. It does not establish that this is \"typically\" the cause of corporate sign-in loops."
     },
     {
       "queryId": "q-login-keeps-logging-me-out",
@@ -230,13 +230,13 @@
           "resolution": "Third-party and first-party cookies were both blocked by a privacy extension, so the session could not be established and the form simply re-rendered. Allowing cookies for the site resolved it."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "The mechanisms and remedies are supported by sources 1 and 2. Calling site-data clearing \"One common cause\" adds a prevalence claim that neither source makes."
     },
     {
       "queryId": "q-login-two-registrations",
       "ticketSubject": "My records appear to be in two places",
-      "draft": "It sounds like you have two accounts with your history split between them, which can happen if one was created with a personal address and another through an organisation invitation. In a similar case, the records were linked so the history appears together, and the unused sign-in was closed after confirmation. If you\u0027d like, we can help you confirm and link your accounts in the same way.",
+      "draft": "It sounds like you have two accounts with your history split between them, which can happen if one was created with a personal address and another through an organisation invitation. In a similar case, the records were linked so the history appears together, and the unused sign-in was closed after confirmation. If you'd like, we can help you confirm and link your accounts in the same way.",
       "citedSources": [
         {
           "ticketId": "01a18cb2-9cc4-766a-a2a3-547091da7932",
@@ -244,13 +244,13 @@
           "resolution": "Two accounts existed, one created with a personal address and one through an organisation invitation. The records were linked so history appears together, and the unused sign-in was closed after confirmation."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 directly describes two accounts created through a personal address and an organisation invitation, linked history, and closing the unused sign-in after confirmation. The proposed help follows that documented action."
     },
     {
       "queryId": "q-login-someone-else-used-my-account",
       "ticketSubject": "Access from somewhere I have never been",
-      "draft": "We understand your concern about the access alert from an unfamiliar location. In similar cases, when an attempt to access an account from an unrecognized location is detected, the attempt is blocked before any session is created or data accessed. The password is reset, all sessions are ended, and two-factor authentication is enabled to secure the account. If you have received such an alert, these security measures are typically put in place to protect your account. Please ensure your password is strong and consider enabling two-factor authentication if you haven\u0027t already. If you notice any unauthorized activity, please let us know immediately so we can assist further.",
+      "draft": "We understand your concern about the access alert from an unfamiliar location. In similar cases, when an attempt to access an account from an unrecognized location is detected, the attempt is blocked before any session is created or data accessed. The password is reset, all sessions are ended, and two-factor authentication is enabled to secure the account. If you have received such an alert, these security measures are typically put in place to protect your account. Please ensure your password is strong and consider enabling two-factor authentication if you haven't already. If you notice any unauthorized activity, please let us know immediately so we can assist further.",
       "citedSources": [
         {
           "ticketId": "01a18cb2-ab5e-7c70-9077-d6fe044ade89",
@@ -258,8 +258,8 @@
           "resolution": "The attempt was blocked before access was granted, so no session was created and no data was reached. The password was reset, all sessions were ended, and two-factor authentication was enabled on the account."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 reports one blocked attempt followed by a password reset, session termination, and enabling two-factor authentication. It does not establish a general rule that unfamiliar-location attempts are blocked or that these measures are \"typically put in place\" after an alert."
     },
     {
       "queryId": "q-login-joined-but-empty",
@@ -272,8 +272,8 @@
           "resolution": "The invitation was accepted while signed in under a different personal account, so the membership attached to that account rather than the intended one. The membership was moved to the correct account and the workspace appeared immediately."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 directly supports invitation acceptance under a different personal account, membership attaching there, moving it to the correct account, and the workspace appearing immediately."
     },
     {
       "queryId": "q-checkout-error",
@@ -286,8 +286,8 @@
           "resolution": "A pricing rule with no end date was throwing during basket revaluation for baskets containing pre-order items. The rule was corrected and checkout recovered without customer action."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "The pricing-rule cause and correction are supported. The source says only \"server error\"; it does not specify HTTP status \"500\" or the error occurring \"when pressing Pay\"."
     },
     {
       "queryId": "q-fault-nothing-saves",
@@ -300,13 +300,13 @@
           "resolution": "The save request was rejected by a validation rule on a field not visible on screen, and the failure was swallowed rather than surfaced. The rule was corrected and save failures now block the confirmation message."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 says save failures \"now block the confirmation message\". That does not state that a failure notification is displayed, as promised by \"you will be notified if a save does not succeed\"."
     },
     {
       "queryId": "q-fault-callbacks-stopped",
       "ticketSubject": "Our system is no longer being told about changes",
-      "draft": "It appears that event callbacks to your system were suspended automatically after your endpoint returned server errors for twenty-four consecutive hours, as per our documented circuit breaker. Once your endpoint recovered, delivery was re-enabled and the retained events were replayed. Please check your endpoint\u0027s availability and error responses to prevent this from happening again.",
+      "draft": "It appears that event callbacks to your system were suspended automatically after your endpoint returned server errors for twenty-four consecutive hours, as per our documented circuit breaker. Once your endpoint recovered, delivery was re-enabled and the retained events were replayed. Please check your endpoint's availability and error responses to prevent this from happening again.",
       "citedSources": [
         {
           "ticketId": "01a18cb2-de42-79f8-94a1-25327b0f9bf7",
@@ -314,22 +314,22 @@
           "resolution": "Delivery was suspended automatically after the endpoint returned server errors for twenty-four consecutive hours, which is the documented circuit breaker. Once the endpoint recovered, delivery was re-enabled and the retained events were replayed."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 explicitly supports the documented circuit breaker after twenty-four consecutive hours of server errors, re-enabling delivery after recovery, and replaying retained events."
     },
     {
       "queryId": "q-fault-site-crawling",
       "ticketSubject": "Main screen is painfully slow to come up",
-      "draft": "Thank you for your report. The issue you describe, where signing in is quick but the main screen takes a considerable time before the overview renders, matches a known problem where the dashboard loaded each widget\u0027s data in series rather than in parallel. This caused the total load time to increase with the number of widgets. The resolution was to parallelize the requests and defer loading the slowest widget separately, which improved the dashboard load time significantly. If you are still experiencing this issue, please ensure you have the latest updates applied that include this fix.",
+      "draft": "Thank you for your report. The issue you describe, where signing in is quick but the main screen takes a considerable time before the overview renders, matches a known problem where the dashboard loaded each widget's data in series rather than in parallel. This caused the total load time to increase with the number of widgets. The resolution was to parallelize the requests and defer loading the slowest widget separately, which improved the dashboard load time significantly. If you are still experiencing this issue, please ensure you have the latest updates applied that include this fix.",
       "citedSources": [
         {
           "ticketId": "01a18cb2-d211-77f5-abb4-9e40ed8fe79b",
           "subject": "Dashboard takes a long time to appear",
-          "resolution": "The dashboard loaded every widget\u0027s data in series rather than in parallel, so total time grew with the number of widgets. Requests were parallelised and the slowest widget was given its own deferred load."
+          "resolution": "The dashboard loaded every widget's data in series rather than in parallel, so total time grew with the number of widgets. Requests were parallelised and the slowest widget was given its own deferred load."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 supports serial widget loading and the implemented changes. It does not state that load time improved \"significantly\" or that customers must apply \"latest updates\" containing the fix."
     },
     {
       "queryId": "q-fault-cannot-find-anything",
@@ -342,8 +342,8 @@
           "resolution": "The search index had fallen behind after a bulk import and was serving from an empty partition. A reindex restored results within the hour, and index lag is now alerted on before it becomes visible."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 directly supports lag after a bulk import, an empty partition, a reindex restoring results within the hour, and alerts before index lag becomes visible."
     },
     {
       "queryId": "q-fault-credentials-suddenly-rejected",
@@ -356,8 +356,8 @@
           "resolution": "The new key was created against a different environment from the one the integration targets, so it authenticated correctly but had no access there. Issuing the key in the matching environment restored service. The credentials were never invalid."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 supports the environment mismatch and issuing a key in the matching environment. \"The credentials were never invalid\" describes their validity; it does not establish the added assurance that service can be restored \"without needing to invalidate the credentials themselves\"."
     },
     {
       "queryId": "q-parcel-missing",
@@ -372,11 +372,11 @@
         {
           "ticketId": "01a18cb3-0c5d-7835-9ec8-6c857ef29ce3",
           "subject": "Tracking says delivered but nothing came",
-          "resolution": "The carrier\u0027s proof of delivery placed the scan at a neighbouring property on the same street. The parcel was recovered from there. Where a scan cannot be located within three working days the order is treated as lost and replaced."
+          "resolution": "The carrier's proof of delivery placed the scan at a neighbouring property on the same street. The parcel was recovered from there. Where a scan cannot be located within three working days the order is treated as lost and replaced."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Both sources document delivery to a neighbouring property and recovery. Source 1 explicitly supports a location trace and a free replacement if recovery fails within three working days."
     },
     {
       "queryId": "q-shipping-says-delivered-but-nothing-here",
@@ -391,11 +391,11 @@
         {
           "ticketId": "01a18cb3-0c5d-7835-9ec8-6c857ef29ce3",
           "subject": "Tracking says delivered but nothing came",
-          "resolution": "The carrier\u0027s proof of delivery placed the scan at a neighbouring property on the same street. The parcel was recovered from there. Where a scan cannot be located within three working days the order is treated as lost and replaced."
+          "resolution": "The carrier's proof of delivery placed the scan at a neighbouring property on the same street. The parcel was recovered from there. Where a scan cannot be located within three working days the order is treated as lost and replaced."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Both sources document a neighbouring-property delivery and recovery. Source 1 explicitly supports the trace and free-replacement policy after three working days. Checking neighbours and requesting contact are advice/offers to help."
     },
     {
       "queryId": "q-shipping-tracking-frozen",
@@ -408,8 +408,8 @@
           "resolution": "The parcel was in transit between depots on a leg that produces no intermediate scans, so movement continued without appearing on tracking. It was delivered on schedule. Scan gaps of up to seventy-two hours on that route are normal."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 supports movement without scans and normal gaps up to seventy-two hours on that route. Its report that one parcel \"was delivered on schedule\" does not support the current-parcel forecast \"likely still on schedule for delivery\"."
     },
     {
       "queryId": "q-shipping-stuck-at-border",
@@ -427,8 +427,8 @@
           "resolution": "The shipment was held pending a commodity code query and was released once the carrier supplied the classification. Customs holds are outside our control and typically clear within ten working days. Nothing was owed by the customer on this occasion."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "The sources document commodity-code holds and support the ten-working-day timeframe, lack of control, and no charges in the referenced case. They do not establish that customs detention is \"typically due to a commodity code query or other customs procedures\"."
     },
     {
       "queryId": "q-shipping-postage-more-than-quoted",
@@ -441,13 +441,13 @@
           "resolution": "The quoted rate applies to standard parcels, and the order included an oversized item carrying a large-item supplement. The supplement is now shown against the item rather than appearing only in the basket total."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 directly supports standard-parcel pricing, the oversized-item supplement, and displaying it against the item instead of only in the basket total."
     },
     {
       "queryId": "q-shipping-box-arrived-damaged",
       "ticketSubject": "Goods were broken when they reached me",
-      "draft": "We\u0027re sorry to hear that your order arrived damaged and is no longer usable. When damage is reported within thirty days of delivery, we replace or refund the item. To proceed, please provide photographs of the damaged goods. Once we receive these, we can dispatch a replacement without requiring the damaged item back first. Additionally, we will handle the carrier claim on your behalf. Please let us know if you would prefer a replacement or a refund.\n\nThank you for your understanding.",
+      "draft": "We're sorry to hear that your order arrived damaged and is no longer usable. When damage is reported within thirty days of delivery, we replace or refund the item. To proceed, please provide photographs of the damaged goods. Once we receive these, we can dispatch a replacement without requiring the damaged item back first. Additionally, we will handle the carrier claim on your behalf. Please let us know if you would prefer a replacement or a refund.\n\nThank you for your understanding.",
       "citedSources": [
         {
           "ticketId": "01a18cb3-448d-7c00-8a8b-b0eaedda00d7",
@@ -455,8 +455,8 @@
           "resolution": "A replacement was despatched on receipt of photographs, without requiring the damaged item back first. The carrier claim was raised by us rather than by the customer. Damage reported within thirty days of delivery is always replaced or refunded."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 supports damaged goods, photographs, a replacement without first returning the item, the seller handling the carrier claim, and the thirty-day policy. It does not state that the goods were \"no longer usable\"."
     },
     {
       "queryId": "q-shipping-only-some-items",
@@ -469,22 +469,22 @@
           "resolution": "The order shipped from two warehouses and the second parcel was despatched a day later with its own tracking, which had not been sent to the customer. The missing tracking notification was the fault; both parcels arrived complete."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 supports two warehouses, a second parcel a day later, missing tracking notification, and both parcels arriving complete. \"The lack of tracking information caused confusion\" adds an unstated customer reaction and causal claim."
     },
     {
       "queryId": "q-shipping-need-different-address",
       "ticketSubject": "Order needs to go somewhere else",
-      "draft": "Once a parcel is with the carrier, we cannot alter the address on the label. However, the carrier\u0027s own redirection service can divert the parcel before the first delivery attempt. If you have not already done so, you may want to contact the carrier to arrange for the parcel to be redirected to your new address. For future orders, address changes can be made in the order screen before dispatch.",
+      "draft": "Once a parcel is with the carrier, we cannot alter the address on the label. However, the carrier's own redirection service can divert the parcel before the first delivery attempt. If you have not already done so, you may want to contact the carrier to arrange for the parcel to be redirected to your new address. For future orders, address changes can be made in the order screen before dispatch.",
       "citedSources": [
         {
           "ticketId": "01a18cb3-1f93-7425-be4e-dd93dc6e9fb7",
           "subject": "Need to change the address on a dispatched order",
-          "resolution": "Once a parcel is with the carrier the address on the label cannot be altered by us, but the carrier\u0027s own redirection service can divert it before the first delivery attempt. The customer redirected it successfully. Address changes before dispatch are made in the order screen."
+          "resolution": "Once a parcel is with the carrier the address on the label cannot be altered by us, but the carrier's own redirection service can divert it before the first delivery attempt. The customer redirected it successfully. Address changes before dispatch are made in the order screen."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 explicitly supports the seller being unable to alter the carrier-held label, carrier redirection before the first attempt, and pre-dispatch address changes in the order screen."
     },
     {
       "queryId": "q-shipping-express-was-not-express",
@@ -497,23 +497,23 @@
           "resolution": "The order was placed after the daily cut-off, so next-day service began the following working day, and the intervening weekend added two non-working days. The service performed to its terms but the cut-off was not prominent, and the expedited charge was refunded."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "The similar-case explanation and refund are supported. The source identifies \"next day\" delivery, without establishing it was the \"quickest service\". It also does not establish the draft's asserted inability to offer a resolution without more details."
     },
     {
       "queryId": "q-refund-missing",
       "ticketSubject": "Approved refund still not in my account",
-      "draft": "Thank you for reaching out. Refunds typically take three to five working days to appear in your account after being processed, depending on your bank\u0027s schedule. Occasionally, it may take longer if the refund was issued to a card that has since expired, in which case the bank may hold the funds in suspense until released. If your refund was approved over a week ago and you still have not received it, please check with your bank to see if they require any additional information or if the refund is being held. If you need further assistance, please let us know. We are here to help.",
+      "draft": "Thank you for reaching out. Refunds typically take three to five working days to appear in your account after being processed, depending on your bank's schedule. Occasionally, it may take longer if the refund was issued to a card that has since expired, in which case the bank may hold the funds in suspense until released. If your refund was approved over a week ago and you still have not received it, please check with your bank to see if they require any additional information or if the refund is being held. If you need further assistance, please let us know. We are here to help.",
       "citedSources": [
         {
           "ticketId": "01a18cb2-3b91-7bcc-93dc-7ead422a5557",
           "subject": "Refund confirmed but nothing in my account",
-          "resolution": "The refund was released the same day and the acquirer reference was provided. Card refunds clear on the issuing bank\u0027s own schedule, commonly three to five working days and occasionally longer across a weekend. The funds appeared on day four."
+          "resolution": "The refund was released the same day and the acquirer reference was provided. Card refunds clear on the issuing bank's own schedule, commonly three to five working days and occasionally longer across a weekend. The funds appeared on day four."
         },
         {
           "ticketId": "01a18cb3-6142-71f4-b1dc-c0a3a115038c",
           "subject": "Refund was approved but has not reached my account",
-          "resolution": "The refund had been issued to a card that had since expired, so the bank held it in suspense. The customer\u0027s bank released it once given the acquirer reference, which we supplied."
+          "resolution": "The refund had been issued to a card that had since expired, so the bank held it in suspense. The customer's bank released it once given the acquirer reference, which we supplied."
         },
         {
           "ticketId": "01a18cb3-6375-7cbc-bb36-e070753a0678",
@@ -521,22 +521,22 @@
           "resolution": "Refunds are released when the return scans in at the warehouse and take three to five working days to appear, depending on the bank."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Sources 1 and 3 explicitly support three to five working days depending on the bank. Source 2 documents an expired-card refund held in suspense and released by the bank after receiving the acquirer reference."
     },
     {
       "queryId": "q-returns-money-back-short",
       "ticketSubject": "Amount returned to me is too small",
-      "draft": "Thank you for reaching out. The amount refunded may be less than the original amount you paid if a promotional discount was applied across your whole basket. When you return one item, only that item\u0027s discounted share is refunded, which matches what you actually paid for the returned item. We can provide a breakdown showing how the discount was allocated if that would help clarify the refund amount. Please let us know if you would like this information.",
+      "draft": "Thank you for reaching out. The amount refunded may be less than the original amount you paid if a promotional discount was applied across your whole basket. When you return one item, only that item's discounted share is refunded, which matches what you actually paid for the returned item. We can provide a breakdown showing how the discount was allocated if that would help clarify the refund amount. Please let us know if you would like this information.",
       "citedSources": [
         {
           "ticketId": "01a18cb3-6457-705e-9d85-9c528e3a2dca",
           "subject": "Refunded less than I paid",
-          "resolution": "A promotional discount had been applied across the whole basket, and returning one line removed only that line\u0027s discounted share. The refund matched what was actually paid for the returned item. A breakdown was supplied showing the allocation."
+          "resolution": "A promotional discount had been applied across the whole basket, and returning one line removed only that line's discounted share. The refund matched what was actually paid for the returned item. A breakdown was supplied showing the allocation."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 directly supports a basket-wide promotional discount, refunding the returned line's discounted share, matching what was actually paid for that item, and providing an allocation breakdown."
     },
     {
       "queryId": "q-returns-sent-back-nothing-happened",
@@ -549,8 +549,8 @@
           "resolution": "The parcel arrived without the return reference inside, so it could not be matched to an order at goods-in and was held in the unidentified area. It was matched manually and refunded the same day, backdated to the receipt date."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 says the parcel \"arrived\", without stating that it was \"signed for\". It also reports backdating one refund, rather than stating the general rule \"Once matched, refunds are issued backdated to the receipt date\"."
     },
     {
       "queryId": "q-returns-decided-against-it",
@@ -563,8 +563,8 @@
           "resolution": "Change-of-mind returns are accepted within thirty days of delivery provided the item is unused and complete. The refund covers the goods and the original standard postage, less the cost of the return label."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 explicitly states the thirty-day unused-and-complete return conditions and a refund of goods plus original standard postage, less the return-label cost."
     },
     {
       "queryId": "q-returns-want-different-size",
@@ -582,22 +582,22 @@
           "resolution": "Where the replacement is unavailable the return is refunded instead, and a back-in-stock alert can be set for the variant. The customer is not held waiting on stock to receive their money."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 explicitly supports requesting an exchange from the return screen, immediate reservation, and fourteen days. Source 2 supports refunding unavailable replacements and setting a variant-specific back-in-stock alert."
     },
     {
       "queryId": "q-returns-how-do-i-send-back",
       "ticketSubject": "Process for sending an item back to you",
-      "draft": "To return an item, please start the return process from the order in your account area. This will generate a printable label and a reference number. Pack the item in its original packaging if possible, and drop it off at any of the carrier\u0027s drop-off points. If you need further assistance, feel free to ask.",
+      "draft": "To return an item, please start the return process from the order in your account area. This will generate a printable label and a reference number. Pack the item in its original packaging if possible, and drop it off at any of the carrier's drop-off points. If you need further assistance, feel free to ask.",
       "citedSources": [
         {
           "ticketId": "01a18cb3-73f7-7ad3-b80a-586146b0a41b",
           "subject": "How do I send something back",
-          "resolution": "A return is started from the order in the account area, which produces a printable label and a reference. The item should be packed in its original packaging where possible and handed in at any of the carrier\u0027s drop-off points."
+          "resolution": "A return is started from the order in the account area, which produces a printable label and a reference. The item should be packed in its original packaging where possible and handed in at any of the carrier's drop-off points."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Every procedural step is directly stated in source 1: start from the account order, obtain a printable label and reference, use original packaging where possible, and hand in at any carrier drop-off point."
     },
     {
       "queryId": "q-returns-bought-as-present",
@@ -610,8 +610,8 @@
           "resolution": "A gift can be returned using the gift reference on the packing note, which identifies the order without revealing what was paid. Without any reference the item cannot be matched and no return is possible."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 explicitly supports a gift return using the packing-note reference, identifying the order without revealing its price, and no return being possible without any reference."
     },
     {
       "queryId": "q-dishwasher-safe",
@@ -624,8 +624,8 @@
           "resolution": "The coating degrades above sixty degrees, so hand washing with warm water is recommended and dishwasher use voids the finish guarantee. Care instructions were sent."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 directly supports coating degradation above sixty degrees, warm-water hand washing, dishwasher use voiding the finish guarantee, and care instructions having been sent."
     },
     {
       "queryId": "q-product-how-to-look-after-it",
@@ -653,8 +653,8 @@
           "resolution": "It should be stored dry and away from direct sunlight, which degrades the material over extended periods. For long storage the battery should be left at roughly half charge rather than full or empty, which preserves capacity."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 3 supports the damp cloth, mild detergent, cleaner restrictions, and no immersion. Source 4 supports dry storage away from sunlight and half charge. Source 1 supports hand washing and the dishwasher/temperature warning. Source 2 supports thirty-degree fabric washing and avoiding tumble drying. The final care summary restates these damage-prevention instructions."
     },
     {
       "queryId": "q-product-when-available-again",
@@ -667,18 +667,18 @@
           "resolution": "Restock dates are estimates until stock is allocated. The customer was subscribed to a back-in-stock alert, which notifies before public release."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 supports estimated restock dates and notification before public release. It does not compare alert reliability with other methods or call it \"the most reliable way\"."
     },
     {
       "queryId": "q-product-what-size-should-i-get",
       "ticketSubject": "Unsure which size to choose",
-      "draft": "Our sizing tends to run smaller than equivalent sizes elsewhere, so if you usually take a certain size, we recommend sizing up for a regular fit. If your measurements fall between two sizes, choose the smaller size for a close fit or the larger size if you plan to wear it over other layers, as the fabric has limited stretch. If the size you choose doesn\u0027t work out, exchanges can be made without charge. Please let us know if you need help with an exchange or have any other questions.",
+      "draft": "Our sizing tends to run smaller than equivalent sizes elsewhere, so if you usually take a certain size, we recommend sizing up for a regular fit. If your measurements fall between two sizes, choose the smaller size for a close fit or the larger size if you plan to wear it over other layers, as the fabric has limited stretch. If the size you choose doesn't work out, exchanges can be made without charge. Please let us know if you need help with an exchange or have any other questions.",
       "citedSources": [
         {
           "ticketId": "01a18cb3-a69c-7539-bd2c-7ffda1b62868",
           "subject": "Should I order a bigger size",
-          "resolution": "This line is cut close and most customers find it a size smaller than the equivalent elsewhere, so sizing up is advised for a regular fit. The guidance is drawn from return data rather than from the manufacturer\u0027s own chart."
+          "resolution": "This line is cut close and most customers find it a size smaller than the equivalent elsewhere, so sizing up is advised for a regular fit. The guidance is drawn from return data rather than from the manufacturer's own chart."
         },
         {
           "ticketId": "01a18cb3-a864-7054-9140-5d98db8c126f",
@@ -686,13 +686,13 @@
           "resolution": "For this design the smaller size is recommended where a close fit is wanted and the larger where it will be worn over other layers, as the fabric has limited give. Either can be exchanged without charge if the choice proves wrong."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 limits its sizing claim to \"This line\" and source 2 to \"this design\". \"Our sizing tends to run smaller\" expands that product-specific statement to the company's sizing generally."
     },
     {
       "queryId": "q-product-charge-does-not-last",
       "ticketSubject": "Running time well below what was promised",
-      "draft": "The running time quoted in the description is measured under specific conditions: at half brightness with wireless disabled, which is the industry standard test condition. Typical mixed use usually results in about 60% of the quoted running time. If your unit\u0027s running time is significantly below this, it may be faulty and eligible for replacement. Please let us know if you believe your unit is not performing as expected under normal use conditions.",
+      "draft": "The running time quoted in the description is measured under specific conditions: at half brightness with wireless disabled, which is the industry standard test condition. Typical mixed use usually results in about 60% of the quoted running time. If your unit's running time is significantly below this, it may be faulty and eligible for replacement. Please let us know if you believe your unit is not performing as expected under normal use conditions.",
       "citedSources": [
         {
           "ticketId": "01a18cb3-b0ec-7872-bca1-70e4881b0913",
@@ -700,8 +700,8 @@
           "resolution": "The quoted figure is measured at half brightness with wireless disabled, which is the industry test condition and is footnoted on the page. Typical mixed use gives roughly sixty per cent of it. A unit falling well below that is faulty and is replaced."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 explicitly supports half brightness with wireless disabled as the industry test condition, roughly sixty per cent runtime in mixed use, and replacement of units falling well below that."
     },
     {
       "queryId": "q-product-no-instructions-in-box",
@@ -714,8 +714,8 @@
           "resolution": "Printed instructions were omitted from a production batch. The full manual is downloadable from the product page and a printed copy was posted. No parts were missing, which was confirmed against the parts list."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": true,
+      "note": "Source 1 directly states the omitted production-batch instructions, downloadable manual, posted printed copy, and confirmation against the parts list that no parts were missing."
     },
     {
       "queryId": "q-product-difference-between-two",
@@ -728,8 +728,8 @@
           "resolution": "The higher model adds the second sensor and the metal housing, and is rated for continuous rather than intermittent use. Performance in light use is indistinguishable, so the difference matters only for sustained workloads. A comparison table was added."
         }
       ],
-      "grounded": null,
-      "note": null
+      "grounded": false,
+      "note": "Source 1 supports the higher model's additional sensor, metal housing, continuous-use rating, and light-use equivalence. It does not explicitly establish that the higher model is \"higher-priced\" or that the added comparison table is \"to the listings\"."
     },
     {
       "queryId": "q-product-safe-for-young-user",
@@ -743,7 +743,7 @@
         }
       ],
       "grounded": null,
-      "note": null
+      "note": "Uncertain scope: the source recommends supervision \"regardless of age where the heating element is involved\". The draft says \"regardless of age, especially where the heating element is involved\", which may broaden the recommendation to other circumstances. Leaving null rather than guessing whether this wording is a material unsupported expansion."
     }
   ]
 }

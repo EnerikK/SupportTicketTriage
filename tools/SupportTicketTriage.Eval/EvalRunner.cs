@@ -117,14 +117,25 @@ public sealed class EvalRunner(
             EmbeddingModel: embeddingModel,
             EmbeddingModelIsReal: EvaluationReport.IsRealEmbeddingModel(embeddingModel),
             ChatModel: chat?.ChatModel,
-            ClassificationPromptVersion: ClassificationPrompt.Version,
-            GenerationPromptVersion: GenerationPrompt.Version,
+            // Recorded only when the stage actually ran. These are compile-time
+            // constants, so stamping them unconditionally made every run claim
+            // a generation prompt - including a logic run with no chat
+            // deployment, which generates nothing. The regression gate had no
+            // way to know the claim was false and refused to compare a recall
+            // baseline because a prompt it never used had been reworded.
+            ClassificationPromptVersion: chat is null ? null : ClassificationPrompt.Version,
+            GenerationPromptVersion: chat is null || skipGeneration ? null : GenerationPrompt.Version,
             RedactionVersion: PiiRedactor.Version,
             // The harness uses the defaults deliberately rather than reading
             // configuration - a baseline produced under one set of floors and
             // compared against a run under another would report a retune as a
             // regression. Recording them is what makes that detectable.
-            MinimumClassificationScore: RoutingThresholds.Default.MinimumClassificationScore,
+            //
+            // Gate A is null without classification, for the reason above.
+            // Gate B is not: retrieval always runs and its gate is always
+            // calibrated, so the floor always bears on a recorded number.
+            MinimumClassificationScore:
+                chat is null ? null : RoutingThresholds.Default.MinimumClassificationScore,
             MinimumSimilarity: RoutingThresholds.Default.MinimumSimilarity,
             GeneratedAt: DateTimeOffset.UtcNow,
             CorpusCount: dataset.Corpus.Count(),
@@ -322,7 +333,12 @@ public sealed class EvalRunner(
             // validity already counts.
             if (result.Draft is { CitationsValid: true })
             {
-                pairs.Add(await ToJudgePairAsync(query.Id, ticket.Subject, result.Draft, ct));
+                pairs.Add(await ToJudgePairAsync(
+                    query.Id,
+                    ticket.Subject,
+                    Redacted(ticket),
+                    result.Draft,
+                    ct));
             }
         }
 
@@ -347,14 +363,20 @@ public sealed class EvalRunner(
         foreach (var pair in pairs)
         {
             var sources = pair.CitedSources
-                .Select(s => new GroundednessPrompt.Source(s.TicketId, s.Resolution))
+                .Select(s => new EvidenceSource(s.TicketId, s.Subject, s.RedactedText, s.Resolution))
                 .ToList();
 
-            judged.Add(await judge!.JudgeAsync(pair.QueryId, pair.Draft, sources, ct));
+            judged.Add(await judge!.JudgeAsync(
+                pair.QueryId, pair.Draft, pair.RedactedTicket, sources, ct));
         }
 
         return judged;
     }
+
+    /// The same string the writer was given, built the same way, so the
+    /// judge and the labeller read exactly what the draft answered.
+    private static string Redacted(Ticket ticket) =>
+        new PiiRedactor().Redact($"{ticket.Subject}\n\n{ticket.Body}");
 
     /// Pairs a draft with the resolutions it cited - the same text the model
     /// was shown, read back from the stored draft's own source rows rather
@@ -363,19 +385,34 @@ public sealed class EvalRunner(
     private async Task<JudgePair> ToJudgePairAsync(
         string queryId,
         string ticketSubject,
+        string redactedTicket,
         TicketDraft draft,
         CancellationToken ct)
     {
         var citedIds = draft.Sources.Where(s => s.WasCited).Select(s => s.SourceTicketId).ToList();
 
-        var sources = await db.Tickets
+        var redactor = new PiiRedactor();
+
+        var rows = await db.Tickets
             .Where(t => citedIds.Contains(t.Id))
-            .Select(t => new JudgeSource(t.Id, t.Subject, t.Resolution!))
+            .Select(t => new { t.Id, t.Subject, t.Body, t.Resolution })
             .ToListAsync(ct);
+
+        // Redacted here for the same reason the generation prompt redacts:
+        // this text is what a judge and a labeller will read, and the AI
+        // boundary applies to both.
+        var sources = rows
+            .Select(r => new JudgeSource(
+                r.Id,
+                redactor.Redact(r.Subject),
+                redactor.Redact(r.Body),
+                redactor.Redact(r.Resolution!)))
+            .ToList();
 
         return new JudgePair(
             queryId,
             ticketSubject,
+            redactedTicket,
             draft.DraftText,
             sources,
             Grounded: null,

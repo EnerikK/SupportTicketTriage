@@ -3,7 +3,14 @@ using System.Text.Json.Serialization;
 
 namespace SupportTicketTriage.Eval.Judging;
 
-public sealed record JudgeSource(Guid TicketId, string Subject, string Resolution);
+/// Everything the writer was shown about one precedent, so a labeller and a
+/// judge see exactly what the draft had. v1 carried subject and resolution
+/// only; the missing body was three of twenty disagreements.
+public sealed record JudgeSource(
+    Guid TicketId,
+    string Subject,
+    string RedactedText,
+    string Resolution);
 
 /// One draft and the sources it cited, ready to be labelled by hand.
 ///
@@ -14,6 +21,10 @@ public sealed record JudgeSource(Guid TicketId, string Subject, string Resolutio
 public sealed record JudgePair(
     string QueryId,
     string TicketSubject,
+    /// The redacted ticket as the writer saw it. v1 withheld this from the
+    /// judge entirely, which made every restatement of the customer's own
+    /// account unsupported by construction.
+    string RedactedTicket,
     string Draft,
     IReadOnlyList<JudgeSource> CitedSources,
     bool? Grounded,
@@ -33,15 +44,51 @@ public sealed record JudgePairFile(
     string Instructions,
     IReadOnlyList<JudgePair> Pairs)
 {
+    /// What a labeller is answering, in the same words the judge is given.
+    ///
+    /// Held to the same rules deliberately: v1 guidance was looser than the
+    /// rubric, and the labels missed precedent-as-fact in 5 of 24 drafts
+    /// marked grounded. A labeller applying a weaker standard than the judge
+    /// produces disagreements that look like judge error and are really a
+    /// specification mismatch.
     public const string HowToLabel =
-        "Set \"grounded\" on each pair to true or false. GROUNDED means every factual "
-        + "claim in the draft is SUPPORTED by the cited sources - a reader could point "
-        + "at text in a source that makes the claim true. Being true is not enough; "
-        + "being uncontradicted is not enough; a claim the sources do not mention is "
-        + "not supported however plausible. Ignore greetings, apologies and offers to "
-        + "help further - they assert nothing. \"note\" is optional and is for you, not "
-        + "for the tool. Leave \"grounded\" as null to skip a pair; skipped pairs are "
-        + "dropped from the comparison rather than counted either way.";
+        """
+        Set "grounded" on each pair to true or false.
+
+        A draft is GROUNDED when every MATERIAL claim it makes is supported.
+
+        EVIDENCE. Only the resolution of a cited precedent establishes facts. The
+        incoming ticket, and each precedent's subject and body, are accounts - what a
+        customer said - and never establish a fact. The customer is authoritative about
+        their own experience and intent: what they did, what they saw, what they want.
+        That may be restated directly. Claims about causes, system state, eligibility,
+        or what anyone else did need either attribution ("you mentioned...") or support
+        from a resolution.
+
+        MATERIALITY. A claim is material if it asserts a cause of the problem the
+        customer reported, a policy or rule, an amount, a timeline, an eligibility, or
+        an action taken or a specific outcome promised. An offer to investigate or
+        assist is not material; a promise of a refund, a replacement, a fix, or when one
+        will happen, is. Descriptive wording that asserts none of these cannot make a
+        draft ungrounded. Ignore greetings, apologies and offers to help further.
+
+        PRECEDENTS. A resolution is evidence about ONE case. It may be used as a similar
+        case, as a hedged possibility, or as general policy ONLY where the resolution is
+        itself phrased in general terms - "a replacement is sent" and "enrolments are
+        tied to the device" license a policy statement, "the discount was applied" and
+        "the browser was configured" describe one past case and do not.
+
+        Mark UNGROUNDED when a draft asserts a precedent's circumstances or actions as
+        this customer's facts, or turns one case into a general practice, a prevalence
+        claim ("commonly", "a few common reasons"), a guarantee ("you will be
+        notified"), or a prediction about this customer's outcome or timing. A
+        conditional asserts its consequent as a general rule, so hedging must attach to
+        the claim itself rather than only to the circumstances that trigger it.
+
+        Leave "grounded" as null to skip a pair. Skipped pairs are dropped from the
+        comparison rather than counted either way. The "note" field is for you; the tool
+        ignores it.
+        """;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {

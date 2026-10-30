@@ -6,15 +6,22 @@
   "models": [
     {
       "model": "gpt-4.1-mini",
-      "inputPerMillionTokens": 0.40,
-      "outputPerMillionTokens": 1.60,
+      "inputPerMillionTokens": 0.4,
+      "outputPerMillionTokens": 1.6,
       "retrievedOn": "2026-10-16",
       "deploymentType": "GlobalStandard"
     },
     {
       "model": "gpt-5",
       "inputPerMillionTokens": 1.25,
-      "outputPerMillionTokens": 10.00,
+      "outputPerMillionTokens": 10.0,
+      "retrievedOn": "2026-10-30",
+      "deploymentType": "GlobalStandard"
+    },
+    {
+      "model": "gpt-5-mini",
+      "inputPerMillionTokens": 0.25,
+      "outputPerMillionTokens": 2.0,
       "retrievedOn": "2026-10-30",
       "deploymentType": "GlobalStandard"
     },

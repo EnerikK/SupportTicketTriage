@@ -12,16 +12,19 @@ public class BaselineComparisonTests
         double? macroF1 = 0.93,
         double? citationValidity = 1.0,
         decimal? costTotal = 0.075m,
-        string classificationPrompt = "classify-v1",
+        string? classificationPrompt = "classify-v1",
         string redaction = "v1",
-        double gateA = 0.50) =>
+        double? gateA = 0.50,
+        string? generationPrompt = "draft-v1",
+        string? chatModel = "gpt-4.1-mini",
+        string pricingVersion = "1.0") =>
         new(
             DatasetVersion: "1.0",
             EmbeddingModel: "text-embedding-3-small",
             EmbeddingModelIsReal: true,
-            ChatModel: "gpt-4.1-mini",
+            ChatModel: chatModel,
             ClassificationPromptVersion: classificationPrompt,
-            GenerationPromptVersion: "draft-v1",
+            GenerationPromptVersion: generationPrompt,
             RedactionVersion: redaction,
             MinimumClassificationScore: gateA,
             MinimumSimilarity: 0.60,
@@ -48,7 +51,7 @@ public class BaselineComparisonTests
             Latency: [],
             Cost: costTotal is null
                 ? null
-                : new CostScore("1.0", "USD", true, new DateOnly(2026, 10, 16), [], costTotal, 0.0001m, 0.0008m, 300, 47),
+                : new CostScore(pricingVersion, "USD", true, new DateOnly(2026, 10, 16), [], costTotal, 0.0001m, 0.0008m, 300, 47),
             TraitCoverage: new Dictionary<string, int>());
 
     private static EvaluationBaseline Baseline() => EvaluationBaseline.From(Run());
@@ -200,5 +203,87 @@ public class BaselineComparisonTests
         Assert.Contains("recall@1", markdown);
         Assert.Contains("REGRESSED", markdown);
         Assert.Contains("The gate failed", markdown);
+    }
+
+    /// The bug this rule exists for. A logic run has no chat deployment and
+    /// generates nothing, but the prompt version was a compile-time constant
+    /// stamped unconditionally, so the run claimed "draft-v2" and the gate
+    /// refused to compare a recall baseline against it. The run now records
+    /// null, and a baseline that gates no generation does not care.
+    [Fact]
+    public void ARunThatSkippedAStageTheBaselineDoesNotGate_IsStillComparable()
+    {
+        var baseline = EvaluationBaseline.From(Run(
+            accuracy: null, macroF1: null, citationValidity: null, costTotal: null,
+            classificationPrompt: null, gateA: null, generationPrompt: null, chatModel: null));
+
+        var comparison = BaselineComparison.Compare(
+            baseline,
+            Run(accuracy: null, macroF1: null, citationValidity: null, costTotal: null,
+                classificationPrompt: null, gateA: null, generationPrompt: null, chatModel: null));
+
+        Assert.True(comparison.Comparable);
+        Assert.Empty(comparison.ProvenanceMismatches);
+    }
+
+    /// Not symmetric with the case above, deliberately. A baseline that covers
+    /// generation is not satisfied by a run that produced none - the numbers
+    /// it gates were never computed, so "no regression" would be a claim about
+    /// nothing.
+    [Fact]
+    public void ARunThatSkippedAStageTheBaselineDoesGate_IsNotComparable()
+    {
+        var comparison = BaselineComparison.Compare(
+            Baseline(),
+            Run(generationPrompt: null));
+
+        Assert.False(comparison.Comparable);
+        Assert.Contains(
+            comparison.ProvenanceMismatches,
+            m => m.Contains("generation prompt") && m.Contains("did not run that stage"));
+    }
+
+    /// Recorded in the baseline since the first one and never compared, so a
+    /// 1.0 -> 1.1 price-list change passed a gate that existed to catch it.
+    /// Cost tolerances mean nothing across two price lists.
+    [Fact]
+    public void AChangedPricingVersion_IsAProvenanceMismatch()
+    {
+        var comparison = BaselineComparison.Compare(Baseline(), Run(pricingVersion: "1.1"));
+
+        Assert.False(comparison.Comparable);
+        Assert.Contains(comparison.ProvenanceMismatches, m => m.Contains("pricing version"));
+    }
+
+    /// A run that priced nothing against a baseline that did. Same rule as
+    /// generation: the baseline gates cost, the run has none.
+    [Fact]
+    public void ARunWithNoPricing_AgainstABaselineWithPricing_IsNotComparable()
+    {
+        var comparison = BaselineComparison.Compare(Baseline(), Run(costTotal: null));
+
+        Assert.False(comparison.Comparable);
+        Assert.Contains(
+            comparison.ProvenanceMismatches,
+            m => m.Contains("pricing version") && m.Contains("did not run that stage"));
+    }
+
+    [Fact]
+    public void AChangedGateAFloor_IsStillAProvenanceMismatch()
+    {
+        var comparison = BaselineComparison.Compare(Baseline(), Run(gateA: 0.55));
+
+        Assert.False(comparison.Comparable);
+        Assert.Contains(comparison.ProvenanceMismatches, m => m.Contains("Gate A floor"));
+    }
+
+    /// Pricing gets the same treatment as the prompts. A logic run loads the
+    /// price list and prices nothing, so it records no version and a recall
+    /// baseline is not held hostage to a price change it never used.
+    [Fact]
+    public void ARunThatPricedNothing_RecordsNoPricingVersion()
+    {
+        Assert.Null(Run(costTotal: null).PricedPricingVersion);
+        Assert.Equal("1.0", Run().PricedPricingVersion);
     }
 }
