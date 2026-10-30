@@ -44,6 +44,11 @@ public static class HarnessHelp
           --judge-effort <level>  default|low|medium|high. Reasoning effort for
                                   the judge. Recorded in run provenance, because
                                   the same model at two efforts is two judges
+          --dev-check <path>      Run the judge against development pairs with
+                                  expected verdicts from <path> and exit. A
+                                  behavioural check, never a reported number -
+                                  these pairs produced the rules and cannot
+                                  also test them. Needs --judge-pairs-from
           --compare-judges <list> Comma-separated verdict files. Builds the
                                   comparison table from committed artifacts and
                                   exits; the first file is the baseline every

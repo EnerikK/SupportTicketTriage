@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
@@ -107,6 +108,86 @@ if (arguments.Value("compare-judges") is { } verdictList)
 
     Console.WriteLine(comparison.ToMarkdown());
     Console.WriteLine($"Wrote {Path.GetFullPath(comparisonPath)}.");
+
+    return 0;
+}
+
+// Behavioural check of the rubric against development pairs, then exit.
+//
+// Deliberately prints a pass/fail list rather than a score: these pairs
+// produced the rules, so any number computed on them measures how well the
+// wording was fitted to its own examples. DECISION-RULE-V2.md fixes what to do
+// with a mismatch, and "iterate the wording until it passes" is not on the list.
+if (arguments.Value("dev-check") is { } expectationsPath)
+{
+    var devPairsPath = arguments.Value("judge-pairs-from");
+
+    if (devPairsPath is null)
+    {
+        Console.Error.WriteLine("--dev-check also needs --judge-pairs-from.");
+        return 1;
+    }
+
+    var expectations = await DevCheck.LoadAsync(expectationsPath);
+    var devRecorder = new AiCallRecorder();
+    var devJudge = BuildJudge(devRecorder, ParseEffort(arguments.Value("judge-effort")));
+
+    if (devJudge is null)
+    {
+        Console.Error.WriteLine("No judge deployment configured.");
+        return 1;
+    }
+
+    var devDataset = await EvalDataset.LoadAsync(
+        arguments.Value("dataset") ?? Path.Combine("eval", "dataset", "tickets.json"));
+
+    using var devDocument = JsonDocument.Parse(await File.ReadAllTextAsync(devPairsPath));
+
+    Console.WriteLine(
+        $"Dev check: {devJudge.Deployment} at effort {devJudge.Effort}, "
+        + $"rubric {GroundednessPrompt.Version}.");
+
+    var outcomes = new List<DevCheckOutcome>();
+
+    foreach (var pair in devDocument.RootElement.GetProperty("pairs").EnumerateArray())
+    {
+        var queryId = pair.GetProperty("queryId").GetString()!;
+
+        if (expectations.Excluded.ContainsKey(queryId) ||
+            !expectations.Expected.TryGetValue(queryId, out var expected))
+        {
+            continue;
+        }
+
+        var rehydrated = DevCheck.Rehydrate(pair, devDataset);
+
+        if (rehydrated is null)
+        {
+            Console.Error.WriteLine($"Could not rebuild evidence for {queryId}; skipping.");
+            continue;
+        }
+
+        var verdict = await devJudge.JudgeAsync(
+            queryId,
+            pair.GetProperty("draft").GetString()!,
+            rehydrated.Value.Ticket,
+            rehydrated.Value.Sources);
+
+        outcomes.Add(new DevCheckOutcome(
+            queryId,
+            expected,
+            verdict.Grounded,
+            verdict.UnsupportedClaim,
+            expectations.Why.TryGetValue(queryId, out var why) ? why : string.Empty));
+    }
+
+    Console.WriteLine();
+    Console.WriteLine(DevCheck.Report(outcomes));
+
+    var devOut = Path.Combine(arguments.Value("output") ?? Path.Combine("eval", "judge"), "DEV-CHECK.md");
+    Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(devOut))!);
+    await File.WriteAllTextAsync(devOut, DevCheck.Report(outcomes));
+    Console.WriteLine($"Wrote {Path.GetFullPath(devOut)}.");
 
     return 0;
 }

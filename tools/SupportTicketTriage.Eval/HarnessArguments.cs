@@ -39,6 +39,7 @@ public sealed class HarnessArguments
             "judge-pairs-from",
             "judge-limit",
             "compare-judges",
+            "dev-check",
         };
 
     private readonly Dictionary<string, string?> _values;
