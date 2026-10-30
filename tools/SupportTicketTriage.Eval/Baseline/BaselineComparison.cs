@@ -90,17 +90,52 @@ public sealed record BaselineComparison(
         var p = baseline.Provenance;
         var mismatches = new List<string>();
 
+        // One rule for every field, so no field is special-cased into silence:
+        //
+        //   both recorded      -> compare
+        //   baseline null      -> skip; this baseline does not gate that stage
+        //   baseline recorded,
+        //   run null           -> fail; the run skipped a stage the baseline
+        //                         measures, so its numbers cannot stand in
+        //
+        // The third case is the one worth stating. It is not symmetric with
+        // the second, and it should not be: a baseline that covers generation
+        // is not satisfied by a run that produced none.
         void Check(string what, string? expected, string? actual)
         {
+            if (expected is null)
+            {
+                return;
+            }
+
+            if (actual is null)
+            {
+                mismatches.Add($"{what}: baseline '{expected}', run did not run that stage");
+                return;
+            }
+
             if (!string.Equals(expected, actual, StringComparison.Ordinal))
             {
-                mismatches.Add($"{what}: baseline '{expected ?? "none"}', run '{actual ?? "none"}'");
+                mismatches.Add($"{what}: baseline '{expected}', run '{actual}'");
             }
         }
 
-        void CheckNumber(string what, double expected, double actual)
+        void CheckNumber(string what, double? expected, double? actual)
         {
-            if (Math.Abs(expected - actual) > 1e-9)
+            if (expected is null)
+            {
+                return;
+            }
+
+            if (actual is null)
+            {
+                mismatches.Add(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "{0}: baseline {1}, run did not run that stage", what, expected));
+                return;
+            }
+
+            if (Math.Abs(expected.Value - actual.Value) > 1e-9)
             {
                 mismatches.Add(string.Format(
                     CultureInfo.InvariantCulture, "{0}: baseline {1}, run {2}", what, expected, actual));
@@ -113,6 +148,12 @@ public sealed record BaselineComparison(
         Check("classification prompt", p.ClassificationPromptVersion, run.ClassificationPromptVersion);
         Check("generation prompt", p.GenerationPromptVersion, run.GenerationPromptVersion);
         Check("redaction rules", p.RedactionVersion, run.RedactionVersion);
+
+        // Recorded since the first baseline and never compared until now, so
+        // the 1.0 -> 1.1 pricing change passed a gate that was supposed to
+        // catch it. Cost tolerances are meaningless across a price list.
+        Check("pricing version", p.PricingVersion, run.PricedPricingVersion);
+
         CheckNumber("Gate A floor", p.MinimumClassificationScore, run.MinimumClassificationScore);
         CheckNumber("Gate B floor", p.MinimumSimilarity, run.MinimumSimilarity);
 

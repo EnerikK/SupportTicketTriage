@@ -18,10 +18,10 @@ public sealed record BaselineProvenance(
     string DatasetVersion,
     string EmbeddingModel,
     string? ChatModel,
-    string ClassificationPromptVersion,
-    string GenerationPromptVersion,
+    string? ClassificationPromptVersion,
+    string? GenerationPromptVersion,
     string RedactionVersion,
-    double MinimumClassificationScore,
+    double? MinimumClassificationScore,
     double MinimumSimilarity,
     string? PricingVersion,
     DateTimeOffset GeneratedAt);
@@ -100,7 +100,7 @@ public sealed record EvaluationBaseline(
                 report.RedactionVersion,
                 report.MinimumClassificationScore,
                 report.MinimumSimilarity,
-                report.Cost?.PricingVersion,
+                report.PricedPricingVersion,
                 report.GeneratedAt),
             Metrics: new BaselineMetrics(
                 RecallAtK: report.RecallAtK

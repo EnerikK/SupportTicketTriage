@@ -52,13 +52,20 @@ public sealed record EvaluationReport(
     /// it makes every existing vector non-comparable, so a recall figure
     /// carried across a redaction change is not a worse number, it is a
     /// meaningless one.
-    string ClassificationPromptVersion,
-    string GenerationPromptVersion,
+    /// Null when the stage that produces it did not run. A logic run has no
+    /// chat deployment and so classifies nothing; recording a version for a
+    /// stage that never executed is a false claim, and the regression gate
+    /// believed it ([[ADR-021]]).
+    string? ClassificationPromptVersion,
+    string? GenerationPromptVersion,
     string RedactionVersion,
     /// The floors that were applied. They move `NotEligible`, which is the
     /// denominator of citation validity, so retuning a gate would otherwise
     /// surface as a citation regression.
-    double MinimumClassificationScore,
+    /// Gate A's floor, null when classification did not run. Gate B's floor
+    /// below is not nullable: retrieval always runs and its gate is always
+    /// calibrated, so the floor always bears on something recorded.
+    double? MinimumClassificationScore,
     double MinimumSimilarity,
     DateTimeOffset GeneratedAt,
     int CorpusCount,
@@ -631,6 +638,15 @@ public sealed record EvaluationReport(
                 + "as measuring logic only. Use --write-baseline for a real run.");
         }
     }
+
+    /// The price list, but only when it actually priced something.
+    ///
+    /// A logic run loads the price list and then prices nothing - every call
+    /// is against a stand-in with no published rate. Recording a version
+    /// anyway makes the same false claim the prompt versions used to make,
+    /// and the gate would refuse a recall comparison over a price change it
+    /// never used.
+    public string? PricedPricingVersion => Cost?.Total is null ? null : Cost.PricingVersion;
 
     public static bool IsRealEmbeddingModel(string model) => model != LexicalEmbeddingGenerator.ModelName;
 }

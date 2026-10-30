@@ -117,14 +117,25 @@ public sealed class EvalRunner(
             EmbeddingModel: embeddingModel,
             EmbeddingModelIsReal: EvaluationReport.IsRealEmbeddingModel(embeddingModel),
             ChatModel: chat?.ChatModel,
-            ClassificationPromptVersion: ClassificationPrompt.Version,
-            GenerationPromptVersion: GenerationPrompt.Version,
+            // Recorded only when the stage actually ran. These are compile-time
+            // constants, so stamping them unconditionally made every run claim
+            // a generation prompt - including a logic run with no chat
+            // deployment, which generates nothing. The regression gate had no
+            // way to know the claim was false and refused to compare a recall
+            // baseline because a prompt it never used had been reworded.
+            ClassificationPromptVersion: chat is null ? null : ClassificationPrompt.Version,
+            GenerationPromptVersion: chat is null || skipGeneration ? null : GenerationPrompt.Version,
             RedactionVersion: PiiRedactor.Version,
             // The harness uses the defaults deliberately rather than reading
             // configuration - a baseline produced under one set of floors and
             // compared against a run under another would report a retune as a
             // regression. Recording them is what makes that detectable.
-            MinimumClassificationScore: RoutingThresholds.Default.MinimumClassificationScore,
+            //
+            // Gate A is null without classification, for the reason above.
+            // Gate B is not: retrieval always runs and its gate is always
+            // calibrated, so the floor always bears on a recorded number.
+            MinimumClassificationScore:
+                chat is null ? null : RoutingThresholds.Default.MinimumClassificationScore,
             MinimumSimilarity: RoutingThresholds.Default.MinimumSimilarity,
             GeneratedAt: DateTimeOffset.UtcNow,
             CorpusCount: dataset.Corpus.Count(),

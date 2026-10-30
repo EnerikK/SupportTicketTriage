@@ -695,6 +695,38 @@ A second consequence is worth stating because it is a benefit rather than a comp
 
 **What would reverse it.** A cheaper evaluation - a smaller scored subset that still supports macro-F1 over ~50 examples a class, or cached corpus embeddings - which would make a per-PR real gate affordable. Or a groundedness metric ([[ADR-018]]) whose regressions are severe enough to justify blocking a merge rather than alarming after one.
 
+### Amendment — 2026-10-30: provenance is recorded per stage, and compared by one rule
+
+A run that generated nothing still claimed a generation prompt. `ClassificationPromptVersion` and `GenerationPromptVersion` were compile-time constants stamped onto every report regardless of what ran, so a logic run - no chat deployment, no classification, no drafts - reported `draft-v2` and was refused against a recall baseline recording `draft-v1`. CI went red on a branch that had not touched a line of retrieval code.
+
+The comparator was not the bug. **The provenance was false**, and a comparator that worked around a false claim would have made the record worse rather than better. So the fix is at the source: the report records `null` for a stage that did not run.
+
+| field | recorded when |
+|---|---|
+| dataset version, embedding model, redaction rules | always - the corpus is always embedded |
+| Gate B floor (minimum similarity) | always - retrieval runs and its gate is always calibrated, so the floor always bears on a recorded number |
+| chat model, classification prompt, Gate A floor | a chat deployment is configured |
+| generation prompt | a chat deployment is configured **and** generation was not skipped |
+| pricing version | at least one call was actually priced |
+
+Pricing is the one that needed the principle applied twice. The first pass left `PricingVersion` recorded unconditionally, and regenerating the logic baseline stamped `1.1` onto a file gating no cost metric at all - which would have failed the logic gate on the next price-list bump, the identical bug under a different field. A logic run loads the price list and then prices nothing, so it now records nothing.
+
+**The comparison rule, applied to every field including `PricingVersion`:**
+
+| baseline | run | outcome |
+|---|---|---|
+| recorded | recorded | compare |
+| null | anything | skip - this baseline does not gate that stage |
+| recorded | null | **fail** - the run skipped a stage the baseline measures |
+
+The third row is deliberately not symmetric with the second. A baseline that covers generation is not satisfied by a run that produced none: the numbers it gates were never computed, so reporting "no regression" would be a claim about nothing.
+
+`PricingVersion` had been recorded since the first baseline and **never compared**. The 1.0 to 1.1 price-list change passed a gate that existed partly to catch it, and cost tolerances mean nothing across two price lists. That is now closed.
+
+**Why this is not the baseline regeneration [[ADR-007]] forbids.** The logic baseline was rewritten, and the diff is the whole argument: every changed line is a provenance field, and the `Metrics` block does not appear in it. Recall is byte-identical at every k. The previous file was generated `2026-10-21T17:13:13.6899763+00:00`; the replacement drops three false claims (`classify-v1`, `draft-v1`, Gate A floor `0.5`) and one unpriced price-list version. Nothing about what the gate measures moved, which is exactly the condition under which regenerating is bookkeeping rather than laundering a regression.
+
+**Counter-argument.** Fewer compared fields is less strictness, and strictness is the point of a provenance check. The answer is that the skipped comparisons were never protecting anything: a field describing a stage that did not run carries no information about the numbers being compared, and a gate that fires on it teaches people to regenerate baselines reflexively - which is how a real regression gets waved through. The rule above removes false positives and adds a genuine one (`PricingVersion`), so the gate is narrower in scope and stricter in effect.
+
 ---
 
 ## ADR-022 — The evaluation harness logs, and takes a dependency to do it
