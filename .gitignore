@@ -21,10 +21,12 @@ dist/
 .DS_Store
 Thumbs.db
 
-# AI assistant working docs - not for the public repo.
-# The reasoning a reviewer should see belongs in the README, not here.
+# Working documents: assistant instructions, session state, personal notes.
+#
+# DECISIONS.MD was in this list until 2026-10-30 and should not have been - an
+# architecture decision record is a normal artifact of a serious repository,
+# not an assistant one. See ADR-032.
 CLAUDE.MD
-DECISIONS.MD
 docs/BUILD-SPEC.MD
 docs/PROJECT-STATE.MD
 docs/INTERVIEW-STUDY-GUIDE.md
