@@ -30,6 +30,13 @@ public static class HarnessHelp
                                   those labels to come from a human: the figure
                                   exists to validate an LLM judge against
                                   something that is not one.
+          --judge-pairs-from <p>  Judge an exported pair file and exit, without
+                                  seeding or regenerating anything. The only
+                                  correct way to run several configurations
+                                  against one set of hand labels: generation is
+                                  nondeterministic, so re-running the pipeline
+                                  per configuration judges different drafts
+          --judge-limit <n>       Judge only the first n pairs. For smoke checks
           --judge-verdicts <path> Write what the judge said, with the tokens it
                                   spent saying it. One file per configuration;
                                   kept out of the labelling file so a verdict

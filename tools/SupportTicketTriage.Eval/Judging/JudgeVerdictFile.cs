@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SupportTicketTriage.Eval.Judging;
 
@@ -33,9 +34,14 @@ public sealed record JudgeVerdictFile(
     DateTimeOffset RunAt,
     IReadOnlyList<JudgeVerdict> Verdicts)
 {
+    /// The enum converter is not decoration. Without it `Effort` serialises as
+    /// its ordinal - `0` for Default - and the artifact that exists to say
+    /// which configuration produced these verdicts says `"effort": 0`, which
+    /// is exactly as useful as saying nothing.
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() },
     };
 
     public static async Task WriteAsync(
@@ -68,9 +74,21 @@ public sealed record JudgeVerdictFile(
         await File.WriteAllTextAsync(path, JsonSerializer.Serialize(file, Json), ct);
     }
 
+    public static async Task<JudgeVerdictFile> ReadAsync(string path, CancellationToken ct = default) =>
+        JsonSerializer.Deserialize<JudgeVerdictFile>(await File.ReadAllTextAsync(path, ct), Json)
+        ?? throw new InvalidOperationException($"'{path}' is not a judge verdict file.");
+
     /// Total reasoning tokens across the run, under whatever key the provider
     /// used. Read by matching on the key name rather than a constant, because
     /// the bridge's naming is not a contract this repository controls.
+    ///
+    /// **Observed null against Azure gpt-5 on 2026-10-30.** The bridge
+    /// reports audio and prediction counts in AdditionalCounts and no
+    /// reasoning count at all, so this returns null and the harness says "not
+    /// reported" rather than zero. Output tokens remain a sound proxy: a
+    /// boolean verdict costing 1,000-2,000 output tokens is almost entirely
+    /// reasoning, and the smoke check in eval/judge/SMOKE-CHECK.md uses that
+    /// rather than a figure the provider does not give us.
     public long? ReasoningTokens =>
         Verdicts
             .Select(v => v.AdditionalCounts?

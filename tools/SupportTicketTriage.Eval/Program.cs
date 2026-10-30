@@ -10,6 +10,7 @@ using SupportTicketTriage.Eval.Dataset;
 using SupportTicketTriage.Eval.Embedding;
 using SupportTicketTriage.Eval.Instrumentation;
 using SupportTicketTriage.Eval.Judging;
+using SupportTicketTriage.Eval.Metrics;
 using SupportTicketTriage.Eval.Pricing;
 using SupportTicketTriage.Eval.Reporting;
 using SupportTicketTriage.Infrastructure.Ai;
@@ -37,6 +38,81 @@ if (arguments.Has("help"))
 {
     Console.WriteLine(
         HarnessHelp.Text);
+    return 0;
+}
+
+// Judge an existing pair file and exit.
+//
+// Deliberately before the connection string is even read: this mode touches
+// no database, seeds nothing and regenerates nothing. That is the point -
+// generation is nondeterministic, so the only way several judge
+// configurations can be compared against one set of hand labels is for all of
+// them to judge the same committed drafts.
+if (arguments.Value("judge-pairs-from") is { } pairsPath)
+{
+    using var judgeOnlyLoggerFactory = LoggerFactory.Create(builder => builder
+        .SetMinimumLevel(LogLevel.Warning)
+        .AddSimpleConsole(options => options.SingleLine = true));
+
+    var judgeOnlyRecorder = new AiCallRecorder();
+    var effortOnly = ParseEffort(arguments.Value("judge-effort"));
+    var judgeOnly = BuildJudge(judgeOnlyRecorder, effortOnly);
+
+    if (judgeOnly is null)
+    {
+        Console.Error.WriteLine(
+            "No judge deployment configured. Set AzureOpenAi__JudgeDeployment (or "
+            + "AZURE_OPENAI_CHAT_DEPLOYMENT_STRONGER) to a stronger deployment than the drafting one.");
+        return 1;
+    }
+
+    var pairFile = await JudgePairFile.ReadAsync(pairsPath);
+    var selected = pairFile.Pairs.AsEnumerable();
+
+    if (arguments.Value("judge-limit") is { } limitText)
+    {
+        if (!int.TryParse(limitText, out var limit) || limit <= 0)
+        {
+            Console.Error.WriteLine($"--judge-limit '{limitText}' is not a positive integer.");
+            return 1;
+        }
+
+        selected = selected.Take(limit);
+    }
+
+    var toJudge = selected.ToList();
+
+    Console.WriteLine(
+        $"Judging {toJudge.Count} pairs from {pairsPath} with {judgeOnly.Deployment} "
+        + $"at reasoning effort {judgeOnly.Effort} (rubric {GroundednessPrompt.Version}).");
+
+    var judgedCases = new List<GroundednessCase>();
+
+    foreach (var pair in toJudge)
+    {
+        var sources = pair.CitedSources
+            .Select(source => new GroundednessPrompt.Source(source.TicketId, source.Resolution))
+            .ToList();
+
+        judgedCases.Add(await judgeOnly.JudgeAsync(pair.QueryId, pair.Draft, sources));
+    }
+
+    var verdictPath = arguments.Value("judge-verdicts")
+        ?? Path.Combine("eval", "judge", $"verdicts-{judgeOnly.Deployment}-{judgeOnly.Effort}.json");
+
+    await JudgeVerdictFile.WriteAsync(verdictPath, judgeOnly.Deployment, judgeOnly.Effort, judgedCases);
+
+    var score = GroundednessMetrics.Summarise(judgedCases);
+    var written = await JudgeVerdictFile.ReadAsync(verdictPath);
+
+    Console.WriteLine(
+        $"{score.Grounded} grounded, {score.Ungrounded} ungrounded, {score.Unjudged} unjudged.");
+    Console.WriteLine(
+        $"Tokens: {judgedCases.Sum(c => c.InputTokens ?? 0)} in, "
+        + $"{judgedCases.Sum(c => c.OutputTokens ?? 0)} out, "
+        + $"reasoning {written.ReasoningTokens?.ToString() ?? "not reported"}.");
+    Console.WriteLine($"Wrote {Path.GetFullPath(verdictPath)}.");
+
     return 0;
 }
 

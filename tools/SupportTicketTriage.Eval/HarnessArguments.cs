@@ -36,6 +36,8 @@ public sealed class HarnessArguments
             "judge-labels",
             "judge-verdicts",
             "judge-effort",
+            "judge-pairs-from",
+            "judge-limit",
         };
 
     private readonly Dictionary<string, string?> _values;
