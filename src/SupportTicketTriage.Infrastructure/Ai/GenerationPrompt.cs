@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 
 namespace SupportTicketTriage.Infrastructure.Ai;
@@ -64,6 +65,22 @@ public static class GenerationPrompt
 
         return builder.ToString();
     }
+
+    /// The prompt text with the per-request delimiter replaced by a fixed
+    /// placeholder, so the hash below identifies the wording rather than the
+    /// random marker.
+    private static string Canonical => System("{delimiter}");
+
+    /// The exact identity of this prompt's text.
+    ///
+    /// The version string is a label a human chooses and does not change when
+    /// wording does - judge-v2 was amended twice in one afternoon without a
+    /// bump, correctly, because no published figure depended on it. But then
+    /// nothing in a verdict file could say which text produced it, and two
+    /// runs an hour apart were silently incomparable. The hash is computed at
+    /// run time and recorded in provenance; the version stays the label.
+    public static string Sha256 =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Canonical))).ToLowerInvariant();
 
     public static string NewDelimiter() => EvidenceBlocks.NewDelimiter();
 }

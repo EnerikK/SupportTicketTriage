@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SupportTicketTriage.Infrastructure.Ai;
 
 namespace SupportTicketTriage.Eval.Judging;
 
@@ -30,6 +31,19 @@ public sealed record JudgeVerdict(
 public sealed record JudgeVerdictFile(
     string Model,
     string RubricVersion,
+    /// The exact rubric and generation-prompt text behind these verdicts.
+    ///
+    /// The version strings are labels a human chooses and do not move every
+    /// time the wording does; these do. judge-v2 was amended twice in one
+    /// afternoon without a bump - correctly, since no published figure
+    /// depended on it - and the cost was that two files an hour apart both
+    /// said "judge-v2" with no way to tell which text produced which.
+    ///
+    /// Nullable because the three v1 comparison artifacts were written before
+    /// this existed and genuinely have no hash. A non-nullable string would
+    /// deserialise those to null anyway and claim otherwise in the type.
+    string? RubricSha256,
+    string? GenerationPromptSha256,
     JudgeReasoningEffort Effort,
     DateTimeOffset RunAt,
     IReadOnlyList<JudgeVerdict> Verdicts)
@@ -61,6 +75,8 @@ public sealed record JudgeVerdictFile(
         var file = new JudgeVerdictFile(
             model,
             GroundednessPrompt.Version,
+            GroundednessPrompt.Sha256,
+            GenerationPrompt.Sha256,
             effort,
             DateTimeOffset.UtcNow,
             cases.Select(c => new JudgeVerdict(

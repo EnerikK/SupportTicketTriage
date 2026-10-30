@@ -1,7 +1,8 @@
 using System.Globalization;
+using SupportTicketTriage.Eval.Judging;
 using SupportTicketTriage.Eval.Pricing;
 using SupportTicketTriage.Eval.Reporting;
-using SupportTicketTriage.Eval.Judging;
+using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Eval.Metrics;
 
 namespace SupportTicketTriage.UnitTests;
@@ -237,7 +238,8 @@ public class McNemarTests
 public class JudgeComparisonReportTests
 {
     private static JudgeVerdictFile Verdicts(string model, JudgeReasoningEffort effort, params bool[] grounded) =>
-        new(model, GroundednessPrompt.Version, effort, DateTimeOffset.UnixEpoch,
+        new(model, GroundednessPrompt.Version, GroundednessPrompt.Sha256, GenerationPrompt.Sha256,
+            effort, DateTimeOffset.UnixEpoch,
             grounded.Select((g, i) => new JudgeVerdict(i.ToString(), g, null, 100, 200, null)).ToList());
 
     private static LabelProvenance Provenance() =>
