@@ -1,0 +1,74 @@
+{
+  "model": "gpt-5",
+  "rubricVersion": "judge-v1",
+  "effort": "Default",
+  "runAt": "2026-10-30T13:54:40.7256032+00:00",
+  "verdicts": [
+    {
+      "queryId": "q-duplicate-charge",
+      "grounded": false,
+      "unsupportedClaim": "placed a minute apart",
+      "inputTokens": 581,
+      "outputTokens": 1113,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-pii-heavy",
+      "grounded": false,
+      "unsupportedClaim": "often",
+      "inputTokens": 729,
+      "outputTokens": 1878,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-billing-auto-renewal-surprise",
+      "grounded": false,
+      "unsupportedClaim": "annual",
+      "inputTokens": 598,
+      "outputTokens": 1238,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-billing-charged-after-stopping",
+      "grounded": false,
+      "unsupportedClaim": "refund any payments",
+      "inputTokens": 673,
+      "outputTokens": 3416,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-billing-paperwork-for-expenses",
+      "grounded": false,
+      "unsupportedClaim": "last month",
+      "inputTokens": 524,
+      "outputTokens": 1303,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    }
+  ],
+  "reasoningTokens": null
+}

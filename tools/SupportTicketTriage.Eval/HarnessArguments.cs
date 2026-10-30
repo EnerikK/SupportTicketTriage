@@ -32,6 +32,12 @@ public sealed class HarnessArguments
             "write-baseline",
             "compare-baseline",
             "write-logic-baseline",
+            "export-judge-pairs",
+            "judge-labels",
+            "judge-verdicts",
+            "judge-effort",
+            "judge-pairs-from",
+            "judge-limit",
         };
 
     private readonly Dictionary<string, string?> _values;

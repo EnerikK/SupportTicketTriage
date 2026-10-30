@@ -36,6 +36,9 @@ public class EvaluationBaselineTests
             JudgeAgreement: null,
             JudgeModel: null,
             JudgeRubricVersion: null,
+            JudgeReasoningEffort: null,
+            LabelSha256: null,
+            LabelCommit: null,
             Calibration: [],
             Latency:
             [

@@ -1,19 +1,29 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "currency": "USD",
-  "retrievedOn": "2026-10-16",
   "source": "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/",
-  "verified": true,
+  "verified": false,
   "models": [
     {
       "model": "gpt-4.1-mini",
       "inputPerMillionTokens": 0.40,
-      "outputPerMillionTokens": 1.60
+      "outputPerMillionTokens": 1.60,
+      "retrievedOn": "2026-10-16",
+      "deploymentType": "GlobalStandard"
+    },
+    {
+      "model": "gpt-5",
+      "inputPerMillionTokens": 1.25,
+      "outputPerMillionTokens": 10.00,
+      "retrievedOn": "2026-10-30",
+      "deploymentType": "GlobalStandard"
     },
     {
       "model": "text-embedding-3-small",
       "inputPerMillionTokens": 0.02,
-      "outputPerMillionTokens": null
+      "outputPerMillionTokens": null,
+      "retrievedOn": "2026-10-16",
+      "deploymentType": "GlobalStandard"
     }
   ]
 }

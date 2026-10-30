@@ -54,7 +54,9 @@ public sealed class EvalRunner(
         EvalDataset dataset,
         bool skipGeneration = false,
         string? exportJudgePairsTo = null,
+        string? exportJudgeVerdictsTo = null,
         IReadOnlyDictionary<string, bool>? humanLabels = null,
+        LabelProvenance? labelProvenance = null,
         CancellationToken ct = default)
     {
         var ticketIds = await SeedAsync(dataset, ct);
@@ -91,6 +93,12 @@ public sealed class EvalRunner(
                 {
                     var judged = await JudgeAsync(generation.Pairs, ct);
                     groundedness = GroundednessMetrics.Summarise(judged);
+
+                    if (exportJudgeVerdictsTo is not null)
+                    {
+                        await JudgeVerdictFile.WriteAsync(
+                            exportJudgeVerdictsTo, judge.Deployment, judge.Effort, judged, ct);
+                    }
 
                     // Agreement only when labels exist. ADR-018 makes the
                     // figure a precondition for quoting the score, and the
@@ -130,6 +138,9 @@ public sealed class EvalRunner(
             JudgeAgreement: agreement,
             JudgeModel: judge?.Deployment,
             JudgeRubricVersion: judge is null ? null : GroundednessPrompt.Version,
+            JudgeReasoningEffort: judge?.Effort.ToString(),
+            LabelSha256: labelProvenance?.ContentSha256,
+            LabelCommit: labelProvenance?.LastCommit,
             Calibration: calibration,
             Latency: LatencyMetrics.Summarise(recorder.Calls),
             // Drafts are the denominator for generation cost, and the citation
@@ -143,6 +154,7 @@ public sealed class EvalRunner(
                     pricing,
                     embeddingModel,
                     chat?.ChatModel,
+                    judge?.Deployment,
                     dataset.Tickets.Count,
                     citations?.Attempted ?? 0),
             TraitCoverage: dataset.Tickets

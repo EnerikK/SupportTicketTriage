@@ -41,6 +41,9 @@ public class BaselineComparisonTests
             JudgeAgreement: null,
             JudgeModel: null,
             JudgeRubricVersion: null,
+            JudgeReasoningEffort: null,
+            LabelSha256: null,
+            LabelCommit: null,
             Calibration: [],
             Latency: [],
             Cost: costTotal is null

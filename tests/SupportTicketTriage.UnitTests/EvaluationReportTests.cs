@@ -35,6 +35,9 @@ public class EvaluationReportTests
             JudgeAgreement: null,
             JudgeModel: null,
             JudgeRubricVersion: null,
+            JudgeReasoningEffort: null,
+            LabelSha256: null,
+            LabelCommit: null,
             Calibration: [],
             Latency: [],
             Cost: null,
@@ -177,7 +180,7 @@ public class EvaluationReportTests
             PerStage:
             [
                 new StageCost(
-                    AiStage.Classification, "gpt-4.1-mini", 1_234_567, 89_012, 1.2345m, UnpricedCalls: 0),
+                    AiStage.Classification, "gpt-4.1-mini", 1_234_567, 89_012, 1.2345m, UnpricedCalls: 0, null, null),
             ],
             Total: 1.2345m,
             PerIngestedTicket: 0.0041m,

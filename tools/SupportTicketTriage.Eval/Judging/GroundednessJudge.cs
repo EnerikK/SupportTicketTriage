@@ -14,7 +14,16 @@ namespace SupportTicketTriage.Eval.Judging;
 public sealed record GroundednessCase(
     string QueryId,
     bool? Grounded,
-    string? UnsupportedClaim);
+    string? UnsupportedClaim,
+    /// What the call actually used. Reasoning tokens are the evidence that a
+    /// configured effort reached the API at all: `RawRepresentationFactory`
+    /// hands the provider an options object it is free to ignore, and an
+    /// ignored setting looks exactly like a working one from the verdict
+    /// alone. `AdditionalCounts` is recorded wholesale rather than reduced to
+    /// a hardcoded key, so whatever the provider reports survives a rename.
+    long? InputTokens = null,
+    long? OutputTokens = null,
+    IReadOnlyDictionary<string, long>? AdditionalCounts = null);
 
 /// Scores drafts for groundedness using a second, stronger chat deployment.
 ///
@@ -23,9 +32,14 @@ public sealed record GroundednessCase(
 /// draft. The separation does not remove bias - both models share a training
 /// lineage - it removes the most obvious objection, and that residual belongs
 /// in the README beside the number.
-public sealed class GroundednessJudge(IChatClient judge, string deployment)
+public sealed class GroundednessJudge(
+    IChatClient judge,
+    string deployment,
+    JudgeReasoningEffort effort = JudgeReasoningEffort.Default)
 {
     public string Deployment { get; } = deployment;
+
+    public JudgeReasoningEffort Effort { get; } = effort;
 
     private sealed record Verdict(
         [property: JsonPropertyName("grounded")] bool Grounded,
@@ -57,13 +71,20 @@ public sealed class GroundednessJudge(IChatClient judge, string deployment)
                     new ChatMessage(ChatRole.System, GroundednessPrompt.System(delimiter)),
                     new ChatMessage(ChatRole.User, GroundednessPrompt.User(delimiter, draftText, citedSources)),
                 ],
-                cancellationToken: ct);
+                JudgeChatOptions.For(Effort),
+                ct);
 
             var verdict = Parse(response.Text);
+            var usage = response.Usage;
+            var extra = usage?.AdditionalCounts?.ToDictionary(c => c.Key, c => c.Value);
 
             return verdict is null
-                ? new GroundednessCase(queryId, Grounded: null, "The judge response could not be read.")
-                : new GroundednessCase(queryId, verdict.Grounded, Blank(verdict.UnsupportedClaim));
+                ? new GroundednessCase(
+                    queryId, Grounded: null, "The judge response could not be read.",
+                    usage?.InputTokenCount, usage?.OutputTokenCount, extra)
+                : new GroundednessCase(
+                    queryId, verdict.Grounded, Blank(verdict.UnsupportedClaim),
+                    usage?.InputTokenCount, usage?.OutputTokenCount, extra);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

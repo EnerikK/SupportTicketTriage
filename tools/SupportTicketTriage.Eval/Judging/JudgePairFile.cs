@@ -63,6 +63,29 @@ public sealed record JudgePairFile(
         await File.WriteAllTextAsync(path, JsonSerializer.Serialize(file, Json), ct);
     }
 
+    /// Reads the pairs themselves, for judging without regenerating them.
+    ///
+    /// This is what makes a multi-configuration comparison possible at all.
+    /// Generation is nondeterministic, so re-running the pipeline per
+    /// configuration produces *different drafts* - and the hand labels are
+    /// tied to specific draft text. Judging regenerated drafts against labels
+    /// written for earlier ones compares nothing, and no artifact in the run
+    /// would reveal it. Every configuration judges this file.
+    public static async Task<JudgePairFile> ReadAsync(string path, CancellationToken ct = default)
+    {
+        var file = JsonSerializer.Deserialize<JudgePairFile>(await File.ReadAllTextAsync(path, ct), Json)
+            ?? throw new InvalidOperationException($"'{path}' is not a judge pair file.");
+
+        if (file.RubricVersion != GroundednessPrompt.Version)
+        {
+            throw new InvalidOperationException(
+                $"'{path}' was exported under rubric {file.RubricVersion}, but this harness runs "
+                + $"{GroundednessPrompt.Version}.");
+        }
+
+        return file;
+    }
+
     /// Reads the labels a human filled in.
     ///
     /// Refuses a file written under a different rubric version. An agreement

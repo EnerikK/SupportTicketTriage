@@ -75,6 +75,17 @@ public sealed record EvaluationReport(
     JudgeAgreement? JudgeAgreement,
     string? JudgeModel,
     string? JudgeRubricVersion,
+    /// The effort the judge was configured with, including "Default" for
+    /// "we did not set it". Recorded because two runs of the same model at
+    /// different efforts are different judges, and a comparison table that
+    /// cannot say which is which proves nothing.
+    string? JudgeReasoningEffort,
+    /// The labels this agreement figure was measured against, identified by
+    /// content and by the commit that last touched them. Recorded so a reader
+    /// can check from the repository that the labels predate the verdicts,
+    /// rather than taking the claim on trust.
+    string? LabelSha256,
+    string? LabelCommit,
     IReadOnlyList<GateCalibration> Calibration,
     IReadOnlyList<StageLatency> Latency,
     /// Null when the run could not be priced at all - no pricing file was
@@ -252,9 +263,10 @@ public sealed record EvaluationReport(
 
         if (JudgeAgreement is null)
         {
-            md.AppendLine(CultureInfo.InvariantCulture,
+            md.AppendLine(
                 $"_Withheld: {Groundedness.Judged} drafts were judged by `{JudgeModel}` under rubric "
-                + $"`{JudgeRubricVersion}`, but the judge has not been validated against hand labels._");
+                + $"`{JudgeRubricVersion}` at reasoning effort `{JudgeReasoningEffort}`, but the judge "
+                + "has not been validated against hand labels._");
             md.AppendLine();
             md.AppendLine(
                 "ADR-018 makes the agreement figure a precondition for quoting the score, so the score is "
@@ -269,13 +281,18 @@ public sealed record EvaluationReport(
         md.AppendLine(CultureInfo.InvariantCulture,
             $"- {Groundedness.Grounded} grounded, {Groundedness.Ungrounded} ungrounded, {Groundedness.Unjudged} unjudged");
         md.AppendLine(CultureInfo.InvariantCulture,
-            $"- Judge: `{JudgeModel}`, rubric `{JudgeRubricVersion}`");
+            $"- Judge: `{JudgeModel}`, rubric `{JudgeRubricVersion}`, reasoning effort `{JudgeReasoningEffort}`");
         md.AppendLine();
         md.AppendLine(CultureInfo.InvariantCulture,
             $"- **Judge agreement with hand labels: {JudgeAgreement.RawAgreement * 100:F1}%** over "
             + $"{JudgeAgreement.Compared} pairs");
         md.AppendLine(CultureInfo.InvariantCulture,
             $"- **Cohen's kappa: {JudgeAgreement.Kappa:F2}**");
+        md.AppendLine(CultureInfo.InvariantCulture,
+            $"- 95% Wilson interval on agreement: {JudgeAgreement.AgreementLower * 100:F1}% to "
+            + $"{JudgeAgreement.AgreementUpper * 100:F1}%");
+        md.AppendLine(
+            $"- Labels: `{LabelSha256?[..12]}`, committed in `{LabelCommit?[..8]}`");
         md.AppendLine(CultureInfo.InvariantCulture,
             $"- Agreed grounded {JudgeAgreement.BothGrounded}, agreed ungrounded {JudgeAgreement.BothUngrounded}; "
             + $"judge said grounded where the human did not {JudgeAgreement.JudgeGroundedHumanNot}, "

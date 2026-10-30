@@ -1,0 +1,74 @@
+{
+  "model": "gpt-5",
+  "rubricVersion": "judge-v1",
+  "effort": "Low",
+  "runAt": "2026-10-30T13:55:30.235908+00:00",
+  "verdicts": [
+    {
+      "queryId": "q-duplicate-charge",
+      "grounded": false,
+      "unsupportedClaim": "placed a minute apart",
+      "inputTokens": 566,
+      "outputTokens": 729,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-pii-heavy",
+      "grounded": false,
+      "unsupportedClaim": "is often because one of the charges is an authorisation hold",
+      "inputTokens": 750,
+      "outputTokens": 737,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-billing-auto-renewal-surprise",
+      "grounded": false,
+      "unsupportedClaim": "we can look into your account",
+      "inputTokens": 608,
+      "outputTokens": 795,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-billing-charged-after-stopping",
+      "grounded": false,
+      "unsupportedClaim": "refund any payments taken since your intended cancellation date",
+      "inputTokens": 701,
+      "outputTokens": 862,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-billing-paperwork-for-expenses",
+      "grounded": false,
+      "unsupportedClaim": "can be used to claim the payment back at work",
+      "inputTokens": 529,
+      "outputTokens": 223,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    }
+  ],
+  "reasoningTokens": null
+}
