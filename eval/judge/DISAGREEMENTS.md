@@ -9,20 +9,88 @@ paraphrase the customer rather than quoting them.
 
 ## A. Labels say grounded, `gpt-5` at default effort says not (20 cases)
 
-| category | count | share |
-|---|---|---|
-| ticket restatement | 11 | 55% |
-| genuine inference | 5 | 25% |
-| other | 2 | 10% |
-| outcome claim | 2 | 10% |
+**Recategorised 2026-10-30.** The first pass categorised each case by the phrase the judge
+flagged, which inherits the shortest-quote blind spot: the judge returns the shortest
+unsupported quote, which is often trivial while the serious problem sits elsewhere in the
+draft. Each case below is now assigned its **most serious problem**, one category only.
+The first pass also double-counted two cases and summed to 23.
 
-**11 of 20 are ticket restatement.** The judge never sees the ticket, by design, so a draft
-that echoes the customer account contains claims unsupported *by the sources*. The judge is
-applying the rubric correctly. The rubric is wrong.
+| category | count | whose error | cases |
+|---|---|---|---|
+| ticket restatement | 6 | rubric | A7, A13, A14, A15, A16, A18 |
+| **precedent-as-fact** | **5** | **labels** | A3, A9, A12, A19, A20 |
+| judge lacked the evidence | 3 | prompt | A1, A4, A6 |
+| hedged or immaterial | 3 | rubric | A2, A10, A11 |
+| judge error | 2 | judge | A5, A17 |
+| not an assertion | 1 | judge | A8 |
 
-The other 9 are not a rubric artefact and would be flagged under any rubric that excludes
-unsupported assertion: 5 inferences the sources do not license, 2 outcome claims, and 2 that
-look like judge error or are not assertions at all.
+**12 of 20 are rubric or prompt defects** - six ticket restatements, three where the judge
+was never shown the evidence the claim rests on, and three where the draft hedged or the
+claim was immaterial.
+
+**Three are judge-side**: A5 flags `codes are tied`, which is verbatim in the cited
+resolution; A17 flags `reference number` where the source says "a reference"; A8 flags a
+recommendation to check something, which asserts nothing.
+
+**Five are label errors.** A3, A9, A12, A19 and A20 assert a precedent's circumstances or
+actions as this customer's facts - "the additional seats were added on different days",
+"a printed copy has been posted to you". The judge's verdict was right in each; only its
+quote was trivial. These were labelled grounded and should not have been.
+
+### Two kinds of flip, kept apart
+
+When `judge-v2` reverses a v1 verdict, the reason matters and the two reasons are not
+the same kind of thing.
+
+**Label errors under any reading** - wrong under `judge-v1` as much as `judge-v2`:
+
+| case | what the draft did |
+|---|---|
+| A3 | "the additional seats were added on different days" - the precedent's circumstance as this customer's fact |
+| A9 | "your endpoint returned server errors for twenty-four consecutive hours", "the retained events were replayed" |
+| A12 | "your order included an oversized item" |
+| A20 | "a printed copy has been posted to you" |
+| B1 | "in such cases, the discount is applied retrospectively" from a single past-tense resolution |
+
+Five cases. The judge's verdict was right in each; only its quote was trivial, which is
+why the first categorisation pass filed four of them under the wrong heading.
+
+**Rule changes introduced by `judge-v2`** - the v1 labels were defensible under the v1
+rubric, which said nothing about any of this:
+
+| case | rule that moved it |
+|---|---|
+| A2 | offer versus promise: "we can assist in... refunding any payments taken since your intended cancellation date" |
+| A6 | evidentiary status: the causal link between wrong attempts and the lock is in no resolution |
+| A8 | offer versus promise: promises a fix and its timing |
+| A15 | generality test: a conditional asserts its consequent as a general rule |
+| A16 | attribution: "the item is perfectly good" bears on eligibility |
+| B6 | materiality: "caused confusion" asserts no cause of the reported problem |
+
+Six cases. **These are not labelling mistakes.** Treating them as such would make the v1
+labeller look careless for applying the rubric they were given, and would hide that the
+rubric was the thing that changed.
+
+### The evidence gap behind A1, A4 and A6
+
+The generation prompt gives the writer each source's **ticket body**; the judge prompt gave
+it only the **resolution**. The judge was scoring against strictly less evidence than the
+writer had, so any claim resting on a source's body or subject was unsupported by
+construction.
+
+- A1 flags `annual`; the source's subject is "No reminder before the **annual** charge".
+- A4 flags `slightly higher`; the source's subject is "Charged **slightly** more than the price shown".
+- A6 flags `multiple incorrect password attempts`; the source's body is "I typed my password wrong a few times".
+
+All three were correctly labelled grounded, and the judge could not have agreed.
+
+### A19 is recorded as possibly conflated, not confirmed
+
+The draft merges care advice from four cited sources - dishwasher temperature, machine
+washing at thirty degrees, a damp cloth, and battery storage. These read as different
+products, but the dataset carries **no product identifier of any kind** (no SKU, model
+number or item code), so the data cannot establish it. Recorded as possibly conflated.
+
 
 ---
 
@@ -523,7 +591,14 @@ practice, a prevalence claim, a guarantee, or a forecast about this customer. Th
 inverse failure to section A: where `gpt-5` at default effort is noisy about restatement,
 `gpt-5-mini` is lenient about scope expansion.
 
-**`gpt-5` at default effort caught 6 of these 7.** The two configurations fail in opposite
+**`gpt-5` at default effort caught 6 of these 7 disagreements, and 5 of the 6
+over-generalisations.** An earlier draft of this file said "6 of 7", which conflated the
+two: `q-billing-promo-ignored` is an over-generalisation that gpt-5 also called grounded,
+and in `q-shipping-only-some-items` its flagged phrase points at the added causal claim
+rather than at any scope expansion. The finding stands - gpt-5-mini caught none of the six -
+but the figure is 5 of 6.
+
+The two configurations fail in opposite
 directions, and a single agreement number hides it: the configuration that scores worse
 overall is better at catching the failure groundedness exists to catch.
 
