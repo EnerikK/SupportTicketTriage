@@ -1,5 +1,6 @@
 using Microsoft.Extensions.AI;
 using SupportTicketTriage.Eval.Judging;
+using SupportTicketTriage.Infrastructure.Ai;
 
 namespace SupportTicketTriage.IntegrationTests;
 
@@ -10,9 +11,14 @@ namespace SupportTicketTriage.IntegrationTests;
 /// deployment.
 public class GroundednessJudgeTests
 {
-    private static readonly List<GroundednessPrompt.Source> OneSource =
+    private const string Ticket = "Charged twice\n\nMy card shows two charges for one order.";
+
+    private static readonly List<EvidenceSource> OneSource =
     [
-        new(Guid.CreateVersion7(), "The second charge was an authorisation hold and drops off within five days."),
+        new(Guid.CreateVersion7(),
+            "Charged twice for the same order",
+            "My statement shows two identical charges for one order.",
+            "The second charge was an authorisation hold and drops off within five days."),
     ];
 
     private static GroundednessJudge Judge(FakeChatClient chat) => new(chat, "test-judge-model");
@@ -22,10 +28,10 @@ public class GroundednessJudgeTests
     {
         var chat = new FakeChatClient
         {
-            ResponseText = """{"grounded": true, "unsupported_claim": ""}""",
+            ResponseText = """{"grounded": true, "unsupported_claims": []}""",
         };
 
-        var result = await Judge(chat).JudgeAsync("q-1", "A draft.", OneSource);
+        var result = await Judge(chat).JudgeAsync("q-1", "A draft.", Ticket, OneSource);
 
         Assert.True(result.Grounded);
         Assert.Null(result.UnsupportedClaim);
@@ -36,13 +42,18 @@ public class GroundednessJudgeTests
     {
         var chat = new FakeChatClient
         {
-            ResponseText = """{"grounded": false, "unsupported_claim": "which improved it significantly"}""",
+            ResponseText =
+                """{"grounded": false, "unsupported_claims": ["which improved it significantly", "by a day"]}""",
         };
 
-        var result = await Judge(chat).JudgeAsync("q-1", "A draft.", OneSource);
+        var result = await Judge(chat).JudgeAsync("q-1", "A draft.", Ticket, OneSource);
 
         Assert.False(result.Grounded);
-        Assert.Equal("which improved it significantly", result.UnsupportedClaim);
+
+        // Every claim is kept, in the judge's own severity order. v1 returned
+        // only the shortest quote, which repeatedly pointed at something
+        // trivial while the serious problem sat elsewhere in the draft.
+        Assert.Equal("which improved it significantly | by a day", result.UnsupportedClaim);
     }
 
     /// Chat models fence JSON often enough that treating it as a failure would
@@ -55,7 +66,7 @@ public class GroundednessJudgeTests
             ResponseText = "```json\n{\"grounded\": true, \"unsupported_claim\": \"\"}\n```",
         };
 
-        Assert.True((await Judge(chat).JudgeAsync("q-1", "A draft.", OneSource)).Grounded);
+        Assert.True((await Judge(chat).JudgeAsync("q-1", "A draft.", Ticket, OneSource)).Grounded);
     }
 
     /// Unjudged, not ungrounded. The distinction is the whole reason Grounded
@@ -66,7 +77,7 @@ public class GroundednessJudgeTests
     {
         var chat = new FakeChatClient { ResponseText = "I think it looks fine to me." };
 
-        var result = await Judge(chat).JudgeAsync("q-1", "A draft.", OneSource);
+        var result = await Judge(chat).JudgeAsync("q-1", "A draft.", Ticket, OneSource);
 
         Assert.Null(result.Grounded);
         Assert.NotNull(result.UnsupportedClaim);
@@ -77,7 +88,7 @@ public class GroundednessJudgeTests
     {
         var chat = new FakeChatClient { ShouldThrow = true };
 
-        Assert.Null((await Judge(chat).JudgeAsync("q-1", "A draft.", OneSource)).Grounded);
+        Assert.Null((await Judge(chat).JudgeAsync("q-1", "A draft.", Ticket, OneSource)).Grounded);
     }
 
     /// Arithmetic, not judgement: a draft citing nothing has no source that
@@ -88,7 +99,7 @@ public class GroundednessJudgeTests
     {
         var chat = new FakeChatClient();
 
-        var result = await Judge(chat).JudgeAsync("q-1", "A draft.", []);
+        var result = await Judge(chat).JudgeAsync("q-1", "A draft.", Ticket, []);
 
         Assert.False(result.Grounded);
         Assert.Empty(chat.Received);
@@ -103,10 +114,10 @@ public class GroundednessJudgeTests
     {
         var chat = new FakeChatClient
         {
-            ResponseText = """{"grounded": true, "unsupported_claim": ""}""",
+            ResponseText = """{"grounded": true, "unsupported_claims": []}""",
         };
 
-        await Judge(chat).JudgeAsync("q-1", "Distinctive draft sentence.", OneSource);
+        await Judge(chat).JudgeAsync("q-1", "Distinctive draft sentence.", Ticket, OneSource);
 
         var messages = Assert.Single(chat.Received);
         var system = Assert.Single(messages, m => m.Role == ChatRole.System);
@@ -117,21 +128,22 @@ public class GroundednessJudgeTests
         Assert.DoesNotContain("Distinctive draft sentence.", system.Text);
     }
 
-    /// Groundedness is a relation between a draft and its sources. Showing the
-    /// judge the original ticket would invite it to reward a reply that
-    /// answers the question - relevance, not groundedness - which would pull
-    /// the score up on exactly the drafts that answer confidently from
-    /// nothing.
+    /// Reversed in judge-v2. v1 withheld the ticket to stop the judge
+    /// rewarding relevance, and the cost was that every restatement of the
+    /// customer's own words was unsupported by construction - six of twenty
+    /// disagreements in the first comparison run. The protection now comes
+    /// from the rubric labelling the ticket an account rather than from the
+    /// judge not seeing it.
     [Fact]
-    public async Task TheOriginalTicket_IsNeverSentToTheJudge()
+    public async Task TheOriginalTicket_IsShownToTheJudgeAsAnAccount()
     {
         var chat = new FakeChatClient
         {
-            ResponseText = """{"grounded": true, "unsupported_claim": ""}""",
+            ResponseText = """{"grounded": true, "unsupported_claims": []}""",
         };
 
-        await Judge(chat).JudgeAsync("q-1", "A draft.", OneSource);
+        await Judge(chat).JudgeAsync("q-1", "A draft.", Ticket, OneSource);
 
-        Assert.DoesNotContain("INCOMING TICKET", chat.AllText);
+        Assert.Contains("INCOMING TICKET", chat.AllText);
     }
 }

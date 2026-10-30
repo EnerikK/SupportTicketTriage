@@ -322,7 +322,12 @@ public sealed class EvalRunner(
             // validity already counts.
             if (result.Draft is { CitationsValid: true })
             {
-                pairs.Add(await ToJudgePairAsync(query.Id, ticket.Subject, result.Draft, ct));
+                pairs.Add(await ToJudgePairAsync(
+                    query.Id,
+                    ticket.Subject,
+                    Redacted(ticket),
+                    result.Draft,
+                    ct));
             }
         }
 
@@ -347,14 +352,20 @@ public sealed class EvalRunner(
         foreach (var pair in pairs)
         {
             var sources = pair.CitedSources
-                .Select(s => new GroundednessPrompt.Source(s.TicketId, s.Resolution))
+                .Select(s => new EvidenceSource(s.TicketId, s.Subject, s.RedactedText, s.Resolution))
                 .ToList();
 
-            judged.Add(await judge!.JudgeAsync(pair.QueryId, pair.Draft, sources, ct));
+            judged.Add(await judge!.JudgeAsync(
+                pair.QueryId, pair.Draft, pair.RedactedTicket, sources, ct));
         }
 
         return judged;
     }
+
+    /// The same string the writer was given, built the same way, so the
+    /// judge and the labeller read exactly what the draft answered.
+    private static string Redacted(Ticket ticket) =>
+        new PiiRedactor().Redact($"{ticket.Subject}\n\n{ticket.Body}");
 
     /// Pairs a draft with the resolutions it cited - the same text the model
     /// was shown, read back from the stored draft's own source rows rather
@@ -363,19 +374,34 @@ public sealed class EvalRunner(
     private async Task<JudgePair> ToJudgePairAsync(
         string queryId,
         string ticketSubject,
+        string redactedTicket,
         TicketDraft draft,
         CancellationToken ct)
     {
         var citedIds = draft.Sources.Where(s => s.WasCited).Select(s => s.SourceTicketId).ToList();
 
-        var sources = await db.Tickets
+        var redactor = new PiiRedactor();
+
+        var rows = await db.Tickets
             .Where(t => citedIds.Contains(t.Id))
-            .Select(t => new JudgeSource(t.Id, t.Subject, t.Resolution!))
+            .Select(t => new { t.Id, t.Subject, t.Body, t.Resolution })
             .ToListAsync(ct);
+
+        // Redacted here for the same reason the generation prompt redacts:
+        // this text is what a judge and a labeller will read, and the AI
+        // boundary applies to both.
+        var sources = rows
+            .Select(r => new JudgeSource(
+                r.Id,
+                redactor.Redact(r.Subject),
+                redactor.Redact(r.Body),
+                redactor.Redact(r.Resolution!)))
+            .ToList();
 
         return new JudgePair(
             queryId,
             ticketSubject,
+            redactedTicket,
             draft.DraftText,
             sources,
             Grounded: null,

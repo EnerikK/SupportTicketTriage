@@ -161,10 +161,12 @@ if (arguments.Value("judge-pairs-from") is { } pairsPath)
     foreach (var pair in toJudge)
     {
         var sources = pair.CitedSources
-            .Select(source => new GroundednessPrompt.Source(source.TicketId, source.Resolution))
+            .Select(source => new EvidenceSource(
+                source.TicketId, source.Subject, source.RedactedText, source.Resolution))
             .ToList();
 
-        judgedCases.Add(await judgeOnly.JudgeAsync(pair.QueryId, pair.Draft, sources));
+        judgedCases.Add(await judgeOnly.JudgeAsync(
+            pair.QueryId, pair.Draft, pair.RedactedTicket, sources));
     }
 
     var verdictPath = arguments.Value("judge-verdicts")

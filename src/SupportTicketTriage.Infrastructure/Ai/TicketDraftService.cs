@@ -86,9 +86,14 @@ public sealed class TicketDraftService(
         // in the system, but they become grounding context here - and the
         // specification allows only redacted content to reach the model. The
         // retrieved body text is already redacted; the resolution is not.
+        // Subject is redacted here too: it is customer-written and reaches the
+        // model as evidence, so the same boundary applies to it as to the body.
         var sources = similar
-            .Select(s => new GenerationPrompt.Source(
-                s.TicketId, s.RedactedText, redactor.Redact(s.Resolution)))
+            .Select(s => new EvidenceSource(
+                s.TicketId,
+                redactor.Redact(s.Subject),
+                s.RedactedText,
+                redactor.Redact(s.Resolution)))
             .ToList();
 
         var retrievalSet = similar
