@@ -44,6 +44,11 @@ public static class HarnessHelp
           --judge-effort <level>  default|low|medium|high. Reasoning effort for
                                   the judge. Recorded in run provenance, because
                                   the same model at two efforts is two judges
+          --compare-judges <list> Comma-separated verdict files. Builds the
+                                  comparison table from committed artifacts and
+                                  exits; the first file is the baseline every
+                                  other is tested against. Requires
+                                  --judge-labels
           --judge-labels <path>   Read hand labels back and report the judge's
                                   agreement and Cohen's kappa. Without this the
                                   groundedness score is withheld rather than

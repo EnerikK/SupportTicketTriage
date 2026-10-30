@@ -41,6 +41,76 @@ if (arguments.Has("help"))
     return 0;
 }
 
+// Build the judge comparison table from committed artifacts and exit.
+//
+// Reads verdict files rather than judging anything, so the table is
+// reproducible from what is in the repository. The numbers were computed in
+// a shell once; a shell is not an artifact, and a table nobody can
+// regenerate is a claim rather than a result.
+if (arguments.Value("compare-judges") is { } verdictList)
+{
+    var labelsForComparison = arguments.Value("judge-labels");
+
+    if (labelsForComparison is null)
+    {
+        Console.Error.WriteLine("--compare-judges also needs --judge-labels.");
+        return 1;
+    }
+
+    // Same guard as a judging run: an agreement figure is only evidence if
+    // the labels demonstrably predate the verdicts being compared.
+    var comparisonProvenance = LabelProvenance.For(labelsForComparison);
+    var comparisonLabels = await JudgePairFile.ReadLabelsAsync(labelsForComparison);
+
+    var files = new List<JudgeVerdictFile>();
+
+    foreach (var path in verdictList.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+        files.Add(await JudgeVerdictFile.ReadAsync(path));
+    }
+
+    if (files.Count < 2)
+    {
+        Console.Error.WriteLine("--compare-judges needs at least two verdict files to compare.");
+        return 1;
+    }
+
+    // Comparing across rubrics would produce a table whose rows answered
+    // different questions, and nothing in it would say so.
+    var rubrics = files.Select(f => f.RubricVersion).Distinct().ToList();
+
+    if (rubrics.Count > 1)
+    {
+        Console.Error.WriteLine(
+            $"Verdict files span rubrics {string.Join(", ", rubrics)}. A comparison across rubrics "
+            + "compares answers to different questions.");
+        return 1;
+    }
+
+    ModelPricing? comparisonPricing = null;
+    var comparisonPricingPath = arguments.Value("pricing")
+        ?? Path.Combine("eval", "pricing", "model-pricing.json");
+
+    if (File.Exists(comparisonPricingPath))
+    {
+        comparisonPricing = await ModelPricing.LoadAsync(comparisonPricingPath);
+    }
+
+    var comparison = JudgeComparisonReport.Build(
+        comparisonProvenance, comparisonLabels, files, comparisonPricing);
+
+    var comparisonOut = arguments.Value("output") ?? Path.Combine("eval", "judge");
+    Directory.CreateDirectory(comparisonOut);
+    var comparisonPath = Path.Combine(comparisonOut, "COMPARISON.md");
+
+    await File.WriteAllTextAsync(comparisonPath, comparison.ToMarkdown());
+
+    Console.WriteLine(comparison.ToMarkdown());
+    Console.WriteLine($"Wrote {Path.GetFullPath(comparisonPath)}.");
+
+    return 0;
+}
+
 // Judge an existing pair file and exit.
 //
 // Deliberately before the connection string is even read: this mode touches
