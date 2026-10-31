@@ -6,7 +6,7 @@ An incoming ticket is classified, matched against resolved tickets by vector sim
 
 It is built to demonstrate the parts of an LLM-backed system that are usually skipped: measured retrieval quality, guardrails that hold against a hostile model, and a documented account of what has and has not been proven. Features were cut before any of that was.
 
-**Status:** feature-complete through grounded generation, human review and the React review UI, and exercised end to end against a live Azure OpenAI deployment (see [Verified end to end](#verified-end-to-end)). Evaluation currently covers retrieval only — see [What has actually been measured](#what-has-actually-been-measured), which is deliberately blunt about what carries no number.
+**Status:** feature-complete through grounded generation, human review and the React review UI, and exercised end to end against a live Azure OpenAI deployment (see [Verified end to end](#verified-end-to-end)). Evaluation covers retrieval, classification, citation validity, latency and cost. Groundedness is the one quantity still carrying no number, and the [judge built to measure it](#the-groundedness-judge-and-why-it-still-has-no-number) is deliberately unpublished until it is validated — see [What has actually been measured](#what-has-actually-been-measured), which is blunt about the difference.
 
 ---
 
@@ -171,7 +171,23 @@ A stage where any call fails to report usage is reported as unpriced rather than
 
 ### What still carries no number
 
-**Groundedness is not measured.** There is **no groundedness judge and therefore no judge-agreement figure** — when there is one, the agreement against hand-labelled pairs will be published next to the score, because for an LLM-as-judge metric the agreement number is worth more than the score.
+**Groundedness.** It is the only one left, and the judge that measures it is built — which makes the absence of a number a choice rather than a gap.
+
+### The groundedness judge, and why it still has no number
+
+An LLM-as-judge metric is only worth the agreement figure behind it, so the agreement against hand-labelled pairs is a **precondition for quoting the score at all**, not a footnote beside it. That figure does not exist yet, so neither does the score.
+
+The judge runs on a second, stronger deployment than the one that writes the drafts; a judge deployment equal to the drafting deployment throws rather than quietly producing a plausible number with a structural bias nobody can see. Labels are hand-made: a model labelling its own judge would measure two models agreeing with each other.
+
+**What the first comparison run actually found was a bug in the measurement, not in the drafts.** The judge was shown only each precedent's resolution while the writer also saw its subject and body, and it was never shown the incoming ticket at all. So it scored drafts against strictly less evidence than they were given, and any reply restating the customer's own words was unsupported by construction. Across 27 disagreements between the judge and a human labeller, most were that asymmetry rather than a judgement.
+
+The writer and the judge are now held to **one specification**: the rules live once in `PrecedentRules.cs`, interpolated verbatim into both prompts, and both render evidence through `EvidenceBlocks.cs`. A test asserts the judge's evidence is never a subset of the generator's. Evidence is labelled by who wrote it — `ACCOUNT` for anything a customer said, `RESOLUTION` for what an agent did — and only the second establishes facts, which is what lets the judge tell restatement from assertion. Prompts are `draft-v2` and `judge-v2`.
+
+Each verdict file records a **SHA-256 of the exact prompt text** that produced it. A version string is a label a human chooses and does not move every time wording does; the hash does. Without it two runs an hour apart under the same label are indistinguishable after the fact.
+
+`--dev-check` runs the judge against verdicts derived by hand beforehand and prints mismatches rather than a score, because those pairs *produced* the rules and any number computed on them measures how well the wording was fitted to its own examples.
+
+**The open blocker is honest and awkward:** every query in the dataset capable of producing a citable draft is already in that development set, so there is no held-out material to validate against. Closing it needs new query tickets, not another run. Working notes are in [`eval/judge/`](eval/judge/).
 
 ### The regression gate
 
@@ -197,7 +213,17 @@ CI compares each run against a committed baseline and fails on regression beyond
 
 Classification is the loosest gate because **nothing downstream reads the category**: the generation prompt never mentions it, retrieval doesn't use it, and the confidence gate compares the self-reported *score* rather than the label. A wrong category changes a label in the queue beside a ticket whose text the reviewer is reading anyway. So the gate's job there is catching breakage — a mangled prompt, a swapped model — which arrives as ten points, not one.
 
-Only regressions fail; improvements never do, and cost is the one metric where *up* is the bad direction. And if the dataset version, either prompt version, the redaction rules or the routing floors have moved, the gate reports that the **baseline no longer applies** rather than calling it a regression — a deliberate prompt change is not the system getting worse. It still fails, because a baseline is never silently regenerated to make CI green.
+Only regressions fail; improvements never do, and cost is the one metric where *up* is the bad direction. And if the provenance behind a run has moved — dataset version, a prompt version, the redaction rules, the routing floors or the price list — the gate reports that the **baseline no longer applies** rather than calling it a regression. A deliberate prompt change is not the system getting worse. It still fails, because a baseline is never silently regenerated to make CI green.
+
+**Provenance is recorded per stage, and compared by one rule.** A run that generates nothing records no generation prompt, rather than stamping a compile-time constant it never used. That distinction is not academic: the versions were previously stamped unconditionally, so a retrieval-only run claimed a generation prompt it had never executed and the gate refused to compare a recall baseline over a prompt reword, on a branch that had not touched retrieval.
+
+| baseline | run | outcome |
+|---|---|---|
+| recorded | recorded | compare |
+| null | anything | skip — this baseline does not gate that stage |
+| recorded | null | **fail** — the run skipped a stage the baseline measures |
+
+The third row is deliberately not the mirror of the second: a baseline covering generation is not satisfied by a run that produced none. The price-list version is compared under the same rule, which it previously was not — it had been recorded since the first baseline and never checked.
 
 No figure for an unmeasured quantity appears anywhere in this repository. That is deliberate, and the harness enforces it rather than relying on discipline: a baseline is refused outright from a stand-in embedder or from unverified pricing.
 
@@ -252,6 +278,8 @@ Deliberately minimal: a queue, a ticket page, three actions, one stylesheet, no 
 
 **The queue is one request.** Category, priority, the routing outcome and the draft's state all come from a single projection rather than four requests per row.
 
+**It is paged in the database, not in the browser.** `Skip`/`Take` run before the rows are materialised, the page size is clamped server-side, and the ordering carries a tie-break on id as well as `CreatedAt` — without it two tickets sharing a timestamp can swap places between pages, which shows up as a row appearing twice and another never appearing at all. A test reads the emitted SQL to assert the paging really happens in the query.
+
 **A ticket page issues five independent requests** — ticket, classification, routing, retrieved evidence, draft. Four of them answer 404 when the ticket has not reached that stage, which is a state rather than a failure, so each section renders "not yet" instead of an error.
 
 **TypeScript types are generated from the API's own OpenAPI document**, so a renamed field on the server is a compile error in the client rather than `undefined` in a browser. That caught a real looseness during development: the generator types every `double` as number-or-numeric-string, because `System.Text.Json` will read a number out of a string. Hand-written types would have asserted `number` and been wrong about what the contract actually promises.
@@ -296,6 +324,13 @@ Nothing in the UI shows a score as a percentage. A gated ticket names the gate t
 
 ---
 
+**The writer and the judge are held to one specification.** The rules a draft must obey and the judge must check live once and are interpolated verbatim into both prompts. The tempting alternative — hold the judge to a *stricter* standard, on the theory that a tough grader is safe — is wrong in a way that is invisible in the output: it produces a groundedness figure that mostly measures the gap between two prompts. Most of the first run's 27 judge/label disagreements were exactly that.
+
+**A prompt's version is a label; its identity is a hash.** Every verdict file records a SHA-256 of the prompt text that produced it, computed at run time. A version should move when the contract moves, not every time a sentence is reworded — but then two runs under the same label and different text are indistinguishable after the fact. The hash is taken over the text with the per-request delimiter replaced by a placeholder, because that delimiter is random by design and hashing the rendered prompt would identify nothing.
+
+Every non-obvious choice in this repository has an entry in [`DECISIONS.MD`](DECISIONS.MD) — 36 of them, with the alternative that was rejected and what would reverse the decision. Several record reversals of earlier entries rather than quietly replacing them.
+
+
 ## Running it
 
 Requires Docker. The .NET 10 SDK is needed only for the tests and the evaluation harness.
@@ -321,13 +356,14 @@ Migrations apply on startup against a clean database. Secrets are never committe
 
 ```
 POST /tickets                         ingest
-GET  /tickets                         review queue, one query
+GET  /tickets?page=&pageSize=         review queue, one query, paged in the database
 GET  /tickets/{id}                    ticket detail
 GET  /tickets/{id}/similar            retrieved resolved tickets
 GET  /tickets/{id}/classification     most recent classification
 GET  /tickets/{id}/routing            most recent routing decision, with inputs and thresholds
 POST /tickets/{id}/draft              generate a grounded draft (idempotent per ticket)
 GET  /tickets/{id}/draft              the draft, if its citations validated
+POST /tickets/{id}/triage             re-run classification and routing on demand
 POST /tickets/{id}/review             approve, edit and approve, or reject
 GET  /tickets/{id}/review             the recorded decision
 ```
@@ -335,13 +371,13 @@ GET  /tickets/{id}/review             the recorded decision
 ### Tests
 
 ```bash
-dotnet test                                   # 170 unit, 80 integration
-npm --prefix src/SupportTicketTriage.Client test   # 33 component
+dotnet test                                   # 302 unit, 107 integration
+npm --prefix src/SupportTicketTriage.Client test   # 90 component
 ```
 
-**Backend: 170 unit tests and 80 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
+**Backend: 302 unit tests and 107 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
 
-**Frontend: 33 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, and what each review action actually sends. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
+**Frontend: 90 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, and what each review action actually sends. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
 
 ### Evaluation harness
 
@@ -360,7 +396,7 @@ With no Azure credentials it falls back to a lexical stand-in embedder, which is
 
 Named here rather than left for a reader to discover:
 
-- **Groundedness**, its judge and the judge-agreement figure. Classification, citation validity and the routing floors are now measured; groundedness is not, and it needs a second chat deployment so the model does not judge its own output. It is therefore absent from the regression gate too, which covers retrieval, classification, citation validity and cost.
+- **A published groundedness score.** The judge is built, runs on a separate stronger deployment, and has been compared across three configurations against 47 hand-labelled pairs. What is missing is validation: those pairs produced the rubric, so they cannot also test it, and the dataset holds no held-out queries to validate against. Closing it needs new query tickets rather than another run. Groundedness is therefore absent from the regression gate too, which covers retrieval, classification, citation validity and cost.
 - **Observability and resilience in the running application.** The evaluation harness now records per-call latency and tokens, but it does so by wrapping the model clients in its own code — the API itself still has no tracing, no per-request token recording, and no timeouts or bounded retry. The measured 4 call failures in 300 above are what the absence of retry currently costs.
 - **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval backfills, which closes this for reviewed tickets and leaves it open for the rest.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.
