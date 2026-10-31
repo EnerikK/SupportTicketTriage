@@ -29,6 +29,7 @@ public class EvaluationBaselineTests
             QueryCount: 60,
             ScoredQueryCount: 54,
             UnscoredQueryCount: 6,
+            HoldoutQuerySource: null,
             RecallAtK: new Dictionary<int, double> { [5] = 0.944, [1] = 0.759 },
             Classification: classification,
             Citations: citations,

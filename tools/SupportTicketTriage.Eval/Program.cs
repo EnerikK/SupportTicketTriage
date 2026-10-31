@@ -303,6 +303,27 @@ using var loggerFactory = LoggerFactory.Create(builder => builder
 var dataset = await EvalDataset.LoadAsync(datasetPath);
 Console.WriteLine($"Loaded dataset {dataset.Version}: {dataset.Tickets.Count} tickets.");
 
+// The corpus stays the dataset's; only the queries are swapped. These carry no
+// relevance labels, so retrieval goes unscored and the report says so rather
+// than printing a mean over nothing.
+var holdoutPath = arguments.Value("holdout-queries");
+
+if (holdoutPath is not null)
+{
+    if (!File.Exists(holdoutPath))
+    {
+        Console.Error.WriteLine($"Held-out query file not found at {Path.GetFullPath(holdoutPath)}.");
+        return 1;
+    }
+
+    var holdout = await EvalDataset.LoadAsync(holdoutPath);
+    dataset = dataset.WithQueriesFrom(holdout);
+
+    Console.WriteLine(
+        $"Held-out queries from {holdoutPath}: {dataset.Queries.Count()} queries "
+        + $"over {dataset.Corpus.Count()} corpus tickets.");
+}
+
 // Absent rather than fatal: a run can legitimately measure latency and skip
 // costing, and the report says "not scored" instead of reporting a run as
 // free. A file that exists but is malformed does throw - that is a mistake,
@@ -432,7 +453,8 @@ var report = await runner.RunAsync(
     exportJudgePairsTo: arguments.Value("export-judge-pairs"),
     exportJudgeVerdictsTo: arguments.Value("judge-verdicts"),
     humanLabels: humanLabels,
-    labelProvenance: labelProvenance);
+    labelProvenance: labelProvenance,
+    holdoutQuerySource: holdoutPath);
 
 var markdownPath = Path.Combine(outputDirectory, "evaluation-report.md");
 var jsonPath = Path.Combine(outputDirectory, "evaluation-result.json");

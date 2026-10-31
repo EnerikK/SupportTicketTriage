@@ -28,6 +28,7 @@ public class EvaluationReportTests
             QueryCount: 60,
             ScoredQueryCount: 54,
             UnscoredQueryCount: 6,
+            HoldoutQuerySource: null,
             RecallAtK: new Dictionary<int, double> { [1] = 0.7592592592592593, [3] = 0.8981481481481481 },
             Classification: null,
             Citations: null,
@@ -450,5 +451,38 @@ public class EvaluationReportTests
         Assert.Contains("\"RedactionVersion\": \"v1\"", json);
         Assert.Contains("\"MinimumClassificationScore\": 0.5", json);
         Assert.Contains("\"MinimumSimilarity\": 0.6", json);
+    }
+
+    /// A held-out run carries no relevance labels by design, so every query is
+    /// unscored and the recall mean is over nothing. Printing "0.0%" would
+    /// read as catastrophic retrieval rather than as "not measured here" -
+    /// and that number would then be quoted or pasted somewhere.
+    [Fact]
+    public void AHeldOutRun_SaysRetrievalIsNotScoredRatherThanPrintingZero()
+    {
+        var heldOut = Report() with
+        {
+            HoldoutQuerySource = "eval/dataset/judge-holdout.json",
+            ScoredQueryCount = 0,
+            UnscoredQueryCount = 105,
+            RecallAtK = new Dictionary<int, double> { [1] = 0.0, [3] = 0.0 },
+        };
+
+        var markdown = heldOut.ToMarkdown();
+
+        Assert.Contains("Retrieval is not scored in a held-out run", markdown);
+        Assert.Contains("judge-holdout.json", markdown);
+        Assert.DoesNotContain("| 1 | 0.0% |", markdown);
+    }
+
+    /// The ordinary run must keep printing the table, or the guard above has
+    /// quietly disabled retrieval reporting for everyone.
+    [Fact]
+    public void AnOrdinaryRun_StillPrintsTheRecallTable()
+    {
+        var markdown = Report().ToMarkdown();
+
+        Assert.DoesNotContain("not scored in a held-out run", markdown);
+        Assert.Contains("| 1 |", markdown);
     }
 }

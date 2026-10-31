@@ -57,6 +57,7 @@ public sealed class EvalRunner(
         string? exportJudgeVerdictsTo = null,
         IReadOnlyDictionary<string, bool>? humanLabels = null,
         LabelProvenance? labelProvenance = null,
+        string? holdoutQuerySource = null,
         CancellationToken ct = default)
     {
         var ticketIds = await SeedAsync(dataset, ct);
@@ -142,6 +143,7 @@ public sealed class EvalRunner(
             QueryCount: dataset.Queries.Count(),
             ScoredQueryCount: RetrievalMetrics.ScoredCaseCount(retrievalCases),
             UnscoredQueryCount: RetrievalMetrics.UnscoredCaseCount(retrievalCases),
+            HoldoutQuerySource: holdoutQuerySource,
             RecallAtK: KValues.ToDictionary(k => k, k => RetrievalMetrics.MeanRecallAt(retrievalCases, k)),
             Classification: classification,
             Citations: citations,

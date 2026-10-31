@@ -1272,6 +1272,27 @@ The honesty mechanism that matters is reporting **both** scores wherever the che
 ---
 
 
+## ADR-036 — The held-out judge queries live in their own file, with no relevance labels
+
+**Status:** Accepted — 2026-11-01.
+
+**Decision.** The ~105 queries that will validate the groundedness judge go in `eval/dataset/judge-holdout.json`, containing query-role tickets only. `--holdout-queries <path>` takes the corpus from `--dataset` and the queries from there. They carry no `relevantIds`, and a run using them is refused as a baseline.
+
+**Alternatives.** Append them to `eval/dataset/tickets.json` and bump it to v1.1.
+
+**Why.** The obvious option is the expensive one, and the cost is not obvious until you work it through. Appending would bump `DatasetVersion`, which under [[ADR-021]]'s provenance rule invalidates **both** committed baselines. Worse, recall@k is a *mean over scored queries*, so adding 105 would change the headline retrieval figures — 75.9 / 89.8 / 94.4 at k=1/3/5 — and make every measurement taken to date non-comparable. That would reset the one part of the evaluation that is fully established, reproduced bit-identically across three weeks and two machines, in order to measure something else entirely.
+
+The two sets also answer different questions. `tickets.json` measures retrieval and classification and needs relevance labels to do it. The held-out set exists to produce *drafts* for a human to label for groundedness; retrieval quality over it is not the question. Omitting `relevantIds` is therefore not laziness but accuracy — and it sidesteps §10's dataset-circularity problem for these queries, because the labels that matter here are the human groundedness labels, not model-authored relevance ones.
+
+**The refusal is the load-bearing part.** A baseline written from a held-out run would record recall over zero scored queries and classification over a different population, while looking exactly like an ordinary baseline. `EnsureQueriesAreTheDatasets()` throws for both baseline kinds, which is the same shape [[ADR-007]] uses to refuse a stand-in embedder, and for the same reason: a guard that depends on remembering is not a guard. The report also refuses to print a recall table for such a run, because `0.0%` reads as catastrophic retrieval rather than as "not measured here", and that number would eventually be quoted.
+
+**Authored blind, and that is recorded.** `eval/dataset/HOLDOUT-BRIEF.md` is committed alongside the data. It names the files the author must not read — the rubric, the generation prompt, the judging code, and the ADRs describing them — and says why: someone who knows the rules a draft is scored against will unconsciously write tickets producing drafts those rules handle cleanly. The brief is the evidence the set was independent of the rules it tests, which is a claim that is otherwise unfalsifiable after the fact.
+
+**What would reverse it.** A decision to re-baseline the whole dataset for unrelated reasons, at which point folding the held-out queries in costs nothing extra. Or evidence that holding the corpus constant while swapping queries is itself a bias — the held-out drafts are grounded in the same 240 resolutions the development set used, so this validates the judge on new *questions* rather than on a new *world*.
+
+---
+
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.

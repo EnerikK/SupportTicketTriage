@@ -18,6 +18,29 @@ public sealed record EvalDataset(
 
     public IEnumerable<EvalTicket> Queries => Tickets.Where(t => t.Role == TicketRole.Query);
 
+    /// This dataset's corpus, with its queries replaced by another file's.
+    ///
+    /// The held-out judge set is queries only, deliberately. Appending ~105
+    /// queries to tickets.json instead would bump the dataset version and
+    /// invalidate both committed baselines - and because recall@k is a mean
+    /// over scored queries, it would change the headline retrieval figures
+    /// too. That would reset the one part of the evaluation that is fully
+    /// established in order to validate something else ([[ADR-036]]).
+    ///
+    /// Validation runs over the combined set rather than either half, so an id
+    /// in the holdout file that collides with a corpus ticket fails here
+    /// rather than seeding two tickets and silently retrieving the wrong one.
+    public EvalDataset WithQueriesFrom(EvalDataset holdout)
+    {
+        var combined = new EvalDataset(
+            Version,
+            Categories,
+            [.. Corpus, .. holdout.Queries]);
+
+        combined.Validate();
+        return combined;
+    }
+
     public static async Task<EvalDataset> LoadAsync(string path, CancellationToken ct = default)
     {
         await using var stream = File.OpenRead(path);

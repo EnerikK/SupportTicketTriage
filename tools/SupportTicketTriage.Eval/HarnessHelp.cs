@@ -19,6 +19,12 @@ public static class HarnessHelp
           --help                  Show this text
           --connection <string>   PostgreSQL connection string (required)
           --dataset <path>        Dataset JSON (default: eval/dataset/tickets.json)
+          --holdout-queries <path>
+                                  Take the corpus from --dataset but the queries
+                                  from <path>. For producing drafts to be labelled
+                                  by hand against a query set the judge rubric was
+                                  not written from. Baseline writing is refused in
+                                  this mode.
           --output <dir>          Report directory (default: eval/results)
           --reset                 Delete existing tickets before seeding
           --skip-generation       Score classification but not drafts (saves the
