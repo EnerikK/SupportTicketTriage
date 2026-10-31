@@ -1078,11 +1078,13 @@ Evidence that re-triage is being used to shop for a better classification. Nothi
 
 ## ADR-029 — The judge reports kappa, withholds its score until validated, and never sees the ticket
 
-**Status:** Accepted — 2026-10-27. Implements [[ADR-018]], which was Accepted on 2026-10-13 and shaped the report schema before the machinery existed. Commit `d527d10`, PR #30.
+> **The last clause no longer holds.** The judge is shown the ticket as of 2026-10-30; see the amendment at the end of this entry. The title is kept as written because entry titles are identifiers and renaming one breaks every reference to it.
+
+**Status:** Accepted — 2026-10-27, **one section reversed 2026-10-30** by the amendment below and by [[ADR-033]]. Implements [[ADR-018]], which was Accepted on 2026-10-13 and shaped the report schema before the machinery existed. Commit `d527d10`, PR #30.
 
 **Decision.** Four choices [[ADR-018]] left open, settled while implementing it.
 
-### The judge is not shown the original ticket
+### The judge is not shown the original ticket — *reversed, see the amendment below*
 
 Groundedness is a relation between a draft and its cited sources, and nothing else. Showing the judge the ticket invites it to reward a reply that *answers the question* — relevance, a different property — which would lift the score on exactly the drafts that answer confidently from nothing. That is the failure mode the strict definition exists to catch, so feeding the judge the material that disguises it would be self-defeating. A test asserts the ticket never reaches the judge.
 
@@ -1111,6 +1113,19 @@ The figure exists to validate an LLM judge against something that is **not** a l
 It would also reproduce this project's largest documented weakness inside the one mechanism designed to counter it: §10 already records that the dataset's tickets, queries *and* relevance labels were authored together by a model sharing a training distribution with the model being measured. The judge validation is the designed antidote. Model-labelling it recreates the disease inside the cure.
 
 **Pre-labelling for a human to review was considered and is worse**, not a compromise: anchoring means most calls get confirmed, so the contamination survives and becomes *invisible*, because the file then looks hand-labelled.
+
+### Amendment — 2026-10-30: the judge **is** shown the ticket, reversing the first section above
+
+**This reverses an Accepted decision, deliberately, and the original reasoning was not wrong — it was incomplete.**
+
+The argument above still holds: showing the judge the ticket invites it to reward relevance, and relevance is not groundedness. What it missed is the cost of withholding it. With no ticket in view, a draft restating *the customer's own words* has no supporting text anywhere the judge can see, so it is unsupported **by construction**. That was the single largest category in the first comparison run: six of twenty disagreements between the judge and the human labeller, none of them a judgement call.
+
+The protection now comes from **labelling rather than withholding**. The ticket is rendered in its own fenced block marked `ACCOUNT (customer's own words - not evidence for any fact)`, and the rubric's evidentiary-status rule says only `RESOLUTION` blocks establish facts. The judge can therefore tell restatement from assertion, which is the distinction it actually needs and which blindness could never give it.
+
+The test that asserted the ticket never reaches the judge is replaced by one asserting it arrives labelled as an account.
+
+**What would reverse this in turn.** Evidence that the judge is scoring relevance — drafts that answer the ticket fluently from nothing scoring grounded. The dev check watches for exactly that shape, and `q-returns-decided-against-it` is the open case closest to it.
+
 
 ### What this still owes
 
@@ -1195,6 +1210,67 @@ For a project whose single stated constraint is that every architectural decisio
 **What would reverse it.** Content arriving in this file that genuinely should not be public, at which point the answer is to move that content out rather than to hide the log again.
 
 ---
+
+## ADR-033 — One specification for the writer and the judge
+
+**Status:** Accepted — 2026-10-30. Commit `c827456`. Amends [[ADR-029]], whose first section it reverses.
+
+**Decision.** The rules a draft must obey and the judge must check live once, in `PrecedentRules`, and are interpolated **verbatim** into both prompts. The evidence both see is rendered by one function, `EvidenceBlocks`. Prompts bump to `draft-v2` and `judge-v2`.
+
+**Alternatives.** Keep two independently worded prompts and accept some drift, which is what v1 did. Or deliberately hold the judge to a *stricter* standard than the writer, on the theory that a tough grader is safe.
+
+**Why.** The second alternative is the tempting one and it is wrong. A judge stricter than the writer produces a groundedness figure that mostly measures **the gap between two prompts**, not the quality of the drafts — and that gap is invisible in the number. Reading 27 real disagreements between the v1 judge and a human labeller, most were not judgement calls at all:
+
+- the judge saw only each precedent's resolution while the writer also saw its subject and body, so it scored against **strictly less evidence than the draft was given** — three cases;
+- the judge never saw the incoming ticket, making every restatement of the customer's own words unsupported by construction — six cases;
+- nothing in the writer's prompt forbade asserting a precedent's circumstances as this customer's facts, or inflating one past-tense resolution into general policy, while the judge was expected to catch both.
+
+A test asserts the judge's evidence is never a subset of the generator's, which is the specific failure that cost three of those cases and which no amount of careful prompt editing would have prevented from recurring.
+
+The rubric also now returns **every** unsupported claim as an array, severest first, rather than the single shortest quote. The shortest unsupported phrase is routinely trivial while the real problem sits elsewhere in the draft, which mis-filed several disagreements under the wrong failure mode.
+
+**What would reverse it.** Evidence that sharing the text makes the judge lenient — that a writer told the rules learns to phrase around them in ways the judge, told the same rules, stops noticing. That would show up as rising agreement alongside falling human-rated quality.
+
+---
+
+## ADR-034 — A prompt's identity is a hash; its version is a label
+
+**Status:** Accepted — 2026-10-30. Commit `b262248`.
+
+**Decision.** Every verdict file records `rubricSha256` and `generationPromptSha256`, computed from the prompt text at run time. The version string stays a human decision.
+
+**Alternatives.** Bump the version on every wording change. Or rely on the commit hash of the run.
+
+**Why.** `judge-v2` was amended twice in one afternoon without a bump, and both times that was correct: a version should move when the **contract** moves — when a published figure or a set of labels depends on it — not every time a sentence is reworded. Bumping on each edit overloads the version with two jobs and still cannot distinguish two runs made between bumps.
+
+The cost appeared immediately. Two dev-check runs an hour apart both said `judge-v2`, and working out which text produced which meant reading the order of edits against the order of builds. That is a reconstruction, not a record, and it only worked because the edits were recent.
+
+The hash is taken over the prompt with the per-request delimiter replaced by a fixed placeholder. [[ADR-002]] makes that delimiter random per request, so hashing the rendered prompt would yield a fresh hash every run and identify nothing — the test pinning that is the one worth reading. Both fields are nullable because the three v1 comparison artifacts predate the mechanism and genuinely have no hash; a non-nullable string would deserialise them to null while claiming otherwise, which is a worse record than an honest blank.
+
+A commit hash was rejected because it identifies the repository, not the prompt: two commits apart with identical prompt text are the same experiment, and a dirty tree has no commit at all.
+
+**What would reverse it.** Nothing foreseeable. The cost is two string fields.
+
+---
+
+## ADR-035 — The dev check prints mismatches, never a score
+
+**Status:** Accepted — 2026-10-30. Commit `34b2811`.
+
+**Decision.** `--dev-check` runs the judge over the pairs that produced the v2 rules and prints each mismatch against a verdict derived by hand beforehand. It prints no score, and no number from it is ever reported.
+
+**Alternatives.** Report accuracy on the development set. Or skip the check and go straight to held-out data.
+
+**Why.** These are the pairs the rules were **written from**. Any number computed on them measures how well the wording was fitted to its own examples, and it would rise every time the rubric was edited toward them — which is precisely the behaviour the check must not reward. Printing a pass list instead makes the only useful output the mismatches, each classified as **rubric ambiguity** or **judge error**. "Iterate the wording until it passes" is not a third option, and that is written into the expectations file itself.
+
+Expectations are stored apart from the labels with a reason recorded per case, so a mismatch is argued against the derivation rather than against a bare true/false. Loading refuses a rubric version the expectations were not derived under.
+
+The honesty mechanism that matters is reporting **both** scores wherever the check is quoted: against the expectations exactly as frozen, and corrected for the two that were found wrong *after* verdicts were visible. A single corrected number would hide that the correction happened with the answers in view.
+
+**What would reverse it.** A genuine held-out set large enough that development data stops being needed for this purpose. None exists yet — all 47 draftable queries in the dataset are already the development set, which is the open blocker recorded in `eval/judge/DEV-CHECK.md`.
+
+---
+
 
 ## Entries expected from the audit
 
