@@ -72,6 +72,11 @@ public sealed record EvaluationReport(
     int QueryCount,
     int ScoredQueryCount,
     int UnscoredQueryCount,
+    /// Set when the queries came from a held-out file rather than from the
+    /// dataset's own. Such a run measures groundedness against queries that
+    /// carry no relevance labels, so its retrieval figures are not the
+    /// dataset's and must never become a baseline.
+    string? HoldoutQuerySource,
     IReadOnlyDictionary<int, double> RecallAtK,
     ClassificationScore? Classification,
     CitationScore? Citations,
@@ -161,6 +166,11 @@ public sealed record EvaluationReport(
         md.AppendLine($"- Generated: {GeneratedAt:u}");
         md.AppendLine($"- Corpus tickets: {CorpusCount}");
         md.AppendLine($"- Queries: {QueryCount} ({ScoredQueryCount} scored, {UnscoredQueryCount} unlabelled)");
+
+        if (HoldoutQuerySource is not null)
+        {
+            md.AppendLine($"- Held-out queries: `{HoldoutQuerySource}`");
+        }
         md.AppendLine();
 
         AppendRetrieval(md);
@@ -179,6 +189,21 @@ public sealed record EvaluationReport(
     {
         md.AppendLine("## Recall@k");
         md.AppendLine();
+
+        // A held-out run carries no relevance labels by design, so every query
+        // is unscored and the mean below is over nothing. Printing 0.0% would
+        // read as catastrophic retrieval rather than as "not measured here".
+        if (HoldoutQuerySource is not null && ScoredQueryCount == 0)
+        {
+            md.AppendLine(
+                "> **Retrieval is not scored in a held-out run.** These queries carry no "
+                + "relevance labels — they exist to produce drafts for groundedness "
+                + "labelling, not to measure retrieval. The dataset's own recall figures "
+                + "are unaffected and still live in the committed baseline.");
+            md.AppendLine();
+            return;
+        }
+
         md.AppendLine("| k | mean recall |");
         md.AppendLine("|---|---|");
         foreach (var (k, recall) in RecallAtK.OrderBy(kv => kv.Key))
@@ -589,8 +614,29 @@ public sealed record EvaluationReport(
     /// A baseline is what CI compares against, so it must never be written from
     /// a stand-in embedder. Refusing here is cheaper than discovering later
     /// that the gate has been guarding a meaningless number.
+    /// A baseline is a claim about *this dataset's* numbers. A held-out run
+    /// swaps the queries for a file that carries no relevance labels, so its
+    /// recall is a mean over nothing and its classification and cost figures
+    /// are over a different population entirely. Committing one as the number
+    /// CI regresses against would make the gate guard the wrong thing while
+    /// looking exactly like it guards the right one - the same failure
+    /// [[ADR-007]] refuses a stand-in embedder for, so it is refused the same
+    /// way rather than left to discipline.
+    private void EnsureQueriesAreTheDatasets()
+    {
+        if (HoldoutQuerySource is not null)
+        {
+            throw new InvalidOperationException(
+                $"Refusing to write a baseline from a run whose queries came from "
+                + $"'{HoldoutQuerySource}'. A baseline describes the dataset's own queries; "
+                + "re-run without --holdout-queries.");
+        }
+    }
+
     public void EnsureCanBeBaseline()
     {
+        EnsureQueriesAreTheDatasets();
+
         if (!EmbeddingModelIsReal)
         {
             throw new InvalidOperationException(
@@ -629,6 +675,8 @@ public sealed record EvaluationReport(
     /// real one is the hazard here.
     public void EnsureCanBeLogicBaseline()
     {
+        EnsureQueriesAreTheDatasets();
+
         if (EmbeddingModelIsReal)
         {
             throw new InvalidOperationException(

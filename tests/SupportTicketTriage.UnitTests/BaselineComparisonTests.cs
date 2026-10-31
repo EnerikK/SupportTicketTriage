@@ -17,7 +17,8 @@ public class BaselineComparisonTests
         double? gateA = 0.50,
         string? generationPrompt = "draft-v1",
         string? chatModel = "gpt-4.1-mini",
-        string pricingVersion = "1.0") =>
+        string pricingVersion = "1.0",
+        string? holdout = null) =>
         new(
             DatasetVersion: "1.0",
             EmbeddingModel: "text-embedding-3-small",
@@ -33,6 +34,7 @@ public class BaselineComparisonTests
             QueryCount: 60,
             ScoredQueryCount: 54,
             UnscoredQueryCount: 6,
+            HoldoutQuerySource: holdout,
             RecallAtK: new Dictionary<int, double> { [1] = recall1 },
             Classification: accuracy is null || macroF1 is null
                 ? null
@@ -285,5 +287,32 @@ public class BaselineComparisonTests
     {
         Assert.Null(Run(costTotal: null).PricedPricingVersion);
         Assert.Equal("1.0", Run().PricedPricingVersion);
+    }
+
+    /// A baseline is a claim about *this dataset's* numbers. A held-out run
+    /// swaps the queries for a file carrying no relevance labels, so its
+    /// recall is a mean over nothing and its other figures are over a
+    /// different population. Committing one would make the gate guard the
+    /// wrong thing while looking exactly like it guards the right one.
+    [Fact]
+    public void ABaselineCannotBeWrittenFromAHeldOutRun()
+    {
+        var run = Run(holdout: "eval/dataset/judge-holdout.json");
+
+        var real = Assert.Throws<InvalidOperationException>(run.EnsureCanBeBaseline);
+        Assert.Contains("judge-holdout.json", real.Message);
+
+        // The logic baseline is refused for the same reason. Narrowing one
+        // refusal and forgetting the other is how a guard quietly stops
+        // guarding half of what it covers.
+        var logic = Assert.Throws<InvalidOperationException>(
+            Run(holdout: "eval/dataset/judge-holdout.json", chatModel: null).EnsureCanBeLogicBaseline);
+        Assert.Contains("judge-holdout.json", logic.Message);
+    }
+
+    [Fact]
+    public void AnOrdinaryRunIsStillAllowedToBecomeABaseline()
+    {
+        Run().EnsureCanBeBaseline();
     }
 }
