@@ -1,6 +1,6 @@
 {
   "rubricVersion": "judge-v2",
-  "instructions": "Set \u0022grounded\u0022 on each pair to true or false.\r\n\r\nA draft is GROUNDED when every MATERIAL claim it makes is supported.\r\n\r\nEVIDENCE. Only the resolution of a cited precedent establishes facts. The\r\nincoming ticket, and each precedent\u0027s subject and body, are accounts - what a\r\ncustomer said - and never establish a fact. The customer is authoritative about\r\ntheir own experience and intent: what they did, what they saw, what they want.\r\nThat may be restated directly. Claims about causes, system state, eligibility,\r\nor what anyone else did need either attribution (\u0022you mentioned...\u0022) or support\r\nfrom a resolution.\r\n\r\nMATERIALITY. A claim is material if it asserts a cause of the problem the\r\ncustomer reported, a policy or rule, an amount, a timeline, an eligibility, or\r\nan action taken or a specific outcome promised. An offer to investigate or\r\nassist is not material; a promise of a refund, a replacement, a fix, or when one\r\nwill happen, is. Descriptive wording that asserts none of these cannot make a\r\ndraft ungrounded. Ignore greetings, apologies and offers to help further.\r\n\r\nPRECEDENTS. A resolution is evidence about ONE case. It may be used as a similar\r\ncase, as a hedged possibility, or as general policy ONLY where the resolution is\r\nitself phrased in general terms - \u0022a replacement is sent\u0022 and \u0022enrolments are\r\ntied to the device\u0022 license a policy statement, \u0022the discount was applied\u0022 and\r\n\u0022the browser was configured\u0022 describe one past case and do not.\r\n\r\nMark UNGROUNDED when a draft asserts a precedent\u0027s circumstances or actions as\r\nthis customer\u0027s facts, or turns one case into a general practice, a prevalence\r\nclaim (\u0022commonly\u0022, \u0022a few common reasons\u0022), a guarantee (\u0022you will be\r\nnotified\u0022), or a prediction about this customer\u0027s outcome or timing. A\r\nconditional asserts its consequent as a general rule, so hedging must attach to\r\nthe claim itself rather than only to the circumstances that trigger it.\r\n\r\nLeave \u0022grounded\u0022 as null to skip a pair. Skipped pairs are dropped from the\r\ncomparison rather than counted either way. The \u0022note\u0022 field is for you; the tool\r\nignores it.",
+  "instructions": "Set \u0022grounded\u0022 on each pair to true or false.\r\n\r\nSet \u0022abstained\u0022 on every pair as well: did the draft avoid presenting an answer\r\nthe evidence does not provide? true / false. Answer it on every pair, not only\r\nwhere you expect it to matter - a file where only some pairs carry it would say\r\nwhich queries were expected to have no answer. It is a separate question from\r\ngroundedness and does not change the rules below: a draft that abstains is still\r\njudged grounded or ungrounded on whatever claims it does make.\r\n\r\nA draft is GROUNDED when every MATERIAL claim it makes is supported.\r\n\r\nEVIDENCE. Only the resolution of a cited precedent establishes facts. The\r\nincoming ticket, and each precedent\u0027s subject and body, are accounts - what a\r\ncustomer said - and never establish a fact. The customer is authoritative about\r\ntheir own experience and intent: what they did, what they saw, what they want.\r\nThat may be restated directly. Claims about causes, system state, eligibility,\r\nor what anyone else did need either attribution (\u0022you mentioned...\u0022) or support\r\nfrom a resolution.\r\n\r\nMATERIALITY. A claim is material if it asserts a cause of the problem the\r\ncustomer reported, a policy or rule, an amount, a timeline, an eligibility, or\r\nan action taken or a specific outcome promised. An offer to investigate or\r\nassist is not material; a promise of a refund, a replacement, a fix, or when one\r\nwill happen, is. Descriptive wording that asserts none of these cannot make a\r\ndraft ungrounded. Ignore greetings, apologies and offers to help further.\r\n\r\nPRECEDENTS. A resolution is evidence about ONE case. It may be used as a similar\r\ncase, as a hedged possibility, or as general policy ONLY where the resolution is\r\nitself phrased in general terms - \u0022a replacement is sent\u0022 and \u0022enrolments are\r\ntied to the device\u0022 license a policy statement, \u0022the discount was applied\u0022 and\r\n\u0022the browser was configured\u0022 describe one past case and do not.\r\n\r\nMark UNGROUNDED when a draft asserts a precedent\u0027s circumstances or actions as\r\nthis customer\u0027s facts, or turns one case into a general practice, a prevalence\r\nclaim (\u0022commonly\u0022, \u0022a few common reasons\u0022), a guarantee (\u0022you will be\r\nnotified\u0022), or a prediction about this customer\u0027s outcome or timing. A\r\nconditional asserts its consequent as a general rule, so hedging must attach to\r\nthe claim itself rather than only to the circumstances that trigger it.\r\n\r\nLeave \u0022grounded\u0022 as null to skip a pair. Skipped pairs are dropped from the\r\ncomparison rather than counted either way. The \u0022note\u0022 field is for you; the tool\r\nignores it.",
   "pairs": [
     {
       "queryId": "q-ho-billing-trial-became-paid",
@@ -17,6 +17,7 @@
       ],
       "topSimilarity": 0.7957437821148201,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -34,6 +35,7 @@
       ],
       "topSimilarity": 0.6243948173437764,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -51,6 +53,7 @@
       ],
       "topSimilarity": 0.7460122227329331,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -68,6 +71,7 @@
       ],
       "topSimilarity": 0.6524340014019367,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -85,6 +89,7 @@
       ],
       "topSimilarity": 0.6318582232346263,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -102,6 +107,7 @@
       ],
       "topSimilarity": 0.7534975668147661,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -119,6 +125,7 @@
       ],
       "topSimilarity": 0.7569416818614538,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -136,6 +143,7 @@
       ],
       "topSimilarity": 0.7359095622496837,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -153,6 +161,7 @@
       ],
       "topSimilarity": 0.848452276642412,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -170,6 +179,7 @@
       ],
       "topSimilarity": 0.8895748318691352,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -187,6 +197,7 @@
       ],
       "topSimilarity": 0.8007789828163484,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -204,6 +215,7 @@
       ],
       "topSimilarity": 0.8538002084306061,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -221,6 +233,7 @@
       ],
       "topSimilarity": 0.8643716349242013,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -238,6 +251,7 @@
       ],
       "topSimilarity": 0.6018351059346568,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -248,6 +262,7 @@
       "citedSources": [],
       "topSimilarity": 0.6192763687813017,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -265,6 +280,7 @@
       ],
       "topSimilarity": 0.6680831965972474,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -288,6 +304,7 @@
       ],
       "topSimilarity": 0.6157648670054212,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -305,6 +322,7 @@
       ],
       "topSimilarity": 0.8153853583984885,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -322,6 +340,7 @@
       ],
       "topSimilarity": 0.7608865877195216,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -339,6 +358,7 @@
       ],
       "topSimilarity": 0.7207970925650143,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -356,6 +376,7 @@
       ],
       "topSimilarity": 0.8149588028774585,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -373,6 +394,7 @@
       ],
       "topSimilarity": 0.7900253427639484,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -390,6 +412,7 @@
       ],
       "topSimilarity": 0.816599898735323,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -407,6 +430,7 @@
       ],
       "topSimilarity": 0.7607883375353897,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -424,6 +448,7 @@
       ],
       "topSimilarity": 0.7019014353178713,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -441,6 +466,7 @@
       ],
       "topSimilarity": 0.8447241856364239,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -458,6 +484,7 @@
       ],
       "topSimilarity": 0.6089607151889389,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -475,6 +502,7 @@
       ],
       "topSimilarity": 0.7253008373283124,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -492,6 +520,7 @@
       ],
       "topSimilarity": 0.6989930602064305,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -509,6 +538,7 @@
       ],
       "topSimilarity": 0.7544227706790038,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -538,6 +568,7 @@
       ],
       "topSimilarity": 0.6441517061169074,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -561,6 +592,7 @@
       ],
       "topSimilarity": 0.7471334746266262,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -578,6 +610,7 @@
       ],
       "topSimilarity": 0.77567201084937,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -595,6 +628,7 @@
       ],
       "topSimilarity": 0.7860839517161121,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -612,6 +646,7 @@
       ],
       "topSimilarity": 0.7131302616529333,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -629,6 +664,7 @@
       ],
       "topSimilarity": 0.7082281455333631,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -646,6 +682,7 @@
       ],
       "topSimilarity": 0.7336978608584426,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -663,6 +700,7 @@
       ],
       "topSimilarity": 0.7911891780809744,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -680,6 +718,7 @@
       ],
       "topSimilarity": 0.6963029124967,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -697,6 +736,7 @@
       ],
       "topSimilarity": 0.7290801228107037,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -714,6 +754,7 @@
       ],
       "topSimilarity": 0.7810358377915256,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -731,6 +772,7 @@
       ],
       "topSimilarity": 0.7814126126807464,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -748,6 +790,7 @@
       ],
       "topSimilarity": 0.7591989161770349,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -765,6 +808,7 @@
       ],
       "topSimilarity": 0.7645360708610277,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -788,6 +832,7 @@
       ],
       "topSimilarity": 0.6581588431980878,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -817,6 +862,7 @@
       ],
       "topSimilarity": 0.6614493795357477,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -834,6 +880,7 @@
       ],
       "topSimilarity": 0.6848155570681416,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -844,6 +891,7 @@
       "citedSources": [],
       "topSimilarity": 0.6618688282137445,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -861,6 +909,7 @@
       ],
       "topSimilarity": 0.6587814904309176,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -890,6 +939,7 @@
       ],
       "topSimilarity": 0.7443977958004596,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -907,6 +957,7 @@
       ],
       "topSimilarity": 0.7818069348171857,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -924,6 +975,7 @@
       ],
       "topSimilarity": 0.8023977201613198,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -941,6 +993,7 @@
       ],
       "topSimilarity": 0.8020312469366911,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -958,6 +1011,7 @@
       ],
       "topSimilarity": 0.841316317519628,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -975,6 +1029,7 @@
       ],
       "topSimilarity": 0.6821234996385641,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -992,6 +1047,7 @@
       ],
       "topSimilarity": 0.7451042102967128,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1009,6 +1065,7 @@
       ],
       "topSimilarity": 0.7436109485899783,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1026,6 +1083,7 @@
       ],
       "topSimilarity": 0.7068426774490563,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1043,6 +1101,7 @@
       ],
       "topSimilarity": 0.7966174962365411,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1060,6 +1119,7 @@
       ],
       "topSimilarity": 0.7740134502439477,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1070,6 +1130,7 @@
       "citedSources": [],
       "topSimilarity": 0.6675047330500782,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1093,6 +1154,7 @@
       ],
       "topSimilarity": 0.7433026455537005,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1103,6 +1165,7 @@
       "citedSources": [],
       "topSimilarity": 0.6062582817992588,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1113,6 +1176,7 @@
       "citedSources": [],
       "topSimilarity": 0.6150521504617207,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1136,6 +1200,7 @@
       ],
       "topSimilarity": 0.7425913925360352,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1153,6 +1218,7 @@
       ],
       "topSimilarity": 0.7120337906349609,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1170,6 +1236,7 @@
       ],
       "topSimilarity": 0.8557864071590866,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1187,6 +1254,7 @@
       ],
       "topSimilarity": 0.843194833496126,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1204,6 +1272,7 @@
       ],
       "topSimilarity": 0.6162573169761384,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1221,6 +1290,7 @@
       ],
       "topSimilarity": 0.7167401183557706,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1238,6 +1308,7 @@
       ],
       "topSimilarity": 0.6922034781569123,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1255,6 +1326,7 @@
       ],
       "topSimilarity": 0.7505777742312502,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1272,6 +1344,7 @@
       ],
       "topSimilarity": 0.8370256264337108,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1289,6 +1362,7 @@
       ],
       "topSimilarity": 0.7346917351099829,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1306,6 +1380,7 @@
       ],
       "topSimilarity": 0.6749145318070506,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1323,6 +1398,7 @@
       ],
       "topSimilarity": 0.7043732245343106,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1340,6 +1416,7 @@
       ],
       "topSimilarity": 0.7545278595539403,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1363,6 +1440,7 @@
       ],
       "topSimilarity": 0.6947069828574045,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1373,6 +1451,7 @@
       "citedSources": [],
       "topSimilarity": 0.6535212553652142,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1390,6 +1469,7 @@
       ],
       "topSimilarity": 0.7273860382639719,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1407,6 +1487,7 @@
       ],
       "topSimilarity": 0.6905385323259903,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1424,6 +1505,7 @@
       ],
       "topSimilarity": 0.6754245369173485,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1447,6 +1529,7 @@
       ],
       "topSimilarity": 0.771530737812152,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1464,6 +1547,7 @@
       ],
       "topSimilarity": 0.6813344802017371,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1481,6 +1565,7 @@
       ],
       "topSimilarity": 0.6209736632306185,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1498,6 +1583,7 @@
       ],
       "topSimilarity": 0.8205294815553325,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1515,6 +1601,7 @@
       ],
       "topSimilarity": 0.6870511441842616,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1532,6 +1619,7 @@
       ],
       "topSimilarity": 0.735122127016286,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1549,6 +1637,7 @@
       ],
       "topSimilarity": 0.747524754224391,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1572,6 +1661,7 @@
       ],
       "topSimilarity": 0.6009436790652456,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1595,6 +1685,7 @@
       ],
       "topSimilarity": 0.6181483445080506,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1612,6 +1703,7 @@
       ],
       "topSimilarity": 0.6124249867184323,
       "grounded": null,
+      "abstained": null,
       "note": null
     },
     {
@@ -1635,6 +1727,7 @@
       ],
       "topSimilarity": 0.6168088571057524,
       "grounded": null,
+      "abstained": null,
       "note": null
     }
   ]

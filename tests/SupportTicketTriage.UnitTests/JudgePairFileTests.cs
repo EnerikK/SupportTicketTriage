@@ -19,6 +19,7 @@ public sealed class JudgePairFileTests : IDisposable
             [new JudgeSource(Guid.NewGuid(), "How do I change the card on file", "body", "resolution")],
             topSimilarity,
             Grounded: null,
+            Abstained: null,
             Note: null);
 
     [Fact]

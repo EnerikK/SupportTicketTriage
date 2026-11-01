@@ -38,6 +38,19 @@ public sealed record JudgePair(
     /// retrieval than the one that produced the draft being labelled.
     double? TopSimilarity,
     bool? Grounded,
+    /// A second, independent label: did the draft decline to answer what the
+    /// evidence could not support?
+    ///
+    /// Separate from <see cref="Grounded"/> rather than folded into it. A
+    /// hard negative's draft is still held to the same groundedness rules as
+    /// every other draft; whether it abstained is a different question about
+    /// the same text, and collapsing the two would give one subset of the set
+    /// its own definition of grounded and make the agreement figure
+    /// unreadable.
+    ///
+    /// Answered on every pair, not only the hard negatives, so that a filled
+    /// file does not reveal which queries were expected to have no answer.
+    bool? Abstained,
     string? Note);
 
 /// The hand-labelling file.
@@ -64,6 +77,13 @@ public sealed record JudgePairFile(
     public const string HowToLabel =
         """
         Set "grounded" on each pair to true or false.
+
+        Set "abstained" on every pair as well: did the draft avoid presenting an answer
+        the evidence does not provide? true / false. Answer it on every pair, not only
+        where you expect it to matter - a file where only some pairs carry it would say
+        which queries were expected to have no answer. It is a separate question from
+        groundedness and does not change the rules below: a draft that abstains is still
+        judged grounded or ungrounded on whatever claims it does make.
 
         A draft is GROUNDED when every MATERIAL claim it makes is supported.
 
