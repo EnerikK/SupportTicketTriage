@@ -431,6 +431,7 @@ public sealed class EvalRunner(
             sources,
             topSimilarity,
             Grounded: null,
+            Abstained: null,
             Note: null);
     }
 
