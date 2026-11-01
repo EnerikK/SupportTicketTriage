@@ -1,0 +1,1012 @@
+{
+  "version": "1.0",
+  "categories": [
+    "Billing",
+    "Account & Login",
+    "Technical Fault",
+    "Shipping & Delivery",
+    "Returns & Refunds",
+    "Product Question"
+  ],
+  "tickets": [
+    {
+      "id": "q-ho-billing-trial-became-paid",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "Free trial has turned into a charge",
+      "body": "I signed up to try this out and did not think I had committed to anything. There is now a full month on my card. I would like it reversed please, I am not going to carry on with it.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-gift-card-not-used",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Low",
+      "subject": "Gift voucher still showing its full balance",
+      "body": "I had about forty pounds on a voucher and meant to put it towards this order, but the whole amount went on my debit card instead. The voucher still shows the balance so I do not think it has been used. Can the difference be sorted out?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-tax-still-charged",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "Tax still on our invoices",
+      "body": "We sent over our exemption certificate when the account was set up and tax is still being added every month. Our finance team have asked me to get this corrected and the amounts charged since then credited back.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-po-reference-missing",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "Accounts payable will not pay this",
+      "body": "Our purchasing process requires a purchase order reference on the face of the invoice and yours does not have one. I have the number here, I just need the document reissued with it on. Sorry to be a nuisance about paperwork.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-account-read-only",
+      "role": "query",
+      "category": "Billing",
+      "priority": "High",
+      "subject": "Account dropped to read only",
+      "body": "A payment failed and now nobody on the team can change anything, we can only look at it. We need this back today. I have people sitting here who cannot do their jobs.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-transfer-not-matched",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "We paid by transfer and the invoice still says outstanding",
+      "body": "The payment left our account on the fourteenth and your portal still shows the invoice as unpaid. I am a little worried about a late fee being added. I can send the remittance advice over if that helps.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-move-to-yearly",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Low",
+      "subject": "Moving to a yearly payment",
+      "body": "I would rather pay once a year than every month. What happens to the month I have already paid for?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-extra-line-on-invoice",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "There is a line on this bill I do not recognise",
+      "body": "My invoice has the normal plan amount and then a second smaller amount underneath it with a description I cannot make sense of. I have not changed anything about the account this month so I have no idea where it has come from.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-refund-to-dead-card",
+      "role": "query",
+      "category": "Billing",
+      "priority": "High",
+      "subject": "Refund sent to a card that no longer exists",
+      "body": "You have refunded me to the card I originally paid with. That account was closed in the summer when I switched banks. Nobody at either end can tell me where the money has actually gone and it is not a small amount. The order was 90712, the closed card ended 3304, and I am on m.enright@example.com.",
+      "traits": ["pii"]
+    },
+    {
+      "id": "q-ho-billing-one-invoice-please",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Low",
+      "subject": "Can we get a single monthly invoice",
+      "body": "We have four subscriptions running on the same account and we receive four separate documents every month. Our finance system treats each one as a separate supplier invoice, which creates work for no reason. One combined document would be far easier for us.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-credit-note-for-seats",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "Need a credit note for seats we do not have",
+      "body": "The last invoice bills us for twenty five seats. We have nineteen. I cannot simply pay less than the invoice says, our auditors need a credit note raised against it.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-old-office-on-invoice",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "Invoices still show our old office",
+      "body": "We moved premises in the spring and the registered address printed on the invoices has not changed. Deliveries come to the right place, so it seems to be only the billing side that is out of date.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-swap-card-on-file",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Low",
+      "subject": "Replacing the card you have on file",
+      "body": "New card, old one is cancelled. How do I make sure the next payment goes to the right one?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-billing-new-card-still-refused",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "Added the new card and it still will not take payment",
+      "body": "The old card expired so I put the replacement on the account last week, and this month's payment has been refused anyway. Nothing else has changed at my end. The new card works everywhere else I have used it.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-billing-reminder-came-after-charge",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "Renewal warning arrived after you took the money",
+      "body": "I did get the email about the renewal, but it landed in my inbox two days after the payment had already come out. That is not much use as a warning. I would have cancelled if it had arrived when it was meant to.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-billing-code-entered-before-paying",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "Discount code accepted but not taken off",
+      "body": "I put the code in on the basket page before I went anywhere near the payment screen, and it showed as applied with the reduced total underneath it. The amount that came off my card was the full price. I still have the screenshot of the basket if you want it.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-billing-payment-terms-request",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "Can we be invoiced on thirty day terms",
+      "body": "Paying by card does not fit how our purchasing department works. We would need to be set up on account with payment thirty days from invoice date. Who do I speak to about arranging that, and is there anything you would need from us first?",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-billing-entity-change",
+      "role": "query",
+      "category": "Billing",
+      "priority": "Normal",
+      "subject": "Our company has been bought and billing needs to move",
+      "body": "The business has been acquired and from January our invoices need to be issued to the new parent company, which has a different registered number and a different VAT number. The subscription itself should carry on exactly as it is. What is the process for moving it across?",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-billing-instalment-plan-after-return",
+      "role": "query",
+      "category": "Billing",
+      "priority": "High",
+      "subject": "Refund confirmed and the payments keep coming",
+      "body": "I have an email saying my refund has been processed and the monthly amounts are still leaving my account. I bought this on your instalment plan rather than paying for it outright.",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-account-recovery-codes-gone",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "High",
+      "subject": "Cannot find my backup codes",
+      "body": "When I set up the second step I printed the recovery codes and put them somewhere safe. I have now turned the house upside down and they are nowhere. My phone still works so I am not locked out yet, but I would like a fresh set before that changes.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-new-password-refused",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Low",
+      "subject": "It will not accept any password I choose",
+      "body": "Every password I type gets rejected and the message just says it cannot be used. I have tried longer ones, ones with symbols, ones with numbers. Nothing tells me what is actually wrong with them.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-which-email-did-i-use",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Low",
+      "subject": "Not sure which address my account is under",
+      "body": "I have a personal address and a work one and I cannot remember which I registered with. Is there a way to check without accidentally creating a second account?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-changing-sign-in-address",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "Changed my email but it has not taken effect",
+      "body": "I put a new address into the settings a couple of days ago and the old one is still what signs me in. I assume I have missed a step somewhere.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-typo-in-registered-email",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "High",
+      "subject": "Got a letter wrong in my email at sign up",
+      "body": "I mistyped my address when I registered, I left a letter out of the domain. The account says s.pardoe@exampl.com and it should be s.pardoe@example.com. Nothing from you reaches me, and I cannot reset the password because the reset goes to an address that does not exist. I can prove the order was mine from the card I used.",
+      "traits": ["pii"]
+    },
+    {
+      "id": "q-ho-account-no-company-sign-in-option",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "Company sign in is not offered",
+      "body": "Our IT team say staff should be signing in through our own provider, but the only thing on your page is the email and password form. Nobody here can see the option at all.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-some-staff-not-recognised",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "A few of the team are refused by company sign in",
+      "body": "Most of us get in through our provider without any trouble. Four people are told their account is not recognised. They are all on the same team, so I assume it is something to do with their permissions.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-new-starter-no-access",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "New colleague cannot get in",
+      "body": "We added her to our directory first thing this morning and she still cannot sign in. Everyone else is fine. She does not start properly until Monday so it is not urgent, but I would rather have it sorted before then.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-form-just-reloads",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "Sign in page comes straight back at me",
+      "body": "I type my email and password, press the button, and the same page reappears with the boxes empty. It does not tell me the password is wrong. It does not tell me anything at all.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-app-signs-me-out",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "App makes me sign in every time, the website does not",
+      "body": "On my laptop I stay signed in for weeks at a time. On the phone app I am asked for my password practically every time I open it. Same account, same password.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-signed-out-by-new-device",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "Signing in on my tablet signs out my laptop",
+      "body": "I have this on a work machine, a home machine, my phone and now a tablet. Every time I use one of them something else gets kicked out. Is there a limit I have gone past?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-saved-password-wrong",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Low",
+      "subject": "Browser is filling in an old password",
+      "body": "My browser fills the password in automatically and it is always refused, but if I type it out by hand it works fine.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-close-it-permanently",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "I would like my account deleted",
+      "body": "I do not use this any more and I would like the account and everything attached to it removed. Could you confirm what happens to my order history and how long the whole thing takes.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-account-codes-refused-clock-checked",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "High",
+      "subject": "Authenticator codes refused even though the clock is right",
+      "body": "Every code the app gives me is rejected, including ones I type within a second of them appearing. I have already checked the phone's clock, automatic time is switched on and it matches to the second. I am fairly sure this is not the usual clock problem.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-account-locked-after-vpn",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "High",
+      "subject": "Locked out after connecting through our work VPN",
+      "body": "I have not gone anywhere. IT put a VPN on my laptop on Friday and since then I cannot sign in at all, it simply says the account is unavailable. Turning the VPN off does not seem to make any difference now either.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-account-closed-three-weeks-ago",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "Closed my account and regret it",
+      "body": "I asked for the account to be closed about three weeks ago and I have changed my mind. Is there anything left to restore, or have I lost the lot? There were a couple of years of orders on it that I would quite like back.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-account-hand-over-to-colleague",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "Handing my account over to someone else",
+      "body": "I am leaving the company at the end of the month and my replacement needs everything that sits on my account, including the history and the saved settings. I would rather hand the whole thing across than have her start from nothing. What is the right way to do that?",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-account-security-key-instead",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "Normal",
+      "subject": "Can I use a security key rather than the app",
+      "body": "Our security policy is moving everyone onto hardware keys and away from codes on a phone. I have the key here in front of me. I cannot find anywhere in the settings to register it, only the authenticator app option.",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-account-cannot-pass-verification",
+      "role": "query",
+      "category": "Account & Login",
+      "priority": "High",
+      "subject": "Lost my phone and cannot answer your checks either",
+      "body": "I replaced my phone and no longer have the authenticator codes, so I cannot get into my account at all. The difficulty is that I have never placed an order and the account was set up for me by my employer, so I cannot answer any of the things you ask to prove who I am.",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-fault-export-strange-characters",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "Names come out as nonsense in the download",
+      "body": "Anyone with an accent in their name appears as a string of odd symbols when I open the file. It is fine on screen, it is only the downloaded version that is wrong.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-pdf-missing-content",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "Half the pages in the PDF are empty",
+      "body": "The document comes out with the right number of pages but pages three, four and seven have nothing on them at all. It happens every time I generate it, not just the once.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-video-keeps-buffering",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "Video will not play through",
+      "body": "It plays for a few seconds, stops, loads, plays again. I have a fast connection and everything else I watch streams perfectly well, so I do not think the problem is at my end.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-wrong-typeface",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Low",
+      "subject": "Site is showing in a different font",
+      "body": "Everything looks plain and slightly wrong compared to how it used to. All the text is in a basic typeface now. It is not stopping me working, it is just odd.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-times-are-wrong",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "Times shown are an hour behind",
+      "body": "Every entry in the activity list shows an hour earlier than when it actually happened. We first noticed it after the clocks changed.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-total-off-by-a-penny",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "Totals do not add up",
+      "body": "On a handful of orders the figure at the bottom is a penny different from adding the lines up myself. In money terms it is trivial. Our reconciliation flags every single one of them, so it is not trivial for us.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-two-entries-each-time",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "High",
+      "subject": "Everything I add appears twice",
+      "body": "I add one record and two identical ones show up in the list. I have about thirty duplicates to clean up now.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-requests-start-failing",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "Our integration fails after a few minutes",
+      "body": "The script runs fine to begin with and then every request comes back rejected. If we leave it alone for a while and start again it works for a bit and then does exactly the same thing. I think something at your end is falling over under the load. Our calls come from 203.0.113.88 and I am the contact on this, d.ferreira@example.org.",
+      "traits": ["pii"]
+    },
+    {
+      "id": "q-ho-fault-same-event-several-times",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "We get the same notification repeatedly",
+      "body": "One change on your side produces three or four callbacks to our endpoint carrying the same content. We are creating duplicate records at our end as a result.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-unusable-on-phone",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "Cannot use this on my phone",
+      "body": "The columns run into each other and the buttons sit off the side of the screen where I cannot reach them. On a laptop it is fine.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-same-alert-several-copies",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "Getting four copies of every alert",
+      "body": "Every alert arrives several times over, within a minute of each other, identical. It has got to the point where I am ignoring them, which rather defeats the purpose of having them.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-alerts-make-no-sound",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Low",
+      "subject": "Notifications are silent on my phone",
+      "body": "They show up on the screen but there is never any sound, so I keep missing them.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-fault-new-records-not-searchable",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "New records do not come up in search",
+      "body": "Something I added this morning cannot be found by searching for it, though it is plainly there if I go to the list and scroll down. By the afternoon it usually turns up. It is making the search impossible to rely on.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-fault-export-disagrees-with-screen",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "High",
+      "subject": "Exported figures do not match the report on screen",
+      "body": "The summary and the rows on screen agree with each other, which is fine. The file I download from that same screen gives a different total. We have already sent the downloaded version to a client, which is the part that worries me.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-fault-export-missing-a-column",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "A column is missing from the export",
+      "body": "The file has all the rows but the reference column that I can see perfectly well on screen is not in it. I have exported it again and it comes out the same.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-fault-scheduled-export-to-sftp",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "Automated nightly export into our systems",
+      "body": "Downloading the file by hand every morning is not sustainable for us any more. We need it dropped onto our SFTP server overnight, or put somewhere we can collect it from automatically. We can supply the server details and a key once we know whether it is possible at all.",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-fault-screen-reader-problems",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "Normal",
+      "subject": "Screen reader cannot work through the order list",
+      "body": "One of our team uses a screen reader and it reads the order list out as a block of unlabelled text, so she cannot tell which button belongs to which order. She is managing by asking a colleague to read it to her, which is not acceptable as a long term arrangement. Is there anything that can be done about it?",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-fault-restore-deleted-records",
+      "role": "query",
+      "category": "Technical Fault",
+      "priority": "High",
+      "subject": "Records we deleted need to come back",
+      "body": "We removed about forty records last week and now need them again. They are gone from the list and they no longer come back in search either. Can they be restored?",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-shipping-nothing-has-shipped",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "No dispatch confirmation after nine days",
+      "body": "I ordered nine days ago and there has been nothing since the order confirmation. No tracking, no dispatch email, nothing. Every item showed as in stock when I placed it.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-free-delivery-not-applied",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "I was charged postage on a large order",
+      "body": "My basket was over your free delivery amount and postage was added anyway. It is only a few pounds but it is the principle of it.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-courier-wants-money",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "High",
+      "subject": "Courier is asking me to pay before handing it over",
+      "body": "I have had a card through the door asking for a payment before my parcel can be delivered. I have already paid for the order in full so I do not understand what this is supposed to be. I am not paying anything to anybody until somebody explains it to me.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-extra-charge-for-postcode",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "Additional delivery charge for my area",
+      "body": "There is a surcharge on my order because of my postcode. I am on the mainland, not somewhere remote.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-missed-the-driver",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "I was out when the driver came",
+      "body": "There is a card through the door saying they tried to deliver. What do I do now?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-collect-it-myself",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "Rather collect than wait for another attempt",
+      "body": "They have tried twice and I am never in during the day. It would be far easier for me to drive to wherever it is being held and pick it up myself. Do I need to bring anything with me?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-tracking-ref-not-found",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "Tracking reference not recognised",
+      "body": "I have put the number from my confirmation email into the carrier's site and it says there is no such parcel. I have checked it twice and typed it out rather than pasting it, same result.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-will-they-leave-it",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Low",
+      "subject": "Will they leave it if I am out",
+      "body": "I am at work during the day. Can the parcel be left somewhere or does somebody have to sign for it?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-afternoon-delivery",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Low",
+      "subject": "Can I ask for an afternoon delivery",
+      "body": "Mornings are no good for me at all. Is it possible to say when I want it to come?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-make-it-come-faster",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "Need this sooner than the estimate",
+      "body": "I ordered on standard delivery yesterday and I now need it for the weekend. I am happy to pay the difference if that is possible.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-address-fields-wrong",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "Your address form does not fit my address",
+      "body": "There is no field for the district, which is a required part of an address where I live, and the postcode box will not accept the format we use. I have had to leave things out just to get past the page. I am now fairly worried the parcel will not reach me.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-box-address-refused",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "You will not accept my box address",
+      "body": "I have everything sent to a postal box because I am rarely at home. Your checkout rejects it and tells me to enter a street address instead.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-three-boxes-three-days",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "One order, three deliveries",
+      "body": "I placed a single order and it has arrived as three separate parcels on three different days. It all turned up in the end so nothing is missing. What I want to know is whether I have been charged three times for delivery, because the paperwork does not make that clear.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-shipping-neighbour-despite-instruction",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "High",
+      "subject": "Left with a neighbour after I asked you not to",
+      "body": "After the last time this happened I set the account so parcels are not left with neighbours, and the driver has gone and done exactly that again. The card says number 14, I am at 18 Cromer Street, and my email is b.ashworth@example.com. I do not know these people and I am not knocking on their door.",
+      "traits": ["near-duplicate", "pii"]
+    },
+    {
+      "id": "q-ho-shipping-address-not-found-but-correct",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "Driver says address not found and the flat number was on the label",
+      "body": "My delivery came back marked as address not found. The flat number is on the label, I have checked it against the confirmation. The entryphone for the building has been broken for a fortnight, which I suspect is the real reason, though the card does not say so.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-shipping-strike-delay",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "Delayed by the carrier's strike and I paid for express",
+      "body": "My parcel has not moved for four days because the carrier is on strike, which was in the news before I even ordered. I paid extra for the quicker service and I have not had it. I would like that charge back at the very least.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-shipping-locker-delivery",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "Delivery to a parcel locker",
+      "body": "There is a locker bank at the end of my road and almost everything else I buy goes there. I cannot find any way to choose it at your checkout, only a home address. Am I missing it or do you simply not offer it?",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-shipping-take-old-one-away",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "Will the driver take the old one away",
+      "body": "I am replacing something bulky and I have no way of getting rid of the one I already have. When the new one is delivered, is there an option for them to take the old unit away with them? I would pay for it if there is a charge.",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-shipping-someone-elses-parcel",
+      "role": "query",
+      "category": "Shipping & Delivery",
+      "priority": "Normal",
+      "subject": "A parcel has arrived that is not mine",
+      "body": "A box turned up this morning with my address on the label but somebody else's name on it, and the packing note inside is for an order I have never placed. My own order is still showing as in transit on the tracking. I do not want to open it any further and I am not going to throw it away. What do you want me to do with it?",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-returns-broken-on-opening",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "High",
+      "subject": "Cracked when I opened the box",
+      "body": "There is a split down one side of the casing and it was clearly like that before it was packed, because the box itself is undamaged. I have not used it. I would like my money back rather than another one.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-opened-sealed-item",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Told I cannot return it because I opened it",
+      "body": "I opened the packaging to have a look at it and I am now being told it cannot be returned. Nothing at the point I bought it made that obvious to me.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-engraved-item",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Can I return something with initials on it",
+      "body": "I had a set of initials put on and the person I bought it for has since been given the same thing by somebody else. It has not been used or even taken out of the box.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-sale-item-rights",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Returning something bought in the sale",
+      "body": "I bought this reduced and I want to send it back. Do the normal rules still apply or does buying it in a sale change things?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-swap-size-unavailable",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "The size I need is not in stock",
+      "body": "I wanted to exchange for the larger size and it is showing as unavailable. I do not want to end up waiting indefinitely with neither the item nor my money.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-exchange-price-gone-up",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Replacement is dearer than what I paid",
+      "body": "I am exchanging for a different colour of the same thing and the price has gone up since I bought mine. Am I expected to pay the difference?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-cancel-just-ordered",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Ordered the wrong thing two minutes ago",
+      "body": "I have just placed an order and immediately realised I picked the wrong variant. Can it be stopped before it goes anywhere?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-already-dispatched",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Tried to cancel and it has already gone",
+      "body": "I went to cancel and the screen tells me the order is already with the courier. I do not want it and I never will. What is the cheapest way out of this for me?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-too-heavy-to-post",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Return is too heavy for me to take anywhere",
+      "body": "This weighs a good deal and I do not drive. There is no realistic way I am getting it to a drop off point on my own.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-where-to-drop-off",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Low",
+      "subject": "Where do I leave the parcel",
+      "body": "Label is printed. Where can I actually hand it in?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-who-pays-for-the-label",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Does the return postage come out of my refund",
+      "body": "I want to send something back because I have changed my mind, not because there is anything wrong with it. I would like to know what that will cost me before I commit to it.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-money-held-back",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Something has been deducted from my refund",
+      "body": "The amount refunded is less than I paid and nobody has explained the difference to me. This was a special order item, if that makes any difference to it.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-returns-faulty-postage-not-refunded",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "High",
+      "subject": "Postage not refunded on a faulty item",
+      "body": "The item was faulty, which you accepted, and I have been refunded for the goods only. The delivery charge I paid at the start has not come back. I did not choose to return this. It broke.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-returns-returned-the-free-one",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Charged more after returning the free item",
+      "body": "I bought three on a three for two and sent one back. The one I returned was the one I did not pay for, so I expected nothing at all to change. Instead the price of the two I kept has gone up and the difference has been taken out of my refund.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-returns-bought-just-before-november",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Christmas present bought in October",
+      "body": "I bought this on the 24th of October as a Christmas present and it was opened on the day. The standard thirty days ran out long before Christmas. I had understood there was a longer period for presents, but when I started the return it would not let me.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-returns-bought-from-reseller",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Returning one of your items bought elsewhere",
+      "body": "I bought this from a shop that sells your products rather than from you directly, and that shop has since closed down. It is faulty and I am not sure who I am meant to go to now. My name is Dervla Kinsella and my email is d.kinsella@example.com if you need to look anything up.",
+      "traits": ["hard-negative", "pii"]
+    },
+    {
+      "id": "q-ho-returns-dispose-instead-of-return",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "Normal",
+      "subject": "Can I dispose of the faulty item rather than send it back",
+      "body": "The unit has failed and it is large and awkward to pack. Rather than wrestle it back to you, is there a way to have it recycled locally and still get the refund? I would send photographs of it and of the disposal if that is what is needed.",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-returns-sent-wrong-item-back",
+      "role": "query",
+      "category": "Returns & Refunds",
+      "priority": "High",
+      "subject": "You have had my return since Tuesday and it is the wrong item",
+      "body": "The carrier confirms you signed for my return on Tuesday. The trouble is that I packed the wrong thing, so what you are holding is something I never meant to send back at all. Can it be found and returned to me?",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-product-how-much-weight",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "How much can it hold",
+      "body": "I want to put something fairly heavy on this and I need to know whether it will take it. The listing gives a figure but does not say whether that is spread out or in one spot.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-how-loud",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Low",
+      "subject": "Is it noisy",
+      "body": "This would be going in a room where somebody sleeps. How loud is it when it is running?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-running-cost",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Low",
+      "subject": "What does it cost to run",
+      "body": "I am trying to work out what this would add to the electricity bill over a year. It would be sitting on standby most of the time and only actually used for a few hours a week.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-size-when-built",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "Size once assembled",
+      "body": "The dimensions on the page look like they are for the box rather than the item. I need to know what it measures once it is put together, and ideally how much room I need around it while I am assembling it.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-what-comes-with-it",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Low",
+      "subject": "What is actually in the box",
+      "body": "The photograph shows the unit, a stand and a couple of other bits. I cannot tell from the description which of those I am actually buying.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-storing-over-winter",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Low",
+      "subject": "Storing it over the winter",
+      "body": "This will be in the garage from October through to March. Is there anything I should do before putting it away so that it still works in the spring?",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-guarantee-length",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "What guarantee comes with it",
+      "body": "Before I order I would like to know how long it is covered for and what that cover actually includes.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-how-many-years",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "Realistically how long will it last",
+      "body": "I am choosing between this and something half the price. If this one lasts twice as long it is worth the money, so I would like an honest answer rather than the marketing one.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-replacement-part",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "Buying a replacement part",
+      "body": "One piece has worn through after about three years of fairly heavy use. The rest of it is perfectly sound. I would much rather replace that one part than throw the whole thing away.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-conformity-paperwork",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "Compliance documents for procurement",
+      "body": "Our procurement process needs the declaration of conformity and the relevant test certificates before a purchase can be approved. Could you send them over, and confirm that they cover the version currently being sold.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-where-is-it-made",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Low",
+      "subject": "Where is this made",
+      "body": "Could you tell me what country this is manufactured in.",
+      "traits": []
+    },
+    {
+      "id": "q-ho-product-what-is-in-it",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "Full list of materials",
+      "body": "I have a skin condition and I react badly to a few specific materials. The listing gives a rough description but not the full breakdown, and it says nothing at all about whatever the coating is made from. Could you send it in writing to h.mbeki@example.com, or ring me on 0117 204 5593.",
+      "traits": ["pii"]
+    },
+    {
+      "id": "q-ho-product-between-sizes-runs-small",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "Between sizes and I hear it runs small",
+      "body": "My measurements put me between the medium and the large, and two of the reviews say this line comes up small. Does that mean I should be going up two sizes from my usual, or am I overthinking it?",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-product-colour-already-faded",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "Colour has gone after three washes",
+      "body": "This has been washed three times, cool, inside out, exactly as the label tells you to, and the colour has visibly gone out of it. I expected some fading eventually. Not after three washes.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-product-spares-for-discontinued",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "Do the new parts fit the old model",
+      "body": "The model I own is no longer listed and the one that has replaced it looks very similar. Before I buy a spare, will the part from the new model fit mine? I would rather ask than order the wrong thing twice.",
+      "traits": ["near-duplicate"]
+    },
+    {
+      "id": "q-ho-product-humid-climate",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "Will it cope with the climate here",
+      "body": "It is extremely humid where I live for much of the year and we are around two thousand metres up. Anything with electronics in it tends not to last long here. Is there an operating range published anywhere, or anything you can tell me about how these hold up in those conditions?",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-product-different-plug-voltage",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "Different plug and voltage",
+      "body": "I am buying this to take abroad permanently. Is it made in a version for a two hundred and twenty volt supply with the local plug fitted, or would I be relying on an adapter forever?",
+      "traits": ["hard-negative"]
+    },
+    {
+      "id": "q-ho-product-commercial-use-guarantee",
+      "role": "query",
+      "category": "Product Question",
+      "priority": "Normal",
+      "subject": "What cover comes with it if we use it at work",
+      "body": "I want to know what guarantee comes with the item before I buy. These would be running most of the day in a workshop rather than sitting in somebody's kitchen.",
+      "traits": ["hard-negative"]
+    }
+  ]
+}

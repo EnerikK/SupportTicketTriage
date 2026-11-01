@@ -94,3 +94,15 @@ Every mismatch is classified as one of two things and nothing else:
 **The wording is not iterated toward a perfect dev score.** A rubric tuned until the judge
 agrees on all 46 has been fitted to one judge on one sample, and the held-out run would
 then measure nothing. The held-out run is the test.
+
+## Addendum (dated): reported breakdowns, not selection criteria
+
+Added after the dev-check runs and before any held-out generation. Nothing in this addendum changes the selection rule above.
+
+### Groundedness by retrieval similarity
+
+Band is each query's top-1 cosine against the 240-ticket corpus, taken from the similarity recorded at draft time, not recomputed (embeddings are not bit-identical run to run). Bands: <0.70, 0.70–0.80, >0.80. Report agreement, missed-ungrounded and false-flag rates per band. Per-band counts are small; report them as descriptive, with intervals.
+
+### Hard negatives that received a draft
+
+12 hard negatives score below 0.60 and are refused by Gate B. 6 were written to clear the floor. Report how many of the 6 were drafted. Their drafts are labelled for groundedness under the same rules as every other draft. Separately, each is labelled for appropriate abstention: did the draft avoid presenting an answer the evidence does not provide? These 6 are not pooled with the ordinary queries in any reported figure.

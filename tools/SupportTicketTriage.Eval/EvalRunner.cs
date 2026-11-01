@@ -411,12 +411,25 @@ public sealed class EvalRunner(
                 redactor.Redact(r.Resolution!)))
             .ToList();
 
+        // Gate B's value, taken from this draft's own retrieval set rather
+        // than from the latest TicketRoutingDecision row. Both routing and
+        // generation call FindSimilarAsync for the same ticket, so rank 1 is
+        // the same number - but these rows hang off this draft by foreign
+        // key, so re-running triage on a ticket cannot slide a different
+        // decision under the pair. Same reason the cited sources are read
+        // back from here rather than by re-running retrieval.
+        var topSimilarity = draft.Sources
+            .Where(s => s.Rank == 1)
+            .Select(s => (double?)s.Similarity)
+            .FirstOrDefault();
+
         return new JudgePair(
             queryId,
             ticketSubject,
             redactedTicket,
             draft.DraftText,
             sources,
+            topSimilarity,
             Grounded: null,
             Note: null);
     }

@@ -77,17 +77,17 @@ and an empty list that means "nothing applies" should not look identical.
 
 ## Count and distribution
 
-**105 queries**, which yields roughly 90 drafts after the ones that legitimately
+**111 queries**, which yields roughly 95 drafts after the ones that legitimately
 produce no draft.
 
 | category | count |
 |---|---|
-| Billing | 18 |
-| Account & Login | 18 |
-| Technical Fault | 17 |
-| Shipping & Delivery | 18 |
-| Returns & Refunds | 17 |
-| Product Question | 17 |
+| Billing | 19 |
+| Account & Login | 19 |
+| Technical Fault | 18 |
+| Shipping & Delivery | 19 |
+| Returns & Refunds | 18 |
+| Product Question | 18 |
 
 Traits, across the whole set:
 
@@ -95,15 +95,40 @@ Traits, across the whole set:
 |---|---|---|
 | *(none)* | 75 | an ordinary, clearly-worded customer problem |
 | `near-duplicate` | 18 | closely resembles a corpus ticket, but differs in one material detail |
-| `hard-negative` | 12 | plausible for this product, but the corpus contains nothing that resolves it |
+| `hard-negative` | 18 | plausible for this product, but the corpus contains nothing that resolves it |
+
+**The hard negatives are deliberately split in two.** Twelve were written for
+plausibility alone, and all twelve land below the 0.60 retrieval floor, so they
+are refused before a draft is attempted. That tests the gate and nothing after
+it. The other six were written **to clear 0.60 on purpose**: anchored on a dense
+corpus cluster, often mirroring one ticket's opening almost verbatim, with the
+unanswerable turn held back to a late clause. Those six are the only queries in
+the set that put tempting-but-insufficient evidence in front of the drafting
+stage, which is the behaviour worth measuring. Report **hard negatives that
+received a draft** as its own metric, and remember the first twelve cannot
+contribute to it.
+
+Writing the second kind is harder than it looks. A capability request ("can I
+have X") embeds away from a corpus full of failure narratives no matter how
+related the topic; four attempts in Account & Login scored 0.46-0.54 before one
+written as a *complaint* mirroring `login-mfa-lost-device` reached 0.747. Match
+the shape, not just the subject.
 
 **Do not include `malformed` or `injection` tickets.** The main dataset already
 carries them and they test the redaction and guardrail paths, not this. They
 produce no draft, so here they would only shrink the set.
 
+`near-duplicate` and `hard-negative` are *scenario* traits, and the 75 in the
+first row means 75 tickets carrying no scenario trait. `pii` is an overlay on top
+of that and does not consume a row.
+
 A handful of tickets may include realistic personal details (a name, an order
 number, an address fragment) — tag those `pii`, in addition to any other trait.
-Aim for about 6. Redaction is tested elsewhere; this is for realism.
+Aim for about 6, and **spread them across the scenario traits in proportion**:
+roughly 4 on ordinary tickets, 1 near-duplicate, 1 hard-negative. Loading `pii`
+onto the two hard groups confounds it with them, and anything later measured per
+trait can no longer tell the two apart. Redaction is tested elsewhere; this is
+for realism.
 
 ---
 
@@ -142,7 +167,8 @@ of question a support desk genuinely has no precedent for yet.
    the 60 in `tickets.json`. Similar situations are fine; same ticket is not.
 3. **Every ticket needs a plausible resolution path in the product's world** —
    except the `hard-negative` ones, where the absence is the point.
-4. `priority` is one of `Low`, `Medium`, `High`. Use judgement; it is not scored.
+4. `priority` is one of `Low`, `Normal`, `High`, matching `TicketPriority.Labels`
+   and the rest of the dataset. Use judgement; it is not scored.
 5. `category` must be exactly one of the six listed, spelled as above.
 
 ---
