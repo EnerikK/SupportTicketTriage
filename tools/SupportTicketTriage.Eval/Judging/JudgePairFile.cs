@@ -27,6 +27,16 @@ public sealed record JudgePair(
     string RedactedTicket,
     string Draft,
     IReadOnlyList<JudgeSource> CitedSources,
+    /// Gate B's top-1 retrieval similarity for this query, recorded at
+    /// generation time rather than recomputed later.
+    ///
+    /// Positional and without a default on purpose: a caller must say what it
+    /// was. Recomputing it afterwards does not give the same answer - the
+    /// embedding deployment is not bit-identical between calls, and two
+    /// queries in the hold-out set moved across the 0.60 floor between runs.
+    /// A band assigned from a recomputed value would describe a different
+    /// retrieval than the one that produced the draft being labelled.
+    double? TopSimilarity,
     bool? Grounded,
     string? Note);
 
@@ -103,6 +113,26 @@ public sealed record JudgePairFile(
         if (!string.IsNullOrEmpty(directory))
         {
             Directory.CreateDirectory(directory);
+        }
+
+        // A pair exists only because a draft was generated, and a draft exists
+        // only because Gate B passed - which required a top-1 similarity at or
+        // above the floor. So a null here is not "retrieval found nothing",
+        // which is a legitimate state on TicketRoutingDecision; it is the
+        // plumbing between generation and this file having dropped the value.
+        // Failing at write time keeps that from reaching a labeller as a pair
+        // whose band cannot be assigned.
+        var unmeasured = pairs
+            .Where(p => !string.IsNullOrWhiteSpace(p.Draft) && p.TopSimilarity is null)
+            .Select(p => p.QueryId)
+            .ToList();
+
+        if (unmeasured.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"{unmeasured.Count} drafted pair(s) carry no top-1 similarity: "
+                + $"{string.Join(", ", unmeasured)}. A draft implies Gate B passed, so this is a "
+                + "generation-side defect rather than an absence of retrieval.");
         }
 
         var file = new JudgePairFile(GroundednessPrompt.Version, HowToLabel, pairs);
