@@ -1,0 +1,1641 @@
+{
+  "rubricVersion": "judge-v2",
+  "instructions": "Set \u0022grounded\u0022 on each pair to true or false.\r\n\r\nA draft is GROUNDED when every MATERIAL claim it makes is supported.\r\n\r\nEVIDENCE. Only the resolution of a cited precedent establishes facts. The\r\nincoming ticket, and each precedent\u0027s subject and body, are accounts - what a\r\ncustomer said - and never establish a fact. The customer is authoritative about\r\ntheir own experience and intent: what they did, what they saw, what they want.\r\nThat may be restated directly. Claims about causes, system state, eligibility,\r\nor what anyone else did need either attribution (\u0022you mentioned...\u0022) or support\r\nfrom a resolution.\r\n\r\nMATERIALITY. A claim is material if it asserts a cause of the problem the\r\ncustomer reported, a policy or rule, an amount, a timeline, an eligibility, or\r\nan action taken or a specific outcome promised. An offer to investigate or\r\nassist is not material; a promise of a refund, a replacement, a fix, or when one\r\nwill happen, is. Descriptive wording that asserts none of these cannot make a\r\ndraft ungrounded. Ignore greetings, apologies and offers to help further.\r\n\r\nPRECEDENTS. A resolution is evidence about ONE case. It may be used as a similar\r\ncase, as a hedged possibility, or as general policy ONLY where the resolution is\r\nitself phrased in general terms - \u0022a replacement is sent\u0022 and \u0022enrolments are\r\ntied to the device\u0022 license a policy statement, \u0022the discount was applied\u0022 and\r\n\u0022the browser was configured\u0022 describe one past case and do not.\r\n\r\nMark UNGROUNDED when a draft asserts a precedent\u0027s circumstances or actions as\r\nthis customer\u0027s facts, or turns one case into a general practice, a prevalence\r\nclaim (\u0022commonly\u0022, \u0022a few common reasons\u0022), a guarantee (\u0022you will be\r\nnotified\u0022), or a prediction about this customer\u0027s outcome or timing. A\r\nconditional asserts its consequent as a general rule, so hedging must attach to\r\nthe claim itself rather than only to the circumstances that trigger it.\r\n\r\nLeave \u0022grounded\u0022 as null to skip a pair. Skipped pairs are dropped from the\r\ncomparison rather than counted either way. The \u0022note\u0022 field is for you; the tool\r\nignores it.",
+  "pairs": [
+    {
+      "queryId": "q-ho-billing-trial-became-paid",
+      "ticketSubject": "Free trial has turned into a charge",
+      "redactedTicket": "Free trial has turned into a charge\n\nI signed up to try this out and did not think I had committed to anything. There is now a full month on my card. I would like it reversed please, I am not going to carry on with it.",
+      "draft": "You mentioned that you signed up for a free trial and did not intend to continue, but a full month was charged to your card. In a similar case, the free trial automatically converts to a paid plan at day thirty unless cancelled, which is stated at sign-up and in the trial confirmation. If the charge was within the fourteen-day refund window, it was refunded in full and the account returned to the free tier. Please let us know if you would like us to check if your charge is eligible for a refund.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-2d45-758a-8535-4bbf7f382186",
+          "subject": "Free trial turned into a paid plan",
+          "redactedText": "I signed up for the free trial and now there is a full charge on my card. I never agreed to continue.",
+          "resolution": "The trial converts to the paid plan automatically at day thirty unless cancelled, which is stated at sign-up and in the trial confirmation. The charge was within the fourteen-day refund window, so it was refunded in full and the account returned to the free tier."
+        }
+      ],
+      "topSimilarity": 0.7957437821148201,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-gift-card-not-used",
+      "ticketSubject": "Gift voucher still showing its full balance",
+      "redactedTicket": "Gift voucher still showing its full balance\n\nI had about forty pounds on a voucher and meant to put it towards this order, but the whole amount went on my debit card instead. The voucher still shows the balance so I do not think it has been used. Can the difference be sorted out?",
+      "draft": "You mentioned that your gift voucher still shows the full balance and the whole amount was charged to your debit card instead. In a similar case, gift card balances need to be selected at the payment step before confirming the order; if not selected, the balance remains untouched and is still available. The difference was refunded and the balance left intact (id=01a196ce-5e93-7144-a37c-8358b80d84fd). If you did not select the voucher during payment, that may explain why the voucher balance was not used. Please check if the voucher was applied at checkout. If you need further assistance sorting out the difference, please let us know.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-5e93-7144-a37c-8358b80d84fd",
+          "subject": "Gift card balance was not deducted",
+          "redactedText": "I had a balance on a gift card and the full amount still came off my bank card.",
+          "resolution": "Gift card balances are applied at the payment step and must be selected before confirming. The order was placed without selecting it, so the balance remained untouched and is still available. The difference was refunded and the balance left intact."
+        }
+      ],
+      "topSimilarity": 0.6243948173437764,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-tax-still-charged",
+      "ticketSubject": "Tax still on our invoices",
+      "redactedTicket": "Tax still on our invoices\n\nWe sent over our exemption certificate when the account was set up and tax is still being added every month. Our finance team have asked me to get this corrected and the amounts charged since then credited back.",
+      "draft": "Thank you for your message. You mentioned that you sent over your exemption certificate when the account was set up but tax is still being added to your invoices each month. In a similar case, exemption is applied once a valid certificate is recorded against the billing profile; until then, tax is charged by default. When the certificate is validated, exemption is enabled, and tax charged on invoices since the certificate\u0027s effective date is credited back. Please let us know if your exemption certificate has been validated and recorded on your account so we can assist further with correcting the tax charges and crediting the amounts charged since then.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-5457-7571-8a8b-9e41a5e3251c",
+          "subject": "We should not be charged tax",
+          "redactedText": "We hold an exemption certificate but tax is still being added to our invoices.",
+          "resolution": "Exemption is applied once a valid certificate is recorded against the billing profile; until then tax is charged by default. The certificate was validated, exemption was enabled, and tax charged on the two invoices since the certificate\u0027s effective date was credited back."
+        }
+      ],
+      "topSimilarity": 0.7460122227329331,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-po-reference-missing",
+      "ticketSubject": "Accounts payable will not pay this",
+      "redactedTicket": "Accounts payable will not pay this\n\nOur purchasing process requires a purchase order reference on the face of the invoice and yours does not have one. I have the number here, I just need the document reissued with it on. Sorry to be a nuisance about paperwork.",
+      "draft": "Thank you for letting us know about the issue with the purchase order reference on the invoice. We can reissue the invoice with the purchase order number included on it. This is done by storing the purchase order reference on the billing profile so it prints on every future invoice. Once reissued, the original invoice will be voided to ensure only one document is payable. Please provide the purchase order number you would like us to include, and we will update the invoice accordingly.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-4949-7fde-a746-f1d58877522b",
+          "subject": "Invoice rejected because it has no PO number",
+          "redactedText": "Our accounts payable team will not process your invoice because our purchase order number is not printed on it.",
+          "resolution": "A purchase order reference can be stored on the billing profile and is then printed on every future invoice. The existing invoice was reissued with the reference included and the original was voided so only one document is payable."
+        }
+      ],
+      "topSimilarity": 0.6524340014019367,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-account-read-only",
+      "ticketSubject": "Account dropped to read only",
+      "redactedTicket": "Account dropped to read only\n\nA payment failed and now nobody on the team can change anything, we can only look at it. We need this back today. I have people sitting here who cannot do their jobs.",
+      "draft": "You mentioned that a payment failed and now the account is in read-only mode, preventing your team from making changes. In a similar case, the account was limited after a charge was declined for insufficient funds and retried twice over six days. Once the payment method was updated and the charge succeeded, full access was restored immediately, with no data removed during the limited period (id=01a196ce-3678-7923-aa8f-4ec367ca3301). Please check your payment method and update it if necessary to restore full access. If you need further assistance, please let us know.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-3678-7923-aa8f-4ec367ca3301",
+          "subject": "Payment failed and now the account is limited",
+          "redactedText": "My monthly payment did not go through and the account has dropped to read only.",
+          "resolution": "The charge was declined for insufficient funds and retried twice over six days before the account was limited. Once the customer updated the payment method the charge succeeded and full access was restored immediately. No data is removed during the limited period."
+        }
+      ],
+      "topSimilarity": 0.6318582232346263,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-transfer-not-matched",
+      "ticketSubject": "We paid by transfer and the invoice still says outstanding",
+      "redactedTicket": "We paid by transfer and the invoice still says outstanding\n\nThe payment left our account on the fourteenth and your portal still shows the invoice as unpaid. I am a little worried about a late fee being added. I can send the remittance advice over if that helps.",
+      "draft": "Thank you for letting us know about your payment. You mentioned that the payment left your account on the fourteenth and the invoice still shows as unpaid in our portal. If you could please send over the remittance advice, that would help us investigate the issue further and ensure your payment is correctly allocated to your invoice to avoid any late fees.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-3dc4-7aa1-bbfb-d97398c89f34",
+          "subject": "Paid by transfer but invoice still shows unpaid",
+          "redactedText": "We sent the payment by bank transfer last week and the invoice in our account still says outstanding.",
+          "resolution": "The transfer arrived without the invoice reference, so it sat in the unallocated account rather than clearing the invoice. It was matched manually using the amount and sending account, and the invoice was marked paid on its original date so no late fee applied."
+        }
+      ],
+      "topSimilarity": 0.7534975668147661,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-move-to-yearly",
+      "ticketSubject": "Moving to a yearly payment",
+      "redactedTicket": "Moving to a yearly payment\n\nI would rather pay once a year than every month. What happens to the month I have already paid for?",
+      "draft": "Switching from monthly to annual payment is done from the plan page and takes effect immediately. The unused portion of the current month you have already paid for is credited against the annual price, so you will only pay the difference for the annual plan.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-2f18-74ac-8fcc-e0750144dfdc",
+          "subject": "Switch from monthly to annual billing",
+          "redactedText": "I pay monthly at the moment. I would like to move to paying once a year instead.",
+          "resolution": "Switching to annual is done from the plan page and takes effect immediately. The unused portion of the current month is credited against the annual price, so the customer only pays the difference. Annual is charged at ten months\u0027 equivalent."
+        }
+      ],
+      "topSimilarity": 0.7569416818614538,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-extra-line-on-invoice",
+      "ticketSubject": "There is a line on this bill I do not recognise",
+      "redactedTicket": "There is a line on this bill I do not recognise\n\nMy invoice has the normal plan amount and then a second smaller amount underneath it with a description I cannot make sense of. I have not changed anything about the account this month so I have no idea where it has come from.",
+      "draft": "Thank you for reaching out about the unfamiliar line on your bill. While I don\u0027t have specific details about your account charges, in a similar case, an additional line on the bill was due to usage above the plan\u0027s included allowance, billed at the per-unit overage rate. If you have not changed anything about your account this month, it might be worth checking if there was any usage beyond your plan\u0027s allowance. If you need further clarification, please provide more details or contact support directly for a detailed explanation of your bill.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-3305-70ca-bd06-152a38eb3041",
+          "subject": "Extra amount on top of my plan fee",
+          "redactedText": "My bill has the usual plan fee plus another line I do not recognise.",
+          "resolution": "The additional line was usage above the plan\u0027s included allowance, billed at the per-unit overage rate. Usage alerts are off by default on this plan; they were enabled at eighty per cent of the allowance so the customer is warned before it happens again."
+        }
+      ],
+      "topSimilarity": 0.7359095622496837,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-refund-to-dead-card",
+      "ticketSubject": "Refund sent to a card that no longer exists",
+      "redactedTicket": "Refund sent to a card that no longer exists\n\nYou have refunded me to the card I originally paid with. That account was closed in the summer when I switched banks. Nobody at either end can tell me where the money has actually gone and it is not a small amount. The order was 90712, the closed card ended 3304, and I am on [EMAIL].",
+      "draft": "You mentioned that the refund was sent to the card you originally paid with, which has since been closed. In a similar case, refunds must return to the original payment method, and when the card is closed, the customer\u0027s bank typically routes the funds to the replacement or successor account rather than rejecting them. The bank confirmed receipt and the amount cleared five working days later (precedent 01a196ce-3414-71fe-b598-4f1dc7ae4156). If you have not been able to locate the funds, we recommend contacting your bank to trace the refund on their end.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-3414-71fe-b598-4f1dc7ae4156",
+          "subject": "Refund sent to a card I no longer have",
+          "redactedText": "You refunded me to the card I paid with, but that account is closed now. Where has the money gone?",
+          "resolution": "Refunds must return to the original payment method. When the card is closed, the customer\u0027s bank routes the funds to the replacement or successor account rather than rejecting them. The bank confirmed receipt and the amount cleared five working days later."
+        }
+      ],
+      "topSimilarity": 0.848452276642412,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-one-invoice-please",
+      "ticketSubject": "Can we get a single monthly invoice",
+      "redactedTicket": "Can we get a single monthly invoice\n\nWe have four subscriptions running on the same account and we receive four separate documents every month. Our finance system treats each one as a separate supplier invoice, which creates work for no reason. One combined document would be far easier for us.",
+      "draft": "Subscriptions billed to the same account can be moved onto a shared billing cycle, after which they appear as line items on a single monthly invoice. If you would like, we can align your four subscriptions to a common billing date so you receive one combined invoice each month, which should simplify your finance process. Please let us know if you want to proceed with this.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-5020-7666-8e1f-3af3d22796b6",
+          "subject": "Can we receive one invoice instead of several",
+          "redactedText": "We run three separate subscriptions and receive three documents each month, which is awkward for our finance process.",
+          "resolution": "Subscriptions billed to the same account can be moved onto a shared billing cycle, after which they appear as line items on a single monthly invoice. The three subscriptions were aligned to a common date, with the short first period prorated."
+        }
+      ],
+      "topSimilarity": 0.8895748318691352,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-credit-note-for-seats",
+      "ticketSubject": "Need a credit note for seats we do not have",
+      "redactedTicket": "Need a credit note for seats we do not have\n\nThe last invoice bills us for twenty five seats. We have nineteen. I cannot simply pay less than the invoice says, our auditors need a credit note raised against it.",
+      "draft": "You mentioned that your last invoice billed you for twenty five seats, but you only have nineteen, and you need a credit note for the difference for your auditors. In a similar case, a credit note was raised against the original invoice for the difference in seat count and sent as a PDF, with the credit applied to the account balance to offset the next invoice automatically (id=01a196ce-523e-7b0b-9323-e1c5810e4bad). Please let us know if you would like us to proceed with raising a credit note for your account.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-523e-7b0b-9323-e1c5810e4bad",
+          "subject": "Need a credit note for an overcharge",
+          "redactedText": "We were invoiced for more seats than we actually hold and our finance team needs formal documentation.",
+          "resolution": "A credit note was raised against the original invoice for the difference in seat count and sent as a PDF. The credit was applied to the account balance and offsets the next invoice automatically."
+        }
+      ],
+      "topSimilarity": 0.8007789828163484,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-old-office-on-invoice",
+      "ticketSubject": "Invoices still show our old office",
+      "redactedTicket": "Invoices still show our old office\n\nWe moved premises in the spring and the registered address printed on the invoices has not changed. Deliveries come to the right place, so it seems to be only the billing side that is out of date.",
+      "draft": "Thank you for letting us know about the issue with the registered address on your invoices. It appears that the billing address is held separately from the delivery address, which is why deliveries are going to the correct place but the invoices still show your old office address. We can update the billing address on your account to reflect your new premises and reissue recent invoices with the correct registered address.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-4d2a-7354-bd91-449a0d5dfb6c",
+          "subject": "Company address on the invoice is out of date",
+          "redactedText": "We moved offices and the invoices still carry our previous registered address.",
+          "resolution": "The billing address is held separately from the delivery address and had not been updated. It was corrected on the account and the two most recent invoices were reissued with the current registered address."
+        }
+      ],
+      "topSimilarity": 0.8538002084306061,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-swap-card-on-file",
+      "ticketSubject": "Replacing the card you have on file",
+      "redactedTicket": "Replacing the card you have on file\n\nNew card, old one is cancelled. How do I make sure the next payment goes to the right one?",
+      "draft": "To ensure your next payment goes to the new card, you need to replace the stored card from the billing page. Once you save the new card there, it becomes the default for all future charges immediately. The old card will be removed automatically once no active subscription references it.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-43dd-7d65-a49e-0aa96e9b5b1b",
+          "subject": "How do I change the card on file",
+          "redactedText": "I have a new card and want to make sure the next payment uses it rather than the old one.",
+          "resolution": "The stored card is replaced from the billing page, and the new card becomes the default for all future charges as soon as it is saved. The old card is removed automatically once no active subscription references it."
+        }
+      ],
+      "topSimilarity": 0.8643716349242013,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-new-card-still-refused",
+      "ticketSubject": "Added the new card and it still will not take payment",
+      "redactedTicket": "Added the new card and it still will not take payment\n\nThe old card expired so I put the replacement on the account last week, and this month\u0027s payment has been refused anyway. Nothing else has changed at my end. The new card works everywhere else I have used it.",
+      "draft": "You mentioned that you added the new card last week but the payment was still refused this month, and that the new card works elsewhere. In a similar case, payment declines with no record at the bank were often due to the billing address check failing before authorization was sent. We recommend confirming that the billing address on your account exactly matches the address on your card statement. If the address is correct and the issue persists, please let us know so we can assist further.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-1d02-7571-8649-d4035ff62051",
+          "subject": "Payment keeps getting declined",
+          "redactedText": "Every time I try to pay, the card is declined. My bank says they see no attempt at all on their side.",
+          "resolution": "Declines with no record at the bank are usually the address check failing before the authorisation is sent. We asked the customer to confirm the billing address exactly as it appears on the statement, after which payment succeeded."
+        }
+      ],
+      "topSimilarity": 0.6018351059346568,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-reminder-came-after-charge",
+      "ticketSubject": "Renewal warning arrived after you took the money",
+      "redactedTicket": "Renewal warning arrived after you took the money\n\nI did get the email about the renewal, but it landed in my inbox two days after the payment had already come out. That is not much use as a warning. I would have cancelled if it had arrived when it was meant to.",
+      "draft": "Thank you for letting us know about the timing of the renewal warning email. You mentioned that the email arrived two days after the payment was already taken, which did not give you a useful warning. We understand how important it is to receive renewal notices in a timely manner. While we do not have specific information about your account\u0027s notification timing in the evidence provided, we acknowledge your experience as you described it. If you would like us to look into this further or assist with any changes to your subscription, please let us know.",
+      "citedSources": [],
+      "topSimilarity": 0.6192763687813017,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-code-entered-before-paying",
+      "ticketSubject": "Discount code accepted but not taken off",
+      "redactedTicket": "Discount code accepted but not taken off\n\nI put the code in on the basket page before I went anywhere near the payment screen, and it showed as applied with the reduced total underneath it. The amount that came off my card was the full price. I still have the screenshot of the basket if you want it.",
+      "draft": "You mentioned that you entered the discount code on the basket page and it showed as applied with the reduced total, but the amount charged to your card was the full price. In a similar case, the discount code was entered after the payment step had been confirmed, so it did not reach the order, and the difference was refunded to the original payment method (precedent 01a196ce-5873-7da9-b249-d515a2a4f844). However, since you stated you applied the code before the payment screen, this precedent may not fully explain your situation. If you can provide the screenshot of your basket showing the discount applied, that might help us understand what happened. Unfortunately, based on the information provided and precedents available, we cannot confirm why the discount was not taken off your payment.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-5873-7da9-b249-d515a2a4f844",
+          "subject": "Discount code did not come off the total",
+          "redactedText": "I entered the code at checkout and the total charged was the full price anyway.",
+          "resolution": "The code was entered after the payment step had already been confirmed, so it did not reach the order. The discount was applied retrospectively and the difference refunded to the original payment method."
+        }
+      ],
+      "topSimilarity": 0.6680831965972474,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-billing-instalment-plan-after-return",
+      "ticketSubject": "Refund confirmed and the payments keep coming",
+      "redactedTicket": "Refund confirmed and the payments keep coming\n\nI have an email saying my refund has been processed and the monthly amounts are still leaving my account. I bought this on your instalment plan rather than paying for it outright.",
+      "draft": "Thank you for your message. You mentioned that you have received an email confirming your refund, but the monthly payments are still being taken from your account despite purchasing on an instalment plan. We do not have specific information here about instalment plan refunds or stopping ongoing payments after a refund. In similar cases where cancellations were not fully confirmed, payments continued and refunds were issued for the extra charges (see precedents 01a196ce-2bd8-73a6-8d96-6df0c9c130d1 and 01a196ce-20ab-7303-b598-dc5692287cea). However, we cannot confirm if this applies to your situation or provide further details about your instalment plan payments or refund status based on the information available. Please contact support directly for assistance with stopping the instalment payments and confirming your refund status.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-20ab-7303-b598-dc5692287cea",
+          "subject": "Subscription renewed after I cancelled",
+          "redactedText": "I cancelled last month but was billed again this morning for the annual plan.",
+          "resolution": "The cancellation had been started but not confirmed, so the plan stayed active. We cancelled it properly and refunded the renewal in full; refunds reach the original card within five working days."
+        },
+        {
+          "ticketId": "01a196ce-2bd8-73a6-8d96-6df0c9c130d1",
+          "subject": "Cancelled last month but still billed",
+          "redactedText": "I cancelled my plan weeks ago and the money has come out again anyway.",
+          "resolution": "The cancellation was started but never confirmed on the final screen, so the plan stayed active. We treated it as cancelled from the original date, refunded the charge taken since, and closed the subscription."
+        }
+      ],
+      "topSimilarity": 0.6157648670054212,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-recovery-codes-gone",
+      "ticketSubject": "Cannot find my backup codes",
+      "redactedTicket": "Cannot find my backup codes\n\nWhen I set up the second step I printed the recovery codes and put them somewhere safe. I have now turned the house upside down and they are nowhere. My phone still works so I am not locked out yet, but I would like a fresh set before that changes.",
+      "draft": "Since you still have access to your phone and are not locked out yet, we can help you get a fresh set of recovery codes. Recovery codes cannot be retrieved once lost because only a hash is stored. However, after verifying your identity through your account\u0027s secondary channel, the second factor can be reset and a new set of recovery codes issued for you to store safely. Please let us know if you would like to proceed with this process.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-7b27-73e9-8014-52a75c05e8ca",
+          "subject": "Lost my recovery codes",
+          "redactedText": "I saved the backup codes when I set this up and I cannot find them anywhere now.",
+          "resolution": "Recovery codes cannot be retrieved because only a hash is stored. Identity was verified through the account\u0027s secondary channel, the second factor was reset, and a fresh set of codes was issued with a prompt to store them outside the device."
+        }
+      ],
+      "topSimilarity": 0.8153853583984885,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-new-password-refused",
+      "ticketSubject": "It will not accept any password I choose",
+      "redactedTicket": "It will not accept any password I choose\n\nEvery password I type gets rejected and the message just says it cannot be used. I have tried longer ones, ones with symbols, ones with numbers. Nothing tells me what is actually wrong with them.",
+      "draft": "You mentioned that every password you try to set is rejected with a message that it cannot be used, and no details are given about what is wrong with them. In a similar case, the issue was that the password failed the reuse check because it matched one of the last five passwords on the account. When a previously unused password was tried, it was accepted on the first attempt, and the error message was updated to be more specific. You might want to try a password that you have not used recently to see if that resolves the issue.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-71b6-7039-980d-ef98fbcd144f",
+          "subject": "New password keeps being refused",
+          "redactedText": "Every password I try to set is rejected and the message does not say what is wrong with it.",
+          "resolution": "The password failed the reuse check rather than the complexity rules, because it matched one of the last five passwords on the account. A previously unused password was accepted on the first attempt, and the error text is being made specific."
+        }
+      ],
+      "topSimilarity": 0.7608865877195216,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-which-email-did-i-use",
+      "ticketSubject": "Not sure which address my account is under",
+      "redactedTicket": "Not sure which address my account is under\n\nI have a personal address and a work one and I cannot remember which I registered with. Is there a way to check without accidentally creating a second account?",
+      "draft": "You can use the account lookup tool to check whether an address is registered without revealing any details about the account. This way, you can confirm which address your account is under without accidentally creating a second account.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-76b2-76c6-9ea4-9e3de94ffaaa",
+          "subject": "Cannot remember which email I signed up with",
+          "redactedText": "I have two addresses and I do not know which one the account is under.",
+          "resolution": "The account lookup tool confirms whether an address is registered without revealing anything about the account. The customer\u0027s work address was the registered one, and a reset was sent there."
+        }
+      ],
+      "topSimilarity": 0.7207970925650143,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-typo-in-registered-email",
+      "ticketSubject": "Got a letter wrong in my email at sign up",
+      "redactedTicket": "Got a letter wrong in my email at sign up\n\nI mistyped my address when I registered, I left a letter out of the domain. The account says [EMAIL] and it should be [EMAIL]. Nothing from you reaches me, and I cannot reset the password because the reset goes to an address that does not exist. I can prove the order was mine from the card I used.",
+      "draft": "Thank you for letting us know about the typo in your email address when you registered. We understand that this is preventing you from receiving communications and resetting your password. In a similar case, ownership of the intended email address was verified through the original payment details, and the sign-in address was corrected manually, with the mistyped address released so it would not block future registration. Please provide the payment details you used for your order so we can verify ownership and assist you in correcting your email address.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-8911-793d-9d13-4bd2916b86ec",
+          "subject": "Mistyped my address when registering",
+          "redactedText": "I got a letter wrong in my email when I created the account and now nothing reaches me.",
+          "resolution": "Ownership of the intended address was verified through the original payment details, and the sign-in address was corrected manually. The mistyped address was released so it cannot block a future registration."
+        }
+      ],
+      "topSimilarity": 0.8149588028774585,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-no-company-sign-in-option",
+      "ticketSubject": "Company sign in is not offered",
+      "redactedTicket": "Company sign in is not offered\n\nOur IT team say staff should be signing in through our own provider, but the only thing on your page is the email and password form. Nobody here can see the option at all.",
+      "draft": "The company sign-in option will appear once your identity provider is connected and your domain is verified. If these steps have not been completed, only the email and password form will be shown. You may want to check with your IT team to ensure that the metadata exchange and domain verification have been completed, as these are required for the company sign-in option to be available to all members on your domain.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-8ed8-76c5-8d99-8967e7c4952f",
+          "subject": "Single sign on option does not appear",
+          "redactedText": "Our staff expect to sign in through the company provider but only the password form is shown.",
+          "resolution": "Single sign on appears once the identity provider is connected and the domain is verified, neither of which had been completed. Once the metadata was exchanged and the domain verified, the option appeared for all members on that domain."
+        }
+      ],
+      "topSimilarity": 0.7900253427639484,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-some-staff-not-recognised",
+      "ticketSubject": "A few of the team are refused by company sign in",
+      "redactedTicket": "A few of the team are refused by company sign in\n\nMost of us get in through our provider without any trouble. Four people are told their account is not recognised. They are all on the same team, so I assume it is something to do with their permissions.",
+      "draft": "It sounds like the issue with the four team members being refused by company sign in could be related to their account permissions or domain verification. In a similar case, some members were not recognized because their email addresses were on a secondary domain that had not been verified alongside the primary one. Adding and verifying the second domain resolved the issue and allowed them to sign in through the company provider. You might want to check if the affected team members\u0027 accounts are associated with any unverified domains or if their permissions differ from those who can sign in successfully.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-91c0-77ee-991e-5399e18df668",
+          "subject": "Some staff cannot use company sign in",
+          "redactedText": "Most of the team can sign in through our provider but a handful are told they are not recognised.",
+          "resolution": "Those members held addresses on a secondary domain that had not been verified alongside the primary one. Adding and verifying the second domain brought them into the same sign-in route."
+        }
+      ],
+      "topSimilarity": 0.816599898735323,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-new-starter-no-access",
+      "ticketSubject": "New colleague cannot get in",
+      "redactedTicket": "New colleague cannot get in\n\nWe added her to our directory first thing this morning and she still cannot sign in. Everyone else is fine. She does not start properly until Monday so it is not urgent, but I would rather have it sorted before then.",
+      "draft": "Thank you for letting us know about the issue with your new colleague\u0027s sign-in. Since you mentioned that she was added to your directory this morning but still cannot sign in, it may be due to the directory synchronization running on a scheduled cycle rather than instantly. In a similar case, a manual sync was triggered which allowed the new member to sign in straight away. You might want to try triggering a manual sync to resolve this before her start date on Monday.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-93ba-757a-8b10-484cd129bc5c",
+          "subject": "New starter cannot sign in yet",
+          "redactedText": "We added someone in our directory this morning and they still cannot get in.",
+          "resolution": "Directory synchronisation runs on a scheduled cycle rather than instantly, so new members appear at the next run. A manual sync was triggered and the member could sign in straight away."
+        }
+      ],
+      "topSimilarity": 0.7607883375353897,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-form-just-reloads",
+      "ticketSubject": "Sign in page comes straight back at me",
+      "redactedTicket": "Sign in page comes straight back at me\n\nI type my email and password, press the button, and the same page reappears with the boxes empty. It does not tell me the password is wrong. It does not tell me anything at all.",
+      "draft": "It sounds like the sign-in page reloads without any error message and clears the fields after you enter your email and password. In a similar case, this behavior was caused by cookies being blocked by a privacy extension, which prevented the session from being established and caused the form to simply re-render. Allowing cookies for the site resolved the issue in that case. You might want to check if any privacy extensions or browser settings are blocking cookies and try allowing them for our site to see if that helps.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-953a-7eef-b280-03a7f3843df3",
+          "subject": "Sign in form just reloads",
+          "redactedText": "I enter my details, press sign in, and the same page comes back with the fields empty and no error.",
+          "resolution": "Third-party and first-party cookies were both blocked by a privacy extension, so the session could not be established and the form simply re-rendered. Allowing cookies for the site resolved it."
+        }
+      ],
+      "topSimilarity": 0.7019014353178713,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-app-signs-me-out",
+      "ticketSubject": "App makes me sign in every time, the website does not",
+      "redactedTicket": "App makes me sign in every time, the website does not\n\nOn my laptop I stay signed in for weeks at a time. On the phone app I am asked for my password practically every time I open it. Same account, same password.",
+      "draft": "You mentioned that the app on your phone asks for your password practically every time you open it, while on your laptop you stay signed in for weeks. In a similar case, the app\u0027s stored credential was being cleared by the phone\u0027s background data restrictions, which the browser is not subject to. Exempting the app from those restrictions kept the session in place (id=01a196ce-97ac-74aa-b2b4-71782fc95857). You might want to check if your phone has any background data restrictions or similar settings that could be clearing the app\u0027s stored credentials and causing you to sign in repeatedly. If this does not resolve your issue, please provide more details about your device and app settings so we can assist further.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-97ac-74aa-b2b4-71782fc95857",
+          "subject": "Phone app signs me out but the website does not",
+          "redactedText": "The app asks me to sign in every time while the same account stays signed in on my laptop.",
+          "resolution": "The app\u0027s stored credential was being cleared by the phone\u0027s background data restrictions, which the browser is not subject to. Exempting the app from those restrictions kept the session in place."
+        }
+      ],
+      "topSimilarity": 0.8447241856364239,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-signed-out-by-new-device",
+      "ticketSubject": "Signing in on my tablet signs out my laptop",
+      "redactedTicket": "Signing in on my tablet signs out my laptop\n\nI have this on a work machine, a home machine, my phone and now a tablet. Every time I use one of them something else gets kicked out. Is there a limit I have gone past?",
+      "draft": "You mentioned that signing in on your tablet signs out your laptop, and that this happens across multiple devices. In a similar case, the plan permits three concurrent sessions and signs out the oldest when a fourth begins. Active sessions can be viewed and ended selectively on the security page, and higher plans raise this limit. This may explain why signing in on one device signs out another if you have reached the session limit. You might want to check your active sessions on the security page to manage them.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-9897-7cb6-9522-f2ce548ffcce",
+          "subject": "Signing in on a new device pushes another one out",
+          "redactedText": "When I sign in somewhere new, one of my other devices is signed out.",
+          "resolution": "The plan permits three concurrent sessions and signs out the oldest when a fourth begins. Active sessions are listed on the security page and can be ended selectively, and higher plans raise the limit."
+        }
+      ],
+      "topSimilarity": 0.6089607151889389,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-saved-password-wrong",
+      "ticketSubject": "Browser is filling in an old password",
+      "redactedTicket": "Browser is filling in an old password\n\nMy browser fills the password in automatically and it is always refused, but if I type it out by hand it works fine.",
+      "draft": "It sounds like your browser\u0027s password manager is filling in an old password that was saved before you changed it. In a similar case, the password manager held an entry saved before a password change and was filling the superseded value. Updating the stored entry in the password manager resolved the issue. You might want to check your browser\u0027s saved passwords and update or remove the old entry so it fills in the correct, current password.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-9ea0-7d84-82e9-feda2656fc12",
+          "subject": "Saved password fills in the wrong value",
+          "redactedText": "My password manager puts something in automatically and it is always refused.",
+          "resolution": "The manager held an entry saved before a password change and was filling the superseded value. Updating the stored entry resolved it. The sign-in form was also marked so managers update saved entries automatically after a change."
+        }
+      ],
+      "topSimilarity": 0.7253008373283124,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-close-it-permanently",
+      "ticketSubject": "I would like my account deleted",
+      "redactedTicket": "I would like my account deleted\n\nI do not use this any more and I would like the account and everything attached to it removed. Could you confirm what happens to my order history and how long the whole thing takes.",
+      "draft": "You can request deletion of your account from the account settings. The deletion takes effect after a fourteen-day grace period during which signing in cancels the deletion. Records required for tax purposes are retained for the statutory period, but everything else, including your order history, is erased. Unfortunately, I cannot provide an exact timescale beyond the fourteen-day period for the deletion to take effect.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-a230-724f-857e-d2a1bd4b3f05",
+          "subject": "Please close my account permanently",
+          "redactedText": "I no longer want an account and would like everything associated with it removed.",
+          "resolution": "Deletion is requested from the account settings and takes effect after a fourteen-day grace period during which signing in cancels it. Records required for tax purposes are retained for the statutory period and everything else is erased."
+        }
+      ],
+      "topSimilarity": 0.6989930602064305,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-codes-refused-clock-checked",
+      "ticketSubject": "Authenticator codes refused even though the clock is right",
+      "redactedTicket": "Authenticator codes refused even though the clock is right\n\nEvery code the app gives me is rejected, including ones I type within a second of them appearing. I have already checked the phone\u0027s clock, automatic time is switched on and it matches to the second. I am fairly sure this is not the usual clock problem.",
+      "draft": "You mentioned that your phone\u0027s clock is set correctly with automatic time enabled and matches to the second, yet the authenticator codes are still rejected immediately. In a similar case, the issue was caused by the phone\u0027s clock drifting by about ninety seconds, and enabling automatic time sync fixed it without needing to re-enroll (id=01a196ce-78f5-77bd-92bc-7d336ee7b878). Since you have already checked your clock and automatic time is on, this may not be the cause in your situation. Unfortunately, based on the information provided and the precedents available, there is no further resolution to suggest for your issue. Please let us know if there are any other details or symptoms you observe, and we will do our best to assist you further.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-78f5-77bd-92bc-7d336ee7b878",
+          "subject": "Authenticator codes are all rejected",
+          "redactedText": "My app shows a code but every one I type is refused, even straight after it refreshes.",
+          "resolution": "The phone\u0027s clock had drifted by roughly ninety seconds, and time-based codes are only accepted inside a thirty-second window either side. Enabling automatic time sync on the device fixed it without re-enrolling."
+        }
+      ],
+      "topSimilarity": 0.7544227706790038,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-locked-after-vpn",
+      "ticketSubject": "Locked out after connecting through our work VPN",
+      "redactedTicket": "Locked out after connecting through our work VPN\n\nI have not gone anywhere. IT put a VPN on my laptop on Friday and since then I cannot sign in at all, it simply says the account is unavailable. Turning the VPN off does not seem to make any difference now either.",
+      "draft": "You mentioned that after your IT department installed a VPN on your laptop, you have been unable to sign in and receive a message that the account is unavailable. Turning off the VPN has not resolved the issue. The evidence does not provide a specific cause or solution for this situation. To proceed, you may want to check with your IT department or support team to see if there are any account suspensions, lockouts, or domain verification issues related to the VPN setup, as these have been causes in other cases. However, we do not have information here that directly addresses your exact problem.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-8152-7f55-b097-cbe4f044ad13",
+          "subject": "Locked out while abroad",
+          "redactedText": "I landed in another country and now I cannot sign in at all.",
+          "resolution": "The sign in came from an unfamiliar country and triggered an automatic protective hold, which is separate from the failed-attempt lockout. The hold was cleared after verification and the customer added the trip dates so it did not recur."
+        },
+        {
+          "ticketId": "01a196ce-82b2-7893-8db0-7f22768462a4",
+          "subject": "Cannot sign in, says account unavailable",
+          "redactedText": "My credentials are definitely right but it will not let me into the account.",
+          "resolution": "The account was suspended for an unpaid invoice rather than locked for security, which is why the password was accepted but access was refused. Settling the invoice restored access within minutes. Suspension and lockout produce similar-looking messages and the wording is being separated."
+        },
+        {
+          "ticketId": "01a196ce-91c0-77ee-991e-5399e18df668",
+          "subject": "Some staff cannot use company sign in",
+          "redactedText": "Most of the team can sign in through our provider but a handful are told they are not recognised.",
+          "resolution": "Those members held addresses on a secondary domain that had not been verified alongside the primary one. Adding and verifying the second domain brought them into the same sign-in route."
+        }
+      ],
+      "topSimilarity": 0.6441517061169074,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-cannot-pass-verification",
+      "ticketSubject": "Lost my phone and cannot answer your checks either",
+      "redactedTicket": "Lost my phone and cannot answer your checks either\n\nI replaced my phone and no longer have the authenticator codes, so I cannot get into my account at all. The difficulty is that I have never placed an order and the account was set up for me by my employer, so I cannot answer any of the things you ask to prove who I am.",
+      "draft": "You mentioned that you lost your phone and no longer have the authenticator codes, and that you cannot answer the usual verification questions because you never placed an order and the account was set up by your employer. Unfortunately, the precedents we have show that identity verification for resetting two-factor authentication typically relies on information such as recent order numbers, billing postcodes, or recovery details associated with the account. Since you do not have these details, it may be difficult to verify your identity through the standard process. We do not have evidence here of an alternative verification method for accounts set up by employers without orders. Please let us know if you have any other information or documentation related to your account that might help with verification.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-6682-7385-8376-04c70da447ad",
+          "subject": "Lost my phone, cannot get past two-factor",
+          "redactedText": "I replaced my phone and no longer have the authenticator codes. I cannot get into my account at all.",
+          "resolution": "Identity was verified against the last two order numbers and the registered billing postcode, after which two-factor was reset and the customer enrolled a new device and stored recovery codes."
+        },
+        {
+          "ticketId": "01a196ce-79f7-7d37-acf8-01739eef8e91",
+          "subject": "Changed phone and cannot complete sign in",
+          "redactedText": "I moved to a new handset and the authenticator no longer has my account in it.",
+          "resolution": "Authenticator enrolments are tied to the device and do not transfer with a phone migration unless the app\u0027s own backup was used. Identity was verified against the account\u0027s recovery details, the old enrolment was removed, and the customer re-enrolled on the new handset."
+        }
+      ],
+      "topSimilarity": 0.7471334746266262,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-export-strange-characters",
+      "ticketSubject": "Names come out as nonsense in the download",
+      "redactedTicket": "Names come out as nonsense in the download\n\nAnyone with an accent in their name appears as a string of odd symbols when I open the file. It is fine on screen, it is only the downloaded version that is wrong.",
+      "draft": "The issue you are experiencing with accented characters appearing as odd symbols in the downloaded file is due to the file being written as UTF-8 without a byte order mark. When your spreadsheet opens the file directly, it may default to a legacy code page, causing the characters to display incorrectly. To fix this, you can import the file into your spreadsheet with the encoding set explicitly to UTF-8, which should render the characters correctly. Additionally, a byte order mark is now included in the file for better compatibility. Please try importing the file with UTF-8 encoding and let us know if the problem persists.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-b0ab-73f9-b248-b8fa2bbbb2df",
+          "subject": "Accented characters come out wrong in the export",
+          "redactedText": "Names with accents appear as strings of odd symbols when I open the downloaded file.",
+          "resolution": "The file is written as UTF-8 without a byte order mark, and the customer\u0027s spreadsheet defaulted to a legacy code page when opening it directly. Importing with the encoding set explicitly rendered it correctly, and a byte order mark is now written for compatibility."
+        }
+      ],
+      "topSimilarity": 0.77567201084937,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-pdf-missing-content",
+      "ticketSubject": "Half the pages in the PDF are empty",
+      "redactedTicket": "Half the pages in the PDF are empty\n\nThe document comes out with the right number of pages but pages three, four and seven have nothing on them at all. It happens every time I generate it, not just the once.",
+      "draft": "Thank you for letting us know about the issue with the PDF pages being empty. A similar problem has been identified before where the content was rendered before the web fonts finished loading, which caused some pages to appear blank. The renderer was updated to wait for fonts before capturing each page to fix this. If you are still experiencing this issue, please ensure you are using the latest version of the software or tool generating the PDF. If the problem persists, please provide more details about how you generate the PDF so we can assist further.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-b68d-7bd7-a549-7dc1697ea95f",
+          "subject": "Generated PDF has empty pages",
+          "redactedText": "The document downloads with the right number of pages but several of them are blank.",
+          "resolution": "Content was being rendered before the web fonts finished loading, leaving text drawn in a font with no glyphs available. The renderer now waits for fonts before capturing each page."
+        }
+      ],
+      "topSimilarity": 0.7860839517161121,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-video-keeps-buffering",
+      "ticketSubject": "Video will not play through",
+      "redactedTicket": "Video will not play through\n\nIt plays for a few seconds, stops, loads, plays again. I have a fast connection and everything else I watch streams perfectly well, so I do not think the problem is at my end.",
+      "draft": "You mentioned that the video plays for a few seconds, stops, loads, and then plays again, despite having a fast connection and other streams working well. In a similar case, the issue was caused by the player being pinned to the highest bitrate rather than adapting, which caused buffering during brief dips in throughput. Restoring adaptive bitrate selection resolved the playback interruptions. It may be helpful to check if your player is set to adapt the bitrate automatically to avoid these pauses.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-b7b2-7f5a-baf0-c0e27aa4cf55",
+          "subject": "Video stops every few seconds",
+          "redactedText": "Playback starts normally and then pauses repeatedly to buffer even on a fast connection.",
+          "resolution": "The player was pinned to the highest bitrate rather than adapting, so any brief dip in throughput starved the buffer. Adaptive selection was restored and playback became continuous."
+        }
+      ],
+      "topSimilarity": 0.7131302616529333,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-wrong-typeface",
+      "ticketSubject": "Site is showing in a different font",
+      "redactedTicket": "Site is showing in a different font\n\nEverything looks plain and slightly wrong compared to how it used to. All the text is in a basic typeface now. It is not stopping me working, it is just odd.",
+      "draft": "Thank you for letting us know about the font change on the site. In a similar case, the issue was caused by a corporate content filter blocking the font host, which made the browser fall back to a basic system typeface. Allowing access to the font host restored the normal font rendering without any site changes needed. You might want to check if something similar is affecting your access to the font resources.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-b945-7cf8-9b26-234f581d30ad",
+          "subject": "Text displays in the wrong typeface",
+          "redactedText": "The site renders in a plain default typeface rather than the usual one.",
+          "resolution": "A corporate content filter blocked the font host, so the browser fell back to a system typeface. Allowing the font host restored normal rendering. No site change was required."
+        }
+      ],
+      "topSimilarity": 0.7082281455333631,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-times-are-wrong",
+      "ticketSubject": "Times shown are an hour behind",
+      "redactedTicket": "Times shown are an hour behind\n\nEvery entry in the activity list shows an hour earlier than when it actually happened. We first noticed it after the clocks changed.",
+      "draft": "You mentioned that every entry in the activity list shows an hour earlier than when it actually happened, and you first noticed this after the clocks changed. In a similar case, timestamps were stored correctly in UTC but rendered with a fixed offset that did not account for summer time. The rendering was then updated to use the account timezone with its daylight saving rules applied. This may explain the issue you are seeing with the times being an hour behind.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-c6ed-7769-9f05-9458d08adb57",
+          "subject": "Timestamps are an hour out",
+          "redactedText": "Entries are consistently showing an hour earlier than when they actually happened.",
+          "resolution": "Timestamps were stored correctly in UTC but rendered with a fixed offset that did not account for summer time. Rendering now uses the account timezone with its daylight saving rules applied."
+        }
+      ],
+      "topSimilarity": 0.7336978608584426,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-total-off-by-a-penny",
+      "ticketSubject": "Totals do not add up",
+      "redactedTicket": "Totals do not add up\n\nOn a handful of orders the figure at the bottom is a penny different from adding the lines up myself. In money terms it is trivial. Our reconciliation flags every single one of them, so it is not trivial for us.",
+      "draft": "You mentioned that the totals at the bottom of some orders differ by a penny from the sum of the lines you calculated. In a similar case, this was due to line values being rounded individually before summing, which caused rounding errors to accumulate. The amounts are now held in minor units and rounded once at the end to remove such discrepancies. This may explain the penny difference you are seeing in your totals.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-c83d-7bef-ac63-6da7b8c65304",
+          "subject": "Totals are out by a penny",
+          "redactedText": "The sum of the lines on screen differs from the total by one penny on some orders.",
+          "resolution": "Line values were rounded individually before being summed, so rounding error accumulated. Amounts are now held in minor units and rounded once at the end, which removes the discrepancy."
+        }
+      ],
+      "topSimilarity": 0.7911891780809744,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-two-entries-each-time",
+      "ticketSubject": "Everything I add appears twice",
+      "redactedTicket": "Everything I add appears twice\n\nI add one record and two identical ones show up in the list. I have about thirty duplicates to clean up now.",
+      "draft": "You mentioned that every time you add one record, two identical ones appear in the list, resulting in about thirty duplicates to clean up. In a similar case, the issue was caused by a double click submitting the form twice before the button disabled itself, and there was no idempotency check on the endpoint. The fix involved adding a request key so repeated submissions collapse into one, and the existing duplicates were merged. If you are experiencing this issue now, it may be related to the same cause. Please let us know if you need assistance with merging or cleaning up the duplicates.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-c247-78e9-9093-0057958591fa",
+          "subject": "Each submission creates two entries",
+          "redactedText": "Every time I add something, two identical entries appear in the list.",
+          "resolution": "A double click submitted the form twice before the button disabled itself, and there was no idempotency check on the endpoint. A request key was added so repeated submissions collapse into one, and the existing duplicates were merged."
+        }
+      ],
+      "topSimilarity": 0.6963029124967,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-requests-start-failing",
+      "ticketSubject": "Our integration fails after a few minutes",
+      "redactedTicket": "Our integration fails after a few minutes\n\nThe script runs fine to begin with and then every request comes back rejected. If we leave it alone for a while and start again it works for a bit and then does exactly the same thing. I think something at your end is falling over under the load. Our calls come from [IP] and I am the contact on this, [EMAIL].",
+      "draft": "Thank you for your report. Based on a similar case where requests started failing after a few minutes, the issue was due to the integration exceeding the per-minute request allowance and being throttled. In that case, adding the documented backoff on the rejection response and batching reads resolved the problem. You might want to check if your integration is hitting a similar rate limit and consider implementing backoff and batching to stay within the allowed limits.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-c00d-7b86-9809-97f579a673c1",
+          "subject": "Requests start failing after a while",
+          "redactedText": "Our script works for a few minutes and then every call comes back rejected.",
+          "resolution": "The integration exceeded the per-minute request allowance and was being throttled. Adding the documented backoff on the rejection response and batching reads brought it comfortably inside the limit."
+        }
+      ],
+      "topSimilarity": 0.7290801228107037,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-same-event-several-times",
+      "ticketSubject": "We get the same notification repeatedly",
+      "redactedTicket": "We get the same notification repeatedly\n\nOne change on your side produces three or four callbacks to our endpoint carrying the same content. We are creating duplicate records at our end as a result.",
+      "draft": "You mentioned that one change on our side produces three or four callbacks to your endpoint carrying the same content, causing duplicate records at your end. In a similar case, delivery is at-least-once by design, and repeats can occur when our request times out after your endpoint has already processed it. To handle this, consumers must treat the event identifier as an idempotency key, which resolves the duplicated processing. Please consider implementing this approach to prevent duplicate records from repeated notifications.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-c9cd-7a04-94dd-c74bc051b245",
+          "subject": "Same event delivered more than once",
+          "redactedText": "Our endpoint is receiving the same notification several times for a single change.",
+          "resolution": "Delivery is at-least-once by design, and repeats occur when our request times out after the endpoint has already processed it. Consumers must treat the event identifier as an idempotency key, which resolved the duplicated processing."
+        }
+      ],
+      "topSimilarity": 0.7810358377915256,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-unusable-on-phone",
+      "ticketSubject": "Cannot use this on my phone",
+      "redactedTicket": "Cannot use this on my phone\n\nThe columns run into each other and the buttons sit off the side of the screen where I cannot reach them. On a laptop it is fine.",
+      "draft": "You mentioned that on your phone the columns run into each other and the buttons sit off the side of the screen where you cannot reach them, while on a laptop it is fine. In a similar case, this issue was caused by a fixed minimum width on the table container that prevented the layout from reflowing below a certain size. The solution was to make the container scrollable within the page so the rest of the layout adapts normally. This may be related to what you are experiencing.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-d22e-760b-9630-6b9232e84b75",
+          "subject": "Page unusable on a phone",
+          "redactedText": "Columns overlap and buttons sit off the edge of the screen when I open it on mobile.",
+          "resolution": "A fixed minimum width on the table container prevented the layout from reflowing below a certain size. The container was made scrollable within the page instead, so the rest of the layout adapts normally."
+        }
+      ],
+      "topSimilarity": 0.7814126126807464,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-same-alert-several-copies",
+      "ticketSubject": "Getting four copies of every alert",
+      "redactedTicket": "Getting four copies of every alert\n\nEvery alert arrives several times over, within a minute of each other, identical. It has got to the point where I am ignoring them, which rather defeats the purpose of having them.",
+      "draft": "You mentioned that you are receiving four copies of every alert within a minute of each other. In a similar case, this was caused by the same address being subscribed both individually and through a group, resulting in multiple identical messages being sent. The subscriptions were then deduplicated per recipient before sending to resolve the issue. It may be worth checking if your alert subscriptions have any overlap like this. If you need further assistance investigating this, please let us know.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-daf8-7432-8f8f-3b74605c893b",
+          "subject": "Receiving the same alert repeatedly",
+          "redactedText": "One event produces several identical messages, sometimes four or five within a minute.",
+          "resolution": "The same address was subscribed both individually and through a group, and each subscription produced its own message. Subscriptions are now deduplicated per recipient before sending."
+        }
+      ],
+      "topSimilarity": 0.7591989161770349,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-alerts-make-no-sound",
+      "ticketSubject": "Notifications are silent on my phone",
+      "redactedTicket": "Notifications are silent on my phone\n\nThey show up on the screen but there is never any sound, so I keep missing them.",
+      "draft": "It sounds like your phone\u0027s notification channel might be set to silent, which can cause notifications to appear on the screen without making any sound. Adjusting the notification channel settings on your device should restore the sound for notifications. The in-app notification setting is linked to the device\u0027s notification channel, so changing the device setting will affect the app\u0027s notification sounds.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-ddcf-7ff4-a1ea-9688800f811b",
+          "subject": "Phone alerts arrive with no sound",
+          "redactedText": "Notifications appear on my lock screen but never make a noise.",
+          "resolution": "The notification channel on the device had been set to silent, which overrides the application\u0027s own setting. Adjusting the channel restored sound. The in-app setting now links to the device channel to avoid the confusion."
+        }
+      ],
+      "topSimilarity": 0.7645360708610277,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-new-records-not-searchable",
+      "ticketSubject": "New records do not come up in search",
+      "redactedTicket": "New records do not come up in search\n\nSomething I added this morning cannot be found by searching for it, though it is plainly there if I go to the list and scroll down. By the afternoon it usually turns up. It is making the search impossible to rely on.",
+      "draft": "You mentioned that new records you added this morning do not appear in search results immediately but do show up by the afternoon. In a similar case, search index updates were delayed due to a backlog, causing deletions or additions to not appear promptly in search results until the index caught up (see precedent 01a196ce-be42-7c32-8098-0aa2784721ac and 01a196ce-bca6-76fa-a9eb-2f51d2e5d808). This suggests that the search index may be lagging behind recent changes, which can make search results temporarily unreliable. Unfortunately, I do not have further information on how to resolve this delay or improve the search indexing speed in your case.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-bca6-76fa-a9eb-2f51d2e5d808",
+          "subject": "Search finds no results at all",
+          "redactedText": "Searching for terms I know exist returns an empty list every time.",
+          "resolution": "The search index had fallen behind after a bulk import and was serving from an empty partition. A reindex restored results within the hour, and index lag is now alerted on before it becomes visible."
+        },
+        {
+          "ticketId": "01a196ce-be42-7c32-8098-0aa2784721ac",
+          "subject": "Search shows items I deleted",
+          "redactedText": "Records I removed last week still come back in search results, though opening them shows they are gone.",
+          "resolution": "Deletions were applied to the database but the corresponding index removals were queued behind a large backlog. The queue was drained and deletion events were given priority over bulk updates."
+        }
+      ],
+      "topSimilarity": 0.6581588431980878,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-export-disagrees-with-screen",
+      "ticketSubject": "Exported figures do not match the report on screen",
+      "redactedTicket": "Exported figures do not match the report on screen\n\nThe summary and the rows on screen agree with each other, which is fine. The file I download from that same screen gives a different total. We have already sent the downloaded version to a client, which is the part that worries me.",
+      "draft": "Thank you for letting us know about the discrepancy between the exported figures and the report on screen. We understand your concern, especially since the downloaded file has already been sent to a client. While we do not have specific information about your case, in a similar situation, differences in totals have been caused by factors such as timezone differences between summary and detail rows or rounding errors in calculations. It may also be helpful to check if any filters applied on screen were carried into the export, as this has caused issues in other cases. Unfortunately, without more details, we cannot determine the exact cause of the mismatch in your export. Please provide any additional information you can about the report or export settings, and we will do our best to assist you further.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-aeb5-7990-a3a7-0eb2383ff122",
+          "subject": "Downloaded export contains no rows",
+          "redactedText": "The file downloads and opens, but there is nothing in it apart from the column headings.",
+          "resolution": "An active filter on the screen was carried into the export, and the filter matched nothing for the chosen period. Clearing the filter produced a complete file. Exports now state the applied filters in the first line."
+        },
+        {
+          "ticketId": "01a196ce-b434-7acb-8448-15f414408513",
+          "subject": "Report totals do not match the detail",
+          "redactedText": "The summary figure at the top is different from the sum of the rows underneath it.",
+          "resolution": "The summary was computed in the account\u0027s reporting timezone while the rows were rendered in the viewer\u0027s local timezone, so entries near midnight fell on different days. Both now use the account timezone and the figures agree."
+        },
+        {
+          "ticketId": "01a196ce-c83d-7bef-ac63-6da7b8c65304",
+          "subject": "Totals are out by a penny",
+          "redactedText": "The sum of the lines on screen differs from the total by one penny on some orders.",
+          "resolution": "Line values were rounded individually before being summed, so rounding error accumulated. Amounts are now held in minor units and rounded once at the end, which removes the discrepancy."
+        }
+      ],
+      "topSimilarity": 0.6614493795357477,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-export-missing-a-column",
+      "ticketSubject": "A column is missing from the export",
+      "redactedTicket": "A column is missing from the export\n\nThe file has all the rows but the reference column that I can see perfectly well on screen is not in it. I have exported it again and it comes out the same.",
+      "draft": "Thank you for letting us know that the reference column visible on screen is missing from your export file. We do not have specific information from previous cases about missing columns in exports. To help us investigate further, could you please confirm if any filters were applied when you exported the data? In a similar case where the export contained no rows, it was found that an active filter on the screen was carried into the export, affecting the output. Clearing the filter produced a complete file. If you have not already tried this, please try exporting again after clearing any filters and let us know if the reference column appears. If the issue persists, please provide any additional details you can about the export process you are using.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-aeb5-7990-a3a7-0eb2383ff122",
+          "subject": "Downloaded export contains no rows",
+          "redactedText": "The file downloads and opens, but there is nothing in it apart from the column headings.",
+          "resolution": "An active filter on the screen was carried into the export, and the filter matched nothing for the chosen period. Clearing the filter produced a complete file. Exports now state the applied filters in the first line."
+        }
+      ],
+      "topSimilarity": 0.6848155570681416,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-fault-restore-deleted-records",
+      "ticketSubject": "Records we deleted need to come back",
+      "redactedTicket": "Records we deleted need to come back\n\nWe removed about forty records last week and now need them again. They are gone from the list and they no longer come back in search either. Can they be restored?",
+      "draft": "You mentioned that you deleted about forty records last week and now need them restored, but they are no longer visible in the list or search. There is no information in the available evidence about restoring deleted records once they no longer appear in search or the list. Therefore, I am unable to confirm whether these records can be restored or how to do so based on the information provided.",
+      "citedSources": [],
+      "topSimilarity": 0.6618688282137445,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-nothing-has-shipped",
+      "ticketSubject": "No dispatch confirmation after nine days",
+      "redactedTicket": "No dispatch confirmation after nine days\n\nI ordered nine days ago and there has been nothing since the order confirmation. No tracking, no dispatch email, nothing. Every item showed as in stock when I placed it.",
+      "draft": "Thank you for reaching out about your order. We understand that you have not received any dispatch confirmation, tracking information, or further updates since your order confirmation nine days ago, despite all items showing as in stock at the time of purchase. While we do not have specific information about your order\u0027s status from the evidence provided, in a similar case where an order had not shipped after a week, it was because one item was on backorder and the order was set to ship complete, causing a delay in dispatch until all items were available. If your order was configured similarly, this might explain the delay. However, we do not have confirmation of this for your order. Please let us know if you would like us to investigate further or provide additional details about your order.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-f6c1-7b96-9400-bce57afe9d42",
+          "subject": "Order has not shipped at all yet",
+          "redactedText": "I placed this over a week ago and there is still no dispatch confirmation or tracking number.",
+          "resolution": "One line was on backorder and the order was configured to ship complete, so nothing left the warehouse. The order was split so the available items shipped immediately and the remaining line followed. Ship-complete is now flagged at checkout."
+        }
+      ],
+      "topSimilarity": 0.6587814904309176,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-free-delivery-not-applied",
+      "ticketSubject": "I was charged postage on a large order",
+      "redactedTicket": "I was charged postage on a large order\n\nMy basket was over your free delivery amount and postage was added anyway. It is only a few pounds but it is the principle of it.",
+      "draft": "Thank you for reaching out about the postage charge on your order. You mentioned that your basket was over the free delivery amount but postage was still added. In a similar case, it was found that the free delivery threshold is assessed on the value after discounts, which can affect whether postage is charged. If you used any promotional codes or discounts, this might have reduced your basket value below the threshold. Unfortunately, without more details about your order, I cannot confirm the exact reason for the postage charge. Please check if any discounts were applied or if your order included any oversized items or delivery surcharges, as these can also affect postage costs. If you provide more information, we can look into this further.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-ff15-75ff-8978-a89a77d2af5d",
+          "subject": "Delivery charge more than advertised",
+          "redactedText": "The postage added at the end was higher than the figure shown on the delivery information page.",
+          "resolution": "The quoted rate applies to standard parcels, and the order included an oversized item carrying a large-item supplement. The supplement is now shown against the item rather than appearing only in the basket total."
+        },
+        {
+          "ticketId": "01a196ce-ffb3-771c-8787-5b0a71fcf346",
+          "subject": "Free delivery did not apply to my order",
+          "redactedText": "My basket was above the threshold and I was still charged for postage.",
+          "resolution": "The threshold is assessed on the value after discounts, and a promotional code had taken the basket just below it. The postage was refunded as a goodwill gesture and the threshold rule is now stated next to the code field."
+        },
+        {
+          "ticketId": "01a196cf-0221-7f42-8c87-ca2389a4400b",
+          "subject": "Extra charge because of where I live",
+          "redactedText": "My postcode attracts an additional delivery cost that I was not expecting.",
+          "resolution": "The carrier applies a surcharge to a defined list of remote postcodes, which is passed through without margin. An alternative carrier without the surcharge was offered for a longer transit time."
+        }
+      ],
+      "topSimilarity": 0.7443977958004596,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-courier-wants-money",
+      "ticketSubject": "Courier is asking me to pay before handing it over",
+      "redactedTicket": "Courier is asking me to pay before handing it over\n\nI have had a card through the door asking for a payment before my parcel can be delivered. I have already paid for the order in full so I do not understand what this is supposed to be. I am not paying anything to anybody until somebody explains it to me.",
+      "draft": "Thank you for your message. You mentioned that you have already paid for your order in full and are being asked by the courier to pay again before delivery. In a similar case, the charge requested by the courier was for import duty and the carrier\u0027s handling fee, which are levied by the destination country rather than by us. Our prices exclude import charges, which is stated at checkout for international destinations. This amount is not refundable by us. If your situation is similar, this may explain the payment request you received. If you believe this does not apply to your order, please let us know so we can assist further.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-014e-7128-83fa-eb6d28319b78",
+          "subject": "Asked to pay a fee before delivery",
+          "redactedText": "The courier is demanding a payment before they will hand over my parcel.",
+          "resolution": "The charge was import duty and the carrier\u0027s handling fee, levied by the destination country rather than by us. Our prices exclude import charges, which is stated at checkout for international destinations. The amount is not refundable by us."
+        }
+      ],
+      "topSimilarity": 0.7818069348171857,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-extra-charge-for-postcode",
+      "ticketSubject": "Additional delivery charge for my area",
+      "redactedTicket": "Additional delivery charge for my area\n\nThere is a surcharge on my order because of my postcode. I am on the mainland, not somewhere remote.",
+      "draft": "You mentioned there is a surcharge on your order because of your postcode, and you are on the mainland, not somewhere remote. In a similar case, the carrier applies a surcharge to a defined list of remote postcodes, which is passed through without margin. An alternative carrier without the surcharge was offered for a longer transit time (id=01a196cf-0221-7f42-8c87-ca2389a4400b). If you believe your postcode should not attract this surcharge, please let us know, and we can look into it further for you.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-0221-7f42-8c87-ca2389a4400b",
+          "subject": "Extra charge because of where I live",
+          "redactedText": "My postcode attracts an additional delivery cost that I was not expecting.",
+          "resolution": "The carrier applies a surcharge to a defined list of remote postcodes, which is passed through without margin. An alternative carrier without the surcharge was offered for a longer transit time."
+        }
+      ],
+      "topSimilarity": 0.8023977201613198,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-missed-the-driver",
+      "ticketSubject": "I was out when the driver came",
+      "redactedTicket": "I was out when the driver came\n\nThere is a card through the door saying they tried to deliver. What do I do now?",
+      "draft": "You mentioned that you were out when the driver came and found a card through the door saying they tried to deliver. Redelivery can be arranged using the carrier\u0027s tracking link and the reference number on the card. You can set the redelivery for a different date or to a neighbouring address. Please note that parcels are held for ten days before being returned to us.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-1164-7bc5-a562-ed242545521b",
+          "subject": "Missed the delivery, what now",
+          "redactedText": "I was out when the driver called and I have a card through the door.",
+          "resolution": "Redelivery is arranged from the carrier\u0027s tracking link using the reference on the card, and can be set for a different date or a neighbouring address. Parcels are held for ten days before being returned to us."
+        }
+      ],
+      "topSimilarity": 0.8020312469366911,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-tracking-ref-not-found",
+      "ticketSubject": "Tracking reference not recognised",
+      "redactedTicket": "Tracking reference not recognised\n\nI have put the number from my confirmation email into the carrier\u0027s site and it says there is no such parcel. I have checked it twice and typed it out rather than pasting it, same result.",
+      "draft": "Thank you for your message. The tracking number you received is issued when the shipping label is created, but it only becomes searchable after the first scan by the carrier, which typically happens at the evening collection. This means that the tracking information may not be immediately available on the carrier\u0027s site. Usually, the tracking updates and becomes visible the next morning. The confirmation email should indicate when tracking becomes active. If you continue to have trouble, please let us know.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-15a5-7e51-aace-eafc453a3ef3",
+          "subject": "Tracking number is not recognised",
+          "redactedText": "I put the reference from my confirmation into the carrier site and it says no such consignment.",
+          "resolution": "The number is issued when the label is created and only becomes searchable after the first carrier scan, typically at the evening collection. It tracked normally the next morning. The confirmation now says when tracking becomes active."
+        }
+      ],
+      "topSimilarity": 0.841316317519628,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-will-they-leave-it",
+      "ticketSubject": "Will they leave it if I am out",
+      "redactedTicket": "Will they leave it if I am out\n\nI am at work during the day. Can the parcel be left somewhere or does somebody have to sign for it?",
+      "draft": "Orders above a value threshold require a signature and cannot be left unattended, which is stated on the despatch confirmation. For orders below that threshold, the carrier may leave the parcel in a safe place unless you opt out of this option. If you are at work during the day and want the parcel left somewhere, it depends on the order value and your account settings. You can check your despatch confirmation for details about whether a signature is required or if safe-place delivery is enabled for your account.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-14dd-7b2b-a776-9e4d48645136",
+          "subject": "Does someone need to be in",
+          "redactedText": "I want to know whether my order can be left if nobody is at home.",
+          "resolution": "Orders above a value threshold require a signature and cannot be left unattended, which is stated on the despatch confirmation. Below that threshold the carrier may use a safe place unless the account opts out."
+        }
+      ],
+      "topSimilarity": 0.6821234996385641,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-afternoon-delivery",
+      "ticketSubject": "Can I ask for an afternoon delivery",
+      "redactedTicket": "Can I ask for an afternoon delivery\n\nMornings are no good for me at all. Is it possible to say when I want it to come?",
+      "draft": "Time windows for delivery are offered by the carrier rather than at checkout. You can choose an afternoon delivery slot from the tracking link once the parcel is out for delivery.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-071e-7561-bc10-f182b01d823f",
+          "subject": "Can I pick a delivery time",
+          "redactedText": "I am only at home in the afternoons and would like the parcel to come then.",
+          "resolution": "Time windows are offered by the carrier rather than at checkout, and are chosen from the tracking link once the parcel is out for delivery. The customer selected an afternoon slot and it was delivered accordingly."
+        }
+      ],
+      "topSimilarity": 0.7451042102967128,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-make-it-come-faster",
+      "ticketSubject": "Need this sooner than the estimate",
+      "redactedTicket": "Need this sooner than the estimate\n\nI ordered on standard delivery yesterday and I now need it for the weekend. I am happy to pay the difference if that is possible.",
+      "draft": "You mentioned that you ordered with standard delivery yesterday and now need the order sooner for the weekend. According to a similar case, the delivery service can be upgraded to a faster option until the order is picked, with only the difference in charge applied. However, once the order is picked and the shipping label is produced, the only option would be to cancel and reorder, which may not be viable depending on stock availability. Please let us know if your order has already been picked, so we can advise you on the next steps.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-05ca-7a4e-ae25-1ddf68f2bf0e",
+          "subject": "Can I make an order arrive faster",
+          "redactedText": "I chose standard delivery and now need it sooner than the estimate.",
+          "resolution": "The service can be upgraded until the order is picked, charging only the difference. After picking the label is already produced and the only option is to cancel and reorder, which was not viable here given stock."
+        }
+      ],
+      "topSimilarity": 0.7436109485899783,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-address-fields-wrong",
+      "ticketSubject": "Your address form does not fit my address",
+      "redactedTicket": "Your address form does not fit my address\n\nThere is no field for the district, which is a required part of an address where I live, and the postcode box will not accept the format we use. I have had to leave things out just to get past the page. I am now fairly worried the parcel will not reach me.",
+      "draft": "Thank you for letting us know about the issue with the address form not fitting your address, specifically the lack of a district field and the postcode format not being accepted. We understand your concern about the parcel reaching you. While we do not have specific information about your address format or how to resolve this issue directly, in a similar case where the address form did not accept a required regional field, the order was placed manually with the correct format and the form was updated to switch layout by destination country. If you can provide your address details, we may be able to assist further or manually process your order to ensure it is correct.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-fe60-79ba-a4ec-5e0e8c2961b6",
+          "subject": "Address form will not accept my region",
+          "redactedText": "The checkout does not have the right fields for how addresses work where I live.",
+          "resolution": "The address form applied the domestic format to an international destination, so a required regional field had nowhere to go. The order was placed manually with the correct format and the form now switches layout by destination country."
+        }
+      ],
+      "topSimilarity": 0.7068426774490563,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-box-address-refused",
+      "ticketSubject": "You will not accept my box address",
+      "redactedTicket": "You will not accept my box address\n\nI have everything sent to a postal box because I am rarely at home. Your checkout rejects it and tells me to enter a street address instead.",
+      "draft": "You mentioned that your checkout rejects your postal box address and asks for a street address instead. In a similar case, the carrier used for the service required a physical address because delivery needs a signature, so box addresses were rejected at checkout. An alternative service that accepts box addresses was offered, though it had a slightly longer transit time. If you would like, we can check if such an option is available for your order.",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-fd8b-7f55-9fab-f43bc1205917",
+          "subject": "Cannot use my postal box as the address",
+          "redactedText": "My order will not accept the box address I normally have things sent to.",
+          "resolution": "The carrier used for this service requires a physical address because delivery needs a signature, so box addresses are rejected at checkout. A different service that accepts them was offered, with a slightly longer transit time."
+        }
+      ],
+      "topSimilarity": 0.7966174962365411,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-three-boxes-three-days",
+      "ticketSubject": "One order, three deliveries",
+      "redactedTicket": "One order, three deliveries\n\nI placed a single order and it has arrived as three separate parcels on three different days. It all turned up in the end so nothing is missing. What I want to know is whether I have been charged three times for delivery, because the paperwork does not make that clear.",
+      "draft": "You mentioned that your single order arrived in three separate parcels on different days and that nothing was missing. In a similar case, items are dispatched from whichever warehouse holds stock, so a single order can produce several consignments arriving independently, each with its own tracking. Importantly, nothing was charged more than once for delivery in that situation. Therefore, it is likely that you have not been charged three times for delivery, but if you want to be certain, please check your payment details or contact us with your order number for further assistance.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-18aa-735b-ae53-b2546aead713",
+          "subject": "Why has my order come in several boxes",
+          "redactedText": "I ordered once and received three separate deliveries on different days.",
+          "resolution": "Items are despatched from whichever warehouse holds stock, so a single order can produce several consignments arriving independently. Each carries its own tracking. Nothing was charged more than once for delivery."
+        }
+      ],
+      "topSimilarity": 0.7740134502439477,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-neighbour-despite-instruction",
+      "ticketSubject": "Left with a neighbour after I asked you not to",
+      "redactedTicket": "Left with a neighbour after I asked you not to\n\nAfter the last time this happened I set the account so parcels are not left with neighbours, and the driver has gone and done exactly that again. The card says number 14, I am at 18 Cromer Street, and my email is [EMAIL]. I do not know these people and I am not knocking on their door.",
+      "draft": "You mentioned that you had previously set your account so parcels are not left with neighbours, yet the driver left your parcel with a neighbour again. I understand that the card says number 14 while you are at 18 Cromer Street, and you do not know these people or want to knock on their door. Unfortunately, the evidence does not provide information on why this happened despite your account settings or what can be done next. Please let us know if you need further assistance.",
+      "citedSources": [],
+      "topSimilarity": 0.6675047330500782,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-address-not-found-but-correct",
+      "ticketSubject": "Driver says address not found and the flat number was on the label",
+      "redactedTicket": "Driver says address not found and the flat number was on the label\n\nMy delivery came back marked as address not found. The flat number is on the label, I have checked it against the confirmation. The entryphone for the building has been broken for a fortnight, which I suspect is the real reason, though the card does not say so.",
+      "draft": "Thank you for your message. You mentioned that the driver marked your delivery as address not found despite the flat number being on the label, and that the entryphone for your building has been broken for a fortnight, which you suspect is the real reason for the delivery issue. In a similar case, the flat number was not visible to the driver because it was truncated on the label, and the order was re-shipped with the flat number in the primary address line and a note for the entryphone (precedent 01a196ce-fccb-7f0e-a2cd-a62b47324421). However, your situation may be different due to the broken entryphone. Unfortunately, the evidence does not provide specific information on how to resolve delivery issues caused by a broken entryphone. You may want to contact the carrier directly to arrange redelivery or provide additional delivery instructions. If you have a card from the driver, redelivery can often be arranged using the carrier\u0027s tracking link (precedent 01a196cf-1164-7bc5-a562-ed242545521b).",
+      "citedSources": [
+        {
+          "ticketId": "01a196ce-fccb-7f0e-a2cd-a62b47324421",
+          "subject": "Courier could not find my flat",
+          "redactedText": "The driver marked my delivery as address not found, though the building is easy to see from the road.",
+          "resolution": "The flat number had been entered on a line the label template truncates, so it did not reach the driver. The order was re-shipped with the flat number in the primary address line and a note for the entryphone."
+        },
+        {
+          "ticketId": "01a196cf-1164-7bc5-a562-ed242545521b",
+          "subject": "Missed the delivery, what now",
+          "redactedText": "I was out when the driver called and I have a card through the door.",
+          "resolution": "Redelivery is arranged from the carrier\u0027s tracking link using the reference on the card, and can be set for a different date or a neighbouring address. Parcels are held for ten days before being returned to us."
+        }
+      ],
+      "topSimilarity": 0.7433026455537005,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-strike-delay",
+      "ticketSubject": "Delayed by the carrier\u0027s strike and I paid for express",
+      "redactedTicket": "Delayed by the carrier\u0027s strike and I paid for express\n\nMy parcel has not moved for four days because the carrier is on strike, which was in the news before I even ordered. I paid extra for the quicker service and I have not had it. I would like that charge back at the very least.",
+      "draft": "Thank you for your message. You mentioned that your parcel has not moved for four days due to a carrier strike and that you paid extra for express service but have not received the quicker delivery you expected. Unfortunately, the evidence provided does not include information about refunds or compensation related to delays caused by carrier strikes. Therefore, I am unable to confirm whether the express charge can be refunded in this situation based on the information available.",
+      "citedSources": [],
+      "topSimilarity": 0.6062582817992588,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-shipping-someone-elses-parcel",
+      "ticketSubject": "A parcel has arrived that is not mine",
+      "redactedTicket": "A parcel has arrived that is not mine\n\nA box turned up this morning with my address on the label but somebody else\u0027s name on it, and the packing note inside is for an order I have never placed. My own order is still showing as in transit on the tracking. I do not want to open it any further and I am not going to throw it away. What do you want me to do with it?",
+      "draft": "Thank you for letting us know about the parcel that arrived with your address but someone else\u0027s name and order details. Since you do not want to open it further or dispose of it, please hold on to the parcel safely. We will investigate the issue and advise you on the next steps shortly.",
+      "citedSources": [],
+      "topSimilarity": 0.6150521504617207,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-broken-on-opening",
+      "ticketSubject": "Cracked when I opened the box",
+      "redactedTicket": "Cracked when I opened the box\n\nThere is a split down one side of the casing and it was clearly like that before it was packed, because the box itself is undamaged. I have not used it. I would like my money back rather than another one.",
+      "draft": "Thank you for letting us know about the split in the casing that you noticed upon opening the box. Since you mentioned the box itself was undamaged and the item was clearly damaged before packing, this sounds like a case of goods faulty on arrival. In similar cases, customers have been offered a refund or replacement with return postage paid by us, without requiring an inspection period. You have expressed a preference for a refund rather than a replacement, so we will take that into consideration. Please let us know if you can provide any photos of the damage to help us process your request.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-1a9e-7aed-839a-8ff93314b09f",
+          "subject": "Item arrived damaged, want to send it back",
+          "redactedText": "The casing was cracked straight out of the box. I would like to return it for a refund.",
+          "resolution": "Damaged goods are returned free of charge. A prepaid label was issued and the refund released on scan-in rather than on arrival, so the customer was not waiting on transit."
+        },
+        {
+          "ticketId": "01a196cf-2a0e-7da0-a7c7-8f4881c99987",
+          "subject": "Item did not work out of the box",
+          "redactedText": "It was faulty the moment I unpacked it and had never been used.",
+          "resolution": "Goods faulty on arrival are replaced or refunded at the customer\u0027s choice with return postage paid by us, and no inspection period is required. A replacement was despatched the same day."
+        }
+      ],
+      "topSimilarity": 0.7425913925360352,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-engraved-item",
+      "ticketSubject": "Can I return something with initials on it",
+      "redactedTicket": "Can I return something with initials on it\n\nI had a set of initials put on and the person I bought it for has since been given the same thing by somebody else. It has not been used or even taken out of the box.",
+      "draft": "Items made to a customer\u0027s specification, such as those with initials engraved, are exempt from change-of-mind returns because they cannot be resold. This exemption applies even if the item is unused and still in its original packaging. The exemption does not apply if the item is faulty or the personalisation is incorrect, but you have not mentioned either of these issues. Therefore, it is unlikely that you can return the item with initials on it for a change of mind.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-2552-75f8-b4c4-c448f9c8230c",
+          "subject": "Told I cannot return an engraved item",
+          "redactedText": "I ordered something with my initials on it and now want to send it back.",
+          "resolution": "Items made to a customer\u0027s specification are exempt from change-of-mind returns because they cannot be resold, which is stated at the point of personalisation. The exemption does not apply if the item is faulty or the personalisation is incorrect, neither of which applied here."
+        }
+      ],
+      "topSimilarity": 0.7120337906349609,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-sale-item-rights",
+      "ticketSubject": "Returning something bought in the sale",
+      "redactedTicket": "Returning something bought in the sale\n\nI bought this reduced and I want to send it back. Do the normal rules still apply or does buying it in a sale change things?",
+      "draft": "Reduced items carry the same return rights as full-price items, and the refund is for the price actually paid. Only clearance items explicitly marked as final sale are excluded, and this one was not. Therefore, the normal return rules still apply to your purchase made in the sale.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-244f-7904-80f7-ff08a42dfb51",
+          "subject": "Can reduced items be returned",
+          "redactedText": "I bought something in the sale and want to know whether the usual rules still apply.",
+          "resolution": "Reduced items carry the same return rights as full-price items, and the refund is for the price actually paid. Only clearance items explicitly marked as final sale are excluded, and this one was not."
+        }
+      ],
+      "topSimilarity": 0.8557864071590866,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-swap-size-unavailable",
+      "ticketSubject": "The size I need is not in stock",
+      "redactedTicket": "The size I need is not in stock\n\nI wanted to exchange for the larger size and it is showing as unavailable. I do not want to end up waiting indefinitely with neither the item nor my money.",
+      "draft": "Since the larger size you want is currently unavailable, the return will be refunded instead of waiting indefinitely. You can also set a back-in-stock alert for the size you need, which will notify you as soon as it becomes available again. This way, you won\u0027t be left waiting without your money or the item. If you want to proceed with the return and refund, please let us know.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-360b-7948-ac22-06e764e10e21",
+          "subject": "The size I want is unavailable",
+          "redactedText": "I wanted to exchange but the option I need is showing as out of stock.",
+          "resolution": "Where the replacement is unavailable the return is refunded instead, and a back-in-stock alert can be set for the variant. The customer is not held waiting on stock to receive their money."
+        }
+      ],
+      "topSimilarity": 0.843194833496126,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-exchange-price-gone-up",
+      "ticketSubject": "Replacement is dearer than what I paid",
+      "redactedTicket": "Replacement is dearer than what I paid\n\nI am exchanging for a different colour of the same thing and the price has gone up since I bought mine. Am I expected to pay the difference?",
+      "draft": "For a direct exchange of the same product in a different color, the replacement is honoured at the originally paid price. Therefore, you would not be expected to pay the difference if the price has gone up since your original purchase.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-3815-71ac-a6ef-a62e89fc4703",
+          "subject": "Exchange item costs more now",
+          "redactedText": "The replacement I want has gone up in price since I bought the original.",
+          "resolution": "Direct exchanges for a different variant of the same product are honoured at the originally paid price. Exchanging for a different product is treated as a refund and a new order, so current pricing applies."
+        }
+      ],
+      "topSimilarity": 0.6162573169761384,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-cancel-just-ordered",
+      "ticketSubject": "Ordered the wrong thing two minutes ago",
+      "redactedTicket": "Ordered the wrong thing two minutes ago\n\nI have just placed an order and immediately realised I picked the wrong variant. Can it be stopped before it goes anywhere?",
+      "draft": "You mentioned you ordered the wrong variant just two minutes ago and want to stop the order before it goes anywhere. Orders can be cancelled from the order screen until picking begins, which releases the payment authorisation without a charge ever being taken. If picking has not yet started, you should be able to cancel the order directly. If picking has already started, cancellation is no longer possible and the order would need to be received and returned instead.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-3946-7ee2-8b23-17b02332f159",
+          "subject": "Want to cancel an order I just placed",
+          "redactedText": "I ordered by mistake a few minutes ago and would like to stop it.",
+          "resolution": "Orders can be cancelled from the order screen until picking begins, which releases the payment authorisation without a charge ever being taken. After picking the order must be received and returned instead."
+        }
+      ],
+      "topSimilarity": 0.7167401183557706,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-already-dispatched",
+      "ticketSubject": "Tried to cancel and it has already gone",
+      "redactedTicket": "Tried to cancel and it has already gone\n\nI went to cancel and the screen tells me the order is already with the courier. I do not want it and I never will. What is the cheapest way out of this for me?",
+      "draft": "You mentioned that you tried to cancel your order but the screen told you it was already with the courier. Once an order has been dispatched, it cannot be cancelled. However, the cheapest way out for you is to refuse the order at the door when it arrives. Refusing the delivery will return the order without you having to pay return postage, and a refund will be processed once the item is received back at the warehouse.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-3a9d-7bf6-bb01-8189561ccf8c",
+          "subject": "Too late to cancel, already sent",
+          "redactedText": "I tried to cancel and was told the order is already on its way.",
+          "resolution": "Once despatched an order cannot be cancelled, but it can be refused at the door, which returns it without the customer paying return postage. Refusal is the cheapest route and the refund follows receipt back at the warehouse."
+        }
+      ],
+      "topSimilarity": 0.6922034781569123,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-too-heavy-to-post",
+      "ticketSubject": "Return is too heavy for me to take anywhere",
+      "redactedTicket": "Return is too heavy for me to take anywhere\n\nThis weighs a good deal and I do not drive. There is no realistic way I am getting it to a drop off point on my own.",
+      "draft": "You mentioned that the return item is too heavy for you to take anywhere and that you do not drive. In a similar case where the item was above the parcel size limit and too big to take anywhere, the item was collected from the customer\u0027s address rather than requiring a drop off. This collection is booked through the return screen with a two-hour window. Additionally, collection is free if the return is due to a fault. You may want to check if your return qualifies for this service and arrange a collection accordingly.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-2ff5-7857-8012-69f56035265d",
+          "subject": "Item is too big to take anywhere",
+          "redactedText": "What I need to return is heavy and will not fit in a car.",
+          "resolution": "Items above the parcel size limit are collected from the address rather than dropped off, booked through the return screen with a two-hour window. Collection is free where the return is due to a fault."
+        }
+      ],
+      "topSimilarity": 0.7505777742312502,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-where-to-drop-off",
+      "ticketSubject": "Where do I leave the parcel",
+      "redactedTicket": "Where do I leave the parcel\n\nLabel is printed. Where can I actually hand it in?",
+      "draft": "You can hand in your parcel at any of the carrier\u0027s drop-off points, which are listed by postcode on the tracking page, as well as at their depots. Please keep the receipt you receive when you drop off the parcel, as it serves as proof of despatch.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-2f15-7508-b2cc-a04d34384b50",
+          "subject": "Where can I hand my return in",
+          "redactedText": "I have the label printed and need somewhere convenient to leave the parcel.",
+          "resolution": "The label is accepted at any of the carrier\u0027s drop-off points, listed by postcode on the tracking page, and at their depots. A receipt should be kept until the refund appears, as it carries the proof of despatch."
+        }
+      ],
+      "topSimilarity": 0.8370256264337108,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-who-pays-for-the-label",
+      "ticketSubject": "Does the return postage come out of my refund",
+      "redactedTicket": "Does the return postage come out of my refund\n\nI want to send something back because I have changed my mind, not because there is anything wrong with it. I would like to know what that will cost me before I commit to it.",
+      "draft": "For returns due to a change of mind, the cost of the return postage is deducted from your refund. This means you will need to pay for the return postage, and the amount will be shown before you confirm the return. Return postage is only free if the item is faulty, incorrect, or damaged.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-2e3b-76f7-9fa2-fd3ef9fee192",
+          "subject": "Do I have to pay to return this",
+          "redactedText": "I want to know whether the cost of sending it back falls to me.",
+          "resolution": "Return postage is free where the item is faulty, incorrect or damaged. For a change of mind the cost of the return label is deducted from the refund, which is shown before the return is confirmed."
+        }
+      ],
+      "topSimilarity": 0.7346917351099829,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-money-held-back",
+      "ticketSubject": "Something has been deducted from my refund",
+      "redactedTicket": "Something has been deducted from my refund\n\nThe amount refunded is less than I paid and nobody has explained the difference to me. This was a special order item, if that makes any difference to it.",
+      "draft": "You mentioned that the amount refunded is less than you paid and that this was a special order item. In a similar case, a restocking deduction was applied only to special-order items brought in specifically for a customer, and this deduction was stated before the order was confirmed. This deduction does not apply to stocked lines and was correctly applied in that case. This may explain the difference in your refund amount. If you would like, we can provide more details about the deduction applied to your refund.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-4429-7d14-b85e-f9e94e64b7f7",
+          "subject": "Deduction taken from my refund",
+          "redactedText": "An amount was held back from what I was given for returning the item.",
+          "resolution": "A restocking deduction applies only to special-order items brought in specifically for a customer, and is stated before the order is confirmed. It does not apply to stocked lines, and was correctly applied here."
+        }
+      ],
+      "topSimilarity": 0.6749145318070506,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-faulty-postage-not-refunded",
+      "ticketSubject": "Postage not refunded on a faulty item",
+      "redactedTicket": "Postage not refunded on a faulty item\n\nThe item was faulty, which you accepted, and I have been refunded for the goods only. The delivery charge I paid at the start has not come back. I did not choose to return this. It broke.",
+      "draft": "You mentioned that the item was faulty and you have been refunded for the goods but not the delivery charge. In a similar case where the return was due to a fault, outbound postage is refunded in full. Since you did not choose to return the item and it broke, this situation aligns with a fault-related return where postage should be refunded. However, I do not have information about your specific refund status beyond what you have shared. Please let us know if you need further assistance with this.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-1f7e-7b52-b9d9-652146b01a7b",
+          "subject": "Delivery charge not included in my refund",
+          "redactedText": "I was refunded for the goods but the postage I paid originally has not come back.",
+          "resolution": "Outbound postage is refunded in full where the return is due to a fault or a cancellation within the statutory period, and withheld for a change of mind. This return was a change of mind, so the goods were refunded and the postage was not."
+        }
+      ],
+      "topSimilarity": 0.7043732245343106,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-returned-the-free-one",
+      "ticketSubject": "Charged more after returning the free item",
+      "redactedTicket": "Charged more after returning the free item\n\nI bought three on a three for two and sent one back. The one I returned was the one I did not pay for, so I expected nothing at all to change. Instead the price of the two I kept has gone up and the difference has been taken out of my refund.",
+      "draft": "You mentioned that you bought three items on a three-for-two offer and returned the one you did not pay for, expecting no change in the price of the two you kept. However, the price of the two items you kept increased, and the difference was deducted from your refund. This can happen because the multi-buy discount requires three qualifying items, and returning one reduces the number to two, causing the remaining items to revert to their standard prices. The difference between the discounted and standard prices is then deducted from the refund. This condition is shown on the offer at checkout. If you need further clarification, please let us know.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-4186-7a8e-8766-cbfe5b1037d5",
+          "subject": "Kept items cost more after my return",
+          "redactedText": "After returning one thing I was charged extra against what I kept.",
+          "resolution": "The multi-buy discount required three qualifying items and the return left two, so the remaining items reverted to their standard prices and the difference was deducted from the refund. The condition is shown on the offer at checkout."
+        }
+      ],
+      "topSimilarity": 0.7545278595539403,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-bought-just-before-november",
+      "ticketSubject": "Christmas present bought in October",
+      "redactedTicket": "Christmas present bought in October\n\nI bought this on the 24th of October as a Christmas present and it was opened on the day. The standard thirty days ran out long before Christmas. I had understood there was a longer period for presents, but when I started the return it would not let me.",
+      "draft": "You mentioned that you bought the item on October 24th as a Christmas present and that the standard thirty-day return period expired before Christmas. According to a similar case, orders placed between the start of November and Christmas Eve may be returned until the end of January, which extends rather than replaces the standard thirty days. However, since your purchase was made in October, it may not qualify for this extended return period. Additionally, if the item was opened and sealed for hygiene reasons, the change-of-mind return right may no longer apply once the seal is broken. Unfortunately, based on the information provided, I cannot confirm a longer return period for your purchase. If you have any further questions or details, please let us know.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-22b4-7b0d-9c5e-98f7f537d363",
+          "subject": "Is the return period longer over the holidays",
+          "redactedText": "I bought something as a present well in advance and the standard period has now passed.",
+          "resolution": "Orders placed between the start of November and Christmas Eve may be returned until the end of January, which extends rather than replaces the standard thirty days. The order qualified and the return was accepted."
+        },
+        {
+          "ticketId": "01a196cf-263a-755f-b090-31310c4a00ff",
+          "subject": "Return refused on a sealed product",
+          "redactedText": "I opened something and was told it can no longer be sent back.",
+          "resolution": "Items sealed for hygiene reasons lose the change-of-mind right once the seal is broken, which is stated on the packaging and at checkout. Faulty items remain returnable regardless of the seal."
+        }
+      ],
+      "topSimilarity": 0.6947069828574045,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-returns-sent-wrong-item-back",
+      "ticketSubject": "You have had my return since Tuesday and it is the wrong item",
+      "redactedTicket": "You have had my return since Tuesday and it is the wrong item\n\nThe carrier confirms you signed for my return on Tuesday. The trouble is that I packed the wrong thing, so what you are holding is something I never meant to send back at all. Can it be found and returned to me?",
+      "draft": "Thank you for your message. You mentioned that you packed the wrong item in your return and that we have received something you never meant to send back. Unfortunately, the evidence provided does not include information about the process for handling returns when the wrong item is sent or whether the item can be located and returned to you. Please let us know if you have any additional details or questions.",
+      "citedSources": [],
+      "topSimilarity": 0.6535212553652142,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-how-much-weight",
+      "ticketSubject": "How much can it hold",
+      "redactedTicket": "How much can it hold\n\nI want to put something fairly heavy on this and I need to know whether it will take it. The listing gives a figure but does not say whether that is spread out or in one spot.",
+      "draft": "The weight rating given in the listing is for an evenly distributed static load. If you place a concentrated or dynamic load, the weight capacity will be substantially reduced. This rating also assumes the item is assembled exactly as instructed with all fixings used. If you plan to mount it on a wall, the weight it can hold will depend on the wall rather than the product itself.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-6dbe-7a32-a339-9bd1a944c50b",
+          "subject": "How much weight will this hold",
+          "redactedText": "I need to be confident it will take what I intend to put on it.",
+          "resolution": "The rating is for evenly distributed static load. Concentrated or dynamic loads reduce it substantially, and the figure assumes assembly exactly as instructed with all fixings used. Wall-mounted use depends on the wall rather than the product."
+        }
+      ],
+      "topSimilarity": 0.7273860382639719,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-how-loud",
+      "ticketSubject": "Is it noisy",
+      "redactedTicket": "Is it noisy\n\nThis would be going in a room where somebody sleeps. How loud is it when it is running?",
+      "draft": "The noise level when the device is running is measured and listed in the specification, taken at one metre on the standard setting. The boost setting is appreciably louder. Keep in mind that perceived loudness roughly doubles for every ten-decibel increase, so the figures alone may not fully convey how loud it will seem. This information should help you assess if it is suitable for a room where someone sleeps.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-7025-780d-80b4-7b700cea1327",
+          "subject": "How loud is it in use",
+          "redactedText": "It will be in a room where noise matters and I want to know what to expect.",
+          "resolution": "The measured level is listed in the specification, taken at one metre on the standard setting. The boost setting is appreciably louder. Perceived loudness roughly doubles for every ten-decibel increase, which the figures alone do not convey."
+        }
+      ],
+      "topSimilarity": 0.6905385323259903,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-running-cost",
+      "ticketSubject": "What does it cost to run",
+      "redactedTicket": "What does it cost to run\n\nI am trying to work out what this would add to the electricity bill over a year. It would be sitting on standby most of the time and only actually used for a few hours a week.",
+      "draft": "The rated consumption and standby power draw, which mostly determines the annual electricity cost for intermittent use, are listed in the product specification. You can find the efficiency label on the product page as well. This information should help you estimate the additional cost to your electricity bill over a year based on your usage pattern.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-6c58-7fdc-95e9-ed8c51d6a396",
+          "subject": "How much electricity does it use",
+          "redactedText": "I want to understand the running cost before committing.",
+          "resolution": "Rated consumption is listed in the specification, alongside standby draw which is the figure that dominates annual cost for intermittent use. The efficiency label is reproduced on the product page."
+        }
+      ],
+      "topSimilarity": 0.6754245369173485,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-size-when-built",
+      "ticketSubject": "Size once assembled",
+      "redactedTicket": "Size once assembled\n\nThe dimensions on the page look like they are for the box rather than the item. I need to know what it measures once it is put together, and ideally how much room I need around it while I am assembling it.",
+      "draft": "The assembled dimensions of the item are listed on the product page separately from the packaged dimensions, with the packaged figure being larger. The clearance needed during assembly exceeds the assembled footprint, and this is noted in the instructions. If you need precise measurements to check fit, the flat measurements for every size are supplied and exclude packaging, which adds several centimeters in each direction and matters where access is tight.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-65f7-7a9a-b528-e4777e8d0101",
+          "subject": "Exact dimensions before I order",
+          "redactedText": "I need the precise measurements to check it fits the space. Please reply to [EMAIL] or call [PHONE] if easier.",
+          "resolution": "Flat measurements for every size were supplied and have since been added to the product page. The dimensions given exclude packaging, which adds several centimetres in each direction and matters where access is tight."
+        },
+        {
+          "ticketId": "01a196cf-6d19-71f9-8c4c-89595b589a5a",
+          "subject": "Size once it is put together",
+          "redactedText": "The listed dimensions seem to be for the box rather than the finished item.",
+          "resolution": "Assembled and packaged dimensions are both listed, and the packaged figure is the larger. Clearance needed during assembly exceeds the assembled footprint, which is noted in the instructions."
+        }
+      ],
+      "topSimilarity": 0.771530737812152,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-what-comes-with-it",
+      "ticketSubject": "What is actually in the box",
+      "redactedTicket": "What is actually in the box\n\nThe photograph shows the unit, a stand and a couple of other bits. I cannot tell from the description which of those I am actually buying.",
+      "draft": "The listing includes the main unit, the stand, and one cable. Items shown in the photograph for context that are not part of these are not included. This is now stated beneath the images as well as in the description.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-7a4a-7ab6-aefa-c73d6f9e8153",
+          "subject": "What exactly is included",
+          "redactedText": "The photograph shows several pieces and I cannot tell which of them come with it.",
+          "resolution": "The listing includes the main unit, the stand and one cable. Items shown in the lifestyle photograph for context are not included, which is now stated beneath the images rather than only in the description."
+        }
+      ],
+      "topSimilarity": 0.6813344802017371,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-storing-over-winter",
+      "ticketSubject": "Storing it over the winter",
+      "redactedTicket": "Storing it over the winter\n\nThis will be in the garage from October through to March. Is there anything I should do before putting it away so that it still works in the spring?",
+      "draft": "For storing your item over the winter in the garage from October through to March, it should be kept dry and away from direct sunlight, as sunlight can degrade the material over extended periods. Additionally, if your item has a battery, it is best to leave the battery at roughly half charge rather than full or empty to preserve its capacity during long storage.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-7421-74b9-ad3c-4e18ba940b85",
+          "subject": "How should I store it when not in use",
+          "redactedText": "This will be packed away for months at a time and I want to avoid damage.",
+          "resolution": "It should be stored dry and away from direct sunlight, which degrades the material over extended periods. For long storage the battery should be left at roughly half charge rather than full or empty, which preserves capacity."
+        }
+      ],
+      "topSimilarity": 0.6209736632306185,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-guarantee-length",
+      "ticketSubject": "What guarantee comes with it",
+      "redactedTicket": "What guarantee comes with it\n\nBefore I order I would like to know how long it is covered for and what that cover actually includes.",
+      "draft": "The standard guarantee for the item is two years from delivery. If you register the item within ninety days, the guarantee is extended to three years. This guarantee covers manufacturing defects but excludes wear, accidental damage, and consumable parts. Additionally, your statutory rights apply in addition to this guarantee and are unaffected by it.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-754b-71f5-b042-48326e02f4c7",
+          "subject": "How long is this guaranteed for",
+          "redactedText": "I want to know what cover comes with the item before I buy it.",
+          "resolution": "The standard guarantee is two years from delivery, extended to three on registration within ninety days. It covers manufacturing defects and excludes wear, accidental damage and consumable parts. Statutory rights apply in addition and are unaffected."
+        }
+      ],
+      "topSimilarity": 0.8205294815553325,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-replacement-part",
+      "ticketSubject": "Buying a replacement part",
+      "redactedTicket": "Buying a replacement part\n\nOne piece has worn through after about three years of fairly heavy use. The rest of it is perfectly sound. I would much rather replace that one part than throw the whole thing away.",
+      "draft": "You mentioned that one piece of your item has worn through after about three years of fairly heavy use, and you would prefer to replace that one part rather than the whole item. Wearing parts are stocked and listed under spares on the product page, and are held for seven years after a line is discontinued. However, structural components are not sold separately because fitting them requires the assembly jig used in manufacture. If the part you need is a wearing part, you should be able to purchase it as a spare. Please check the product page for available spares.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-7727-71a1-ac75-69862246af39",
+          "subject": "Can I buy replacement parts",
+          "redactedText": "One component has worn out and I would rather replace it than the whole item. My details are [EMAIL] and [PHONE].",
+          "resolution": "Wearing parts are stocked and listed under spares on the product page, and are held for seven years after a line is discontinued. Structural components are not sold separately because fitting them requires the assembly jig used in manufacture."
+        }
+      ],
+      "topSimilarity": 0.6870511441842616,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-conformity-paperwork",
+      "ticketSubject": "Compliance documents for procurement",
+      "redactedTicket": "Compliance documents for procurement\n\nOur procurement process needs the declaration of conformity and the relevant test certificates before a purchase can be approved. Could you send them over, and confirm that they cover the version currently being sold.",
+      "draft": "The declaration of conformity and the relevant test certificates are available on request and cover the current production revision. If you would like, we can provide these documents to you to support your procurement process.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-7be4-7b07-b9f6-56760eddd889",
+          "subject": "Do you hold compliance documentation",
+          "redactedText": "Our organisation needs the conformity paperwork before we can approve a purchase.",
+          "resolution": "The declaration of conformity and the test certificates are available on request and were supplied. They cover the current production revision; earlier revisions have their own documents, identified by the code on the rating plate."
+        }
+      ],
+      "topSimilarity": 0.735122127016286,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-where-is-it-made",
+      "ticketSubject": "Where is this made",
+      "redactedTicket": "Where is this made\n\nCould you tell me what country this is manufactured in.",
+      "draft": "The country of manufacture is printed on the rating plate and stated in the specification. Components are sourced from several countries, and the final assembly determines the declared origin, which is the basis for customs classification.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-8173-7bbb-9659-1df26478039e",
+          "subject": "Where is this manufactured",
+          "redactedText": "I would like to know where the item is actually made.",
+          "resolution": "The country of manufacture is printed on the rating plate and stated in the specification. Components are sourced from several countries and final assembly determines the declared origin, which is the basis for customs classification."
+        }
+      ],
+      "topSimilarity": 0.747524754224391,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-what-is-in-it",
+      "ticketSubject": "Full list of materials",
+      "redactedTicket": "Full list of materials\n\nI have a skin condition and I react badly to a few specific materials. The listing gives a rough description but not the full breakdown, and it says nothing at all about whatever the coating is made from. Could you send it in writing to [EMAIL], or ring me on [PHONE].",
+      "draft": "Thank you for your message. We understand your need for detailed information about the materials used, including the coating. While the listing provides a rough description, the full material breakdown by percentage, including the coating and thread, is typically listed under specifications. If you require a complete ingredient declaration in writing, this can be supplied and will match the packaging. Please note that formulations can change, so it is advisable to check the packaging upon receipt. Unfortunately, we cannot send this information directly to your email or call you by phone. If you have any further questions, please let us know.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-588e-70a4-b2df-6d7dea7211e1",
+          "subject": "What is this made of",
+          "redactedText": "I react to certain materials and need to know exactly what is in it before buying.",
+          "resolution": "The full material breakdown by percentage is listed under specifications, including the coating and the thread. The item contains no natural latex. Manufacturing takes place on a line that also handles wool, which is noted for those with severe sensitivities."
+        },
+        {
+          "ticketId": "01a196cf-7fc8-7ca7-8f2f-371c1a24fb76",
+          "subject": "Full ingredient breakdown needed",
+          "redactedText": "I have a medical restriction and need the complete list. My consultant asked me to confirm in writing to [EMAIL], or by phone on [PHONE].",
+          "resolution": "The full ingredient declaration in descending order by weight was supplied and matches the pack. The facility also handles nuts and sesame, which is declared on the packaging. Formulations can change, so the pack should always be checked on receipt."
+        }
+      ],
+      "topSimilarity": 0.6009436790652456,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-between-sizes-runs-small",
+      "ticketSubject": "Between sizes and I hear it runs small",
+      "redactedTicket": "Between sizes and I hear it runs small\n\nMy measurements put me between the medium and the large, and two of the reviews say this line comes up small. Does that mean I should be going up two sizes from my usual, or am I overthinking it?",
+      "draft": "You mentioned your measurements put you between medium and large, and you heard this line runs small. For this design, it is generally advised to size up for a regular fit, as it tends to run smaller than equivalent items elsewhere. If you want a close fit, the smaller size is recommended, but if you plan to wear it over other layers, the larger size is better. Either size can be exchanged without charge if it doesn\u0027t work out. So, you might consider going up one size rather than two, depending on your fit preference.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-646e-74ea-ac5b-cdabd72f9378",
+          "subject": "Should I order a bigger size",
+          "redactedText": "I normally take a medium and want to know whether that will be right here.",
+          "resolution": "This line is cut close and most customers find it a size smaller than the equivalent elsewhere, so sizing up is advised for a regular fit. The guidance is drawn from return data rather than from the manufacturer\u0027s own chart."
+        },
+        {
+          "ticketId": "01a196cf-66ea-71ae-8d72-0e6065191772",
+          "subject": "I fall between two sizes",
+          "redactedText": "My measurements sit halfway between the two options and I am unsure which to choose.",
+          "resolution": "For this design the smaller size is recommended where a close fit is wanted and the larger where it will be worn over other layers, as the fabric has limited give. Either can be exchanged without charge if the choice proves wrong."
+        }
+      ],
+      "topSimilarity": 0.6181483445080506,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-spares-for-discontinued",
+      "ticketSubject": "Do the new parts fit the old model",
+      "redactedTicket": "Do the new parts fit the old model\n\nThe model I own is no longer listed and the one that has replaced it looks very similar. Before I buy a spare, will the part from the new model fit mine? I would rather ask than order the wrong thing twice.",
+      "draft": "The successor model to your discontinued one shares the same fitting and dimensions, although it uses a different finish. This suggests that parts from the new model should fit your old model. However, if your model is from before 2019, some components like mounting brackets may require an adapter plate. If you can provide the generation or year of your model, I can offer more specific guidance.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-6963-739d-9662-fce75930453a",
+          "subject": "Is this coming back at all",
+          "redactedText": "Something I have bought before is no longer listed and I want to know whether it will return.",
+          "resolution": "The line has been discontinued and will not be restocked. The successor model shares the same fitting and dimensions but uses a different finish. Remaining stock of the original is held only in the clearance section while it lasts."
+        }
+      ],
+      "topSimilarity": 0.6124249867184323,
+      "grounded": null,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-product-commercial-use-guarantee",
+      "ticketSubject": "What cover comes with it if we use it at work",
+      "redactedTicket": "What cover comes with it if we use it at work\n\nI want to know what guarantee comes with the item before I buy. These would be running most of the day in a workshop rather than sitting in somebody\u0027s kitchen.",
+      "draft": "The standard guarantee for the item is two years from delivery, which can be extended to three years if you register it within ninety days. This guarantee covers manufacturing defects but excludes wear, accidental damage, and consumable parts. Statutory rights also apply in addition to this guarantee. If you need to make a claim within the first year, it is handled directly by us as the seller. After the first year, the manufacturer\u0027s process is usually faster, though your statutory rights against us remain. Proof of purchase is your order confirmation, which never expires.",
+      "citedSources": [
+        {
+          "ticketId": "01a196cf-2bdb-7c86-bfe7-a71ca047d9b9",
+          "subject": "How do I claim on the guarantee",
+          "redactedText": "Something has developed a fault and I am not sure whether to come to you or the manufacturer.",
+          "resolution": "Claims in the first year are handled by us directly as the seller. Beyond that the manufacturer\u0027s process is usually faster, though statutory rights against us remain. Proof of purchase is the order confirmation, which never expires."
+        },
+        {
+          "ticketId": "01a196cf-754b-71f5-b042-48326e02f4c7",
+          "subject": "How long is this guaranteed for",
+          "redactedText": "I want to know what cover comes with the item before I buy it.",
+          "resolution": "The standard guarantee is two years from delivery, extended to three on registration within ninety days. It covers manufacturing defects and excludes wear, accidental damage and consumable parts. Statutory rights apply in addition and are unaffected."
+        }
+      ],
+      "topSimilarity": 0.6168088571057524,
+      "grounded": null,
+      "note": null
+    }
+  ]
+}
