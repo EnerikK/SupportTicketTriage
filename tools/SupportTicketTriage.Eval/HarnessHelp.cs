@@ -54,7 +54,9 @@ public static class HarnessHelp
                                   expected verdicts from <path> and exit. A
                                   behavioural check, never a reported number -
                                   these pairs produced the rules and cannot
-                                  also test them. Needs --judge-pairs-from
+                                  also test them. Needs --judge-pairs-from.
+                                  Prints the report; writes it only with
+                                  --output, and never over an existing one
           --compare-judges <list> Comma-separated verdict files. Builds the
                                   comparison table from committed artifacts and
                                   exits; the first file is the baseline every

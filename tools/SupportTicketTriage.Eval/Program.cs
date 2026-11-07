@@ -129,6 +129,13 @@ if (arguments.Value("dev-check") is { } expectationsPath)
     }
 
     var expectations = await DevCheck.LoadAsync(expectationsPath);
+
+    // Resolved before a single judge call, not after the loop. A run that is
+    // going to refuse to write its report must refuse before it spends money
+    // on the verdicts it would then have nowhere to put - the same ordering
+    // the deployment-configuration check uses in CI.
+    var devOut = DevCheck.ResolveReportPath(arguments.Value("output"));
+
     var devRecorder = new AiCallRecorder();
     var devJudge = BuildJudge(devRecorder, ParseEffort(arguments.Value("judge-effort")));
 
@@ -184,10 +191,19 @@ if (arguments.Value("dev-check") is { } expectationsPath)
     Console.WriteLine();
     Console.WriteLine(DevCheck.Report(outcomes));
 
-    var devOut = Path.Combine(arguments.Value("output") ?? Path.Combine("eval", "judge"), "DEV-CHECK.md");
-    Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(devOut))!);
-    await File.WriteAllTextAsync(devOut, DevCheck.Report(outcomes));
-    Console.WriteLine($"Wrote {Path.GetFullPath(devOut)}.");
+    if (devOut is null)
+    {
+        Console.WriteLine(
+            "Report printed above and not written. Pass --output <directory> to keep it; "
+            + "there is deliberately no default, because the old one overwrote the committed "
+            + "eval/judge/DEV-CHECK.md.");
+    }
+    else
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(devOut))!);
+        await File.WriteAllTextAsync(devOut, DevCheck.Report(outcomes));
+        Console.WriteLine($"Wrote {Path.GetFullPath(devOut)}.");
+    }
 
     return 0;
 }

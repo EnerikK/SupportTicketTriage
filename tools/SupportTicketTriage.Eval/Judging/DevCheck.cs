@@ -35,6 +35,46 @@ public static class DevCheck
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
+    /// Where a dev-check run may write its report, or null for "print only".
+    ///
+    /// **The default used to be `eval/judge/DEV-CHECK.md`, and that was a
+    /// trap.** That file is the committed analysis of three configurations
+    /// across 26 cases; a two-case smoke run with no `--output` replaced 7,812
+    /// bytes of it with 334 and reported success. It was recoverable only
+    /// because it happened to be committed and the tree happened to be clean.
+    ///
+    /// So there is no default any more. Without `--output` the report is
+    /// printed and nothing is written — the console already carries the whole
+    /// thing, so a run loses nothing by not writing it.
+    ///
+    /// And an existing report is never overwritten. Re-running one
+    /// configuration is ordinary, but silently replacing the record of the
+    /// previous run is how a comparison loses the artifact it was comparing
+    /// against. The refusal names the file and leaves the choice to a person.
+    ///
+    /// This mirrors `--judge-verdicts`, which takes an explicit path for the
+    /// same reason: one file per configuration, written where the caller said.
+    public static string? ResolveReportPath(string? outputDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(outputDirectory))
+        {
+            return null;
+        }
+
+        var path = Path.Combine(outputDirectory, "DEV-CHECK.md");
+
+        if (File.Exists(path))
+        {
+            throw new InvalidOperationException(
+                $"'{Path.GetFullPath(path)}' already exists and would be overwritten. A dev-check "
+                + "report is the record of one configuration's run; replacing it silently loses the "
+                + "run it is being compared against. Point --output at a different directory, or "
+                + "remove that file deliberately.");
+        }
+
+        return path;
+    }
+
     public static async Task<DevCheckExpectations> LoadAsync(string path, CancellationToken ct = default)
     {
         var file = JsonSerializer.Deserialize<DevCheckExpectations>(
