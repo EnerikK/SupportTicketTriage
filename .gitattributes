@@ -1,0 +1,22 @@
+# Line endings are normalised to LF, in the repository and in the working tree.
+#
+# `text=auto` alone would only fix what is stored, which was never the problem:
+# every blob in this repository was already LF. `eol=lf` is the half that
+# matters, because it fixes what is *checked out* - and the defect this file
+# exists to prevent lived in the working tree.
+#
+# A C# raw string literal carries the newlines of the source file it is written
+# in. With core.autocrlf on and no rule here, the generation prompt was CRLF on
+# a Windows laptop and LF in CI, so the same prompt hashed two different ways
+# and two runs of identical wording were recorded as different experiments.
+# See the 2026-11-07 amendment to ADR-034.
+#
+# GenerationPrompt.Sha256 now normalises before hashing, so the hash is correct
+# whatever a checkout does. This file removes the condition rather than relying
+# on every future value that crosses into a key remembering to defend itself.
+* text=auto eol=lf
+
+# Keep CRLF where a tool requires it on Windows.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
