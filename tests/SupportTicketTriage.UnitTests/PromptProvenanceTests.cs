@@ -36,10 +36,40 @@ public class PromptProvenanceTests
     public void TheHashIsTakenOverThePromptText()
     {
         var expected = Convert.ToHexString(
-                SHA256.HashData(Encoding.UTF8.GetBytes(GroundednessPrompt.System("{delimiter}"))))
+                SHA256.HashData(
+                    Encoding.UTF8.GetBytes(
+                        GroundednessPrompt.System("{delimiter}").ReplaceLineEndings("\n"))))
             .ToLowerInvariant();
 
         Assert.Equal(expected, GroundednessPrompt.Sha256);
+    }
+
+    /// The hash identifies the wording, not the checkout.
+    ///
+    /// A raw string literal carries the newlines of the source file it is
+    /// written in, so with no `.gitattributes` and `core.autocrlf` on, the
+    /// same prompt hashed one way on Windows and another in CI - which was
+    /// found on 2026-11-07 when a test pinning a recorded hash passed locally
+    /// and failed on Linux with `c9d138e9…` against `83fccb7f…`. Two runs of
+    /// identical wording looked like different experiments, which is the one
+    /// thing the hash exists to prevent.
+    ///
+    /// This asserts the property directly rather than pinning a literal: the
+    /// same text with CRLF endings must hash to the same value as with LF.
+    [Fact]
+    public void TheHashIsUnaffectedByLineEndings()
+    {
+        var lf = GroundednessPrompt.System("{delimiter}").ReplaceLineEndings("\n");
+        var crlf = lf.ReplaceLineEndings("\r\n");
+
+        Assert.NotEqual(lf, crlf);
+
+        static string Hash(string text) =>
+            Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text.ReplaceLineEndings("\n"))))
+                .ToLowerInvariant();
+
+        Assert.Equal(Hash(lf), Hash(crlf));
+        Assert.Equal(GroundednessPrompt.Sha256, Hash(crlf));
     }
 
     /// The rules are shared verbatim between writer and judge, so a careless
