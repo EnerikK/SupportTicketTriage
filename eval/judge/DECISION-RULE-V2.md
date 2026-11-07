@@ -106,3 +106,67 @@ Band is each query's top-1 cosine against the 240-ticket corpus, taken from the 
 ### Hard negatives that received a draft
 
 12 hard negatives score below 0.60 and are refused by Gate B. 6 were written to clear the floor. Report how many of the 6 were drafted. Their drafts are labelled for groundedness under the same rules as every other draft. Separately, each is labelled for appropriate abstention: did the draft avoid presenting an answer the evidence does not provide? These 6 are not pooled with the ordinary queries in any reported figure.
+## Addendum, 2026-11-07: extending the candidate set
+
+Added **before any held-out pair carries a groundedness label** and before any configuration
+has produced a verdict over the held-out set, so git timestamps this ahead of every number it
+governs. Nothing here changes the selection criteria above. It governs only **which
+configurations those criteria are applied to.**
+
+### Why this is needed now
+
+Every listed candidate has a retirement date, and they are closer than the comparison is:
+
+| configuration | retires | runway from 2026-11-07 |
+|---|---|---|
+| `gpt-5` default | 2027-02-09 | ~3 months |
+| `gpt-5` low | 2027-02-09 | ~3 months |
+| `gpt-5-mini` default | 2027-07-13 | ~8 months |
+
+Two of the three disappear first. **A foreseeable and unwelcome outcome follows**, and it is
+named here rather than discovered: under `judge-v1` the only non-`gpt-5` candidate scored a
+29.2% false-flag rate, which is **above this rule's 25% ceiling**. If the two `gpt-5`
+configurations retire before the comparison runs and `gpt-5-mini` is again ineligible, the
+rule adopts nothing and no groundedness score is ever published — closing out a Tier 1
+requirement by attrition rather than by measurement.
+
+### What may change, and what may not
+
+**The criteria are frozen.** The 25% false-flag ceiling, the ordering (misses, then false
+flags, then cost), and the no-eligible-configuration outcome are not revisable by this
+addendum or by any later one. A configuration already judged and found ineligible is **never
+re-run under altered criteria**.
+
+**The candidate set may be extended, under two triggers and no others:**
+
+1. a listed configuration becomes undeployable — retired, withdrawn, or unavailable in the
+   region and deployment type this project uses; or
+2. no listed configuration is eligible under the frozen criteria.
+
+### The conditions an addition must satisfy
+
+- It is **committed to this file before that configuration judges a single held-out pair.**
+  The git history, not this sentence, is what evidences the ordering.
+- The entry records the **date, the trigger, and the configuration's full provenance** —
+  model id, model version, reasoning effort, API version. "`gpt-6-something` at default
+  effort" is not a candidate specification; defaults move.
+- Where an addition is made **after other candidates' verdicts are visible**, that fact is
+  stated in the entry and repeated in the README. It is permitted — a retirement does not
+  wait for a convenient moment — but a reader must not have to reconstruct the ordering from
+  commit dates to discover it.
+
+### What an addition does not do to results already obtained
+
+A selection outcome attaches to the candidate set **as it stood when the selection was made**,
+exactly as `DECISION-RULE.md`'s v1 result stands as recorded. Extending the set later does not
+retro-label an earlier outcome, and a figure published under the earlier set keeps the judge
+it was computed with named beside it.
+
+### The honest weakness
+
+A rule that permits its own candidate set to grow is weaker than one that cannot, and the
+mechanism could in principle be used to keep adding configurations until one passes. Three
+things constrain it rather than one: the triggers are enumerated, the criteria cannot move,
+and every addition is timestamped against the verdicts it precedes or follows. That is
+weaker than a closed set and stronger than an undocumented extension made under deadline
+pressure, which is the realistic alternative given the dates in the table above.
