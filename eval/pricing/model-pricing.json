@@ -2,7 +2,7 @@
   "version": "1.1",
   "currency": "USD",
   "source": "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/",
-  "verified": false,
+  "verified": true,
   "models": [
     {
       "model": "gpt-4.1-mini",

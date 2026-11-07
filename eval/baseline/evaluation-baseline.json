@@ -5,12 +5,12 @@
     "EmbeddingModel": "text-embedding-3-small",
     "ChatModel": "gpt-4.1-mini",
     "ClassificationPromptVersion": "classify-v1",
-    "GenerationPromptVersion": "draft-v1",
+    "GenerationPromptVersion": "draft-v2",
     "RedactionVersion": "v1",
     "MinimumClassificationScore": 0.5,
     "MinimumSimilarity": 0.6,
-    "PricingVersion": "1.0",
-    "GeneratedAt": "2026-10-21T17:36:46.7287386+00:00"
+    "PricingVersion": "1.1",
+    "GeneratedAt": "2026-11-07T15:24:48.8298913+00:00"
   },
   "Metrics": {
     "RecallAtK": {
@@ -19,12 +19,12 @@
       "5": 0.9444444444444444,
       "10": 0.9907407407407407
     },
-    "ClassificationAccuracy": 0.9366666666666666,
-    "ClassificationMacroF1": 0.9443537270393706,
+    "ClassificationAccuracy": 0.9266666666666666,
+    "ClassificationMacroF1": 0.934266202130417,
     "CitationValidityRate": 1,
-    "CostTotal": 0.07481776,
-    "CostPerIngestedTicket": 0.0001480112,
-    "CostPerDraftedTicket": 0.0008238867555555555555555556
+    "CostTotal": 0.08693856,
+    "CostPerIngestedTicket": 0.0001477805333333333333333333,
+    "CostPerDraftedTicket": 0.0010542571290780141843971631
   },
   "Tolerances": {
     "RecallMaxDrop": 0.01,
