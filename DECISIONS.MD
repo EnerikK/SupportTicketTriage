@@ -1153,7 +1153,7 @@ No number yet. A run with `--export-judge-pairs`, 47 pairs labelled by hand, the
 
 ## ADR-031 — The judge is chosen by a rule written before the comparison was run
 
-**Status:** Accepted — 2026-10-30. The rule itself is committed to the repository at `eval/judge/DECISION-RULE.md`.
+**Status:** **Superseded by [[ADR-037]]** — 2026-11-07. Accepted 2026-10-30; governed the `judge-v1` comparison, whose result **stands as recorded** and is not retro-labelled. The rule itself is committed to the repository at `eval/judge/DECISION-RULE.md`.
 
 **Decision.** Pick the cheapest judge configuration whose agreement with the hand labels is **not significantly worse** than `gpt-5` at default reasoning effort, by **McNemar's exact test** on the discordant pairs at α = 0.05. If nothing separates, the cheapest wins and the README says so.
 
@@ -1292,6 +1292,32 @@ The two sets also answer different questions. `tickets.json` measures retrieval 
 
 ---
 
+
+## ADR-037 — The judge is selected on two error rates, not on agreement with a reference model
+
+**Status:** Accepted — 2026-11-07. **Supersedes [[ADR-031]]**, which this entry should have been written alongside on 2026-10-30.
+
+**Decision.** The operative judge-selection rule is `eval/judge/DECISION-RULE-V2.md`. A configuration is eligible only if its **false-flag rate is at most 25%**; among eligible configurations the order is lowest **missed-ungrounded**, then lowest false-flag, then cheapest. If none is eligible, **no judge is adopted and no groundedness score is published**. McNemar's exact test survives as a *reported* statistic restricted to ungrounded-labelled pairs, not as the selection criterion.
+
+**Alternatives.** *Leave [[ADR-031]] standing and treat the v2 file as an implementation detail* — rejected: the two documents say different things about how a judge is chosen, and the one a reviewer can read is not the one the decision log describes. *Re-pin [[ADR-031]]'s `gpt-5` reference to a successor model*, which is what was asked for on 2026-11-07 — rejected, because it would restore a rule that two committed files had already retired eight days earlier.
+
+**Why the v1 rule was not good enough.** It selected on **overall agreement** with the hand labels, which averages two error types whose consequences point in opposite directions. A missed-ungrounded verdict flatters the published score and lets unsupported claims pass; a false flag depresses it and makes the metric noise. On the v1 numbers those two rankings disagreed completely:
+
+| v1 configuration | missed-ungrounded | false-flag |
+|---|---|---|
+| `gpt-5` default | 1/22 = 4.5% | 20/24 = 83.3% |
+| `gpt-5` low | 2/22 = 9.1% | 13/24 = 54.2% |
+| `gpt-5-mini` default | 7/22 = 31.8% | 7/24 = 29.2% |
+
+The v1 rule picked `gpt-5-mini` — best agreement, **worst miss rate**. A single averaged number named as winner the configuration most likely to certify the exact failure the measurement exists to catch. Misses therefore rank first, and the 25% ceiling is what stops "fewest misses" being won by a judge that flags everything.
+
+**A consequence worth stating plainly:** the v2 rule names no model, so **`gpt-5`'s retirement on 2027-02-09 does not touch it.** What the retirement does threaten is the candidate *set* — see the dated addendum in `DECISION-RULE-V2.md`.
+
+**What the omission cost, which is the part worth remembering.** [[ADR-032]] tracked this file so that a reviewer could read the reasoning behind the artifacts. This is the first case of the relationship inverting: the tracked artifact moved and the decision log did not follow, so for eight days `DECISIONS.MD` described a superseded rule as Accepted. It was found on 2026-11-07 while checking whether the judge's retirement required re-pinning a reference — the answer being that the reference had not existed for over a week. **A decision log that lags its own artifacts is worse than one that is merely private**, because it reads as current.
+
+**What would reverse it.** A `judge-v3` rubric, which would supersede this the way v2 superseded v1 — with its own file committed before any v3 configuration runs. Or evidence that the 25% ceiling is unreachable by any deployable configuration, which would be an argument about the threshold rather than about the two-rate structure.
+
+---
 
 ## Entries expected from the audit
 
