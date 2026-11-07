@@ -1251,6 +1251,29 @@ A commit hash was rejected because it identifies the repository, not the prompt:
 
 **What would reverse it.** Nothing foreseeable. The cost is two string fields.
 
+### Amendment — 2026-11-07: the hash identified the wording *and the checkout*
+
+**This entry's central claim was false for eight days and nothing noticed.** The hash was taken over the prompt text as the running process saw it, and a C# raw string literal carries the newlines of the source file it is written in. With no `.gitattributes` and `core.autocrlf=true`, `GenerationPrompt.cs` is CRLF in a Windows working tree and LF in CI, so the identical prompt hashed to:
+
+```
+c9d138e91623cf33efe2bfaf23776d777ee7f1619598b8138ef047ddf6949f27   Windows, CRLF
+83fccb7fe317afbab2a51280b4c70dcc8ec712cba39dfdede4a41e04f989669c   CI, LF
+```
+
+Two runs of the same wording on different machines were therefore recorded as different experiments — **the exact failure this entry was written to prevent**, reintroduced one layer down.
+
+**The fix** is `ReplaceLineEndings("\n")` before hashing, in both `GenerationPrompt.Sha256` and `GroundednessPrompt.Sha256`. The hash is now a property of the wording rather than of the checkout.
+
+**How it was found, which is the part worth keeping.** A test added on 2026-11-07 pinned the hash recorded in the committed judge pair file against the prompt in the tree. It passed locally and failed on its first CI run. Nothing else in the suite could have caught it: every other test computes both sides in the same process on the same machine, so a platform-dependent value agrees with itself. **It took an artifact committed on one platform and verified on another.**
+
+The direct property now has its own test — the same text with CRLF and with LF must hash identically — rather than relying on a cross-platform artifact check to notice again.
+
+**This is the fifth appearance of the family [[ADR-017]] and [[ADR-019]] describe.** ADR-017 named three culture-sensitive `double`s; ADR-019 added the float grid and generalised it to *any `double` that crosses into a comparison, a key, or a printed label is not the decimal it looks like unless something makes it so*. The generalisation was still too narrow: it is not only `double`s. **Any value that crosses into a comparison or a key carries whatever ambient state produced it** — culture for a number, line endings for text, and the rule is to normalise at the point the value becomes an identity.
+
+**What this invalidates, stated rather than quietly fixed.** The three verdict files committed before this date carry un-normalised hashes and **cannot be compared by hash to anything written after it**. They are development-set artifacts under `DECISION-RULE-V2.md` and are not re-stamped: rewriting a recorded value to match a later mechanism would make the record say something the run did not. The held-out pair file *was* re-backfilled, because its provenance was already marked as reconstructed rather than recorded, and a reconstruction should reconstruct the correct value.
+
+**What would reverse the amendment.** A `.gitattributes` normalising the repository to LF would make the working tree consistent and the defect unreachable from this direction — worth doing, and not a reason to remove the normalisation, which keeps the hash correct regardless of how any future checkout is configured.
+
 ---
 
 ## ADR-035 — The dev check prints mismatches, never a score

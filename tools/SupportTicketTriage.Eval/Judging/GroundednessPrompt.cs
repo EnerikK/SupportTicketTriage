@@ -127,8 +127,17 @@ public static class GroundednessPrompt
     /// nothing in a verdict file could say which text produced it, and two
     /// runs an hour apart were silently incomparable. The hash is computed at
     /// run time and recorded in provenance; the version stays the label.
+    ///
+    /// **Newlines are normalised to LF before hashing**, for the reason set out
+    /// on `GenerationPrompt.Sha256`: a raw string literal carries its source
+    /// file's newlines, so without this the same rubric hashes differently on
+    /// Windows and in CI. The three verdict files committed before 2026-11-07
+    /// carry the un-normalised values and cannot be compared by hash to
+    /// anything written after it.
     public static string Sha256 =>
-        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Canonical))).ToLowerInvariant();
+        Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(Canonical.ReplaceLineEndings("\n"))))
+            .ToLowerInvariant();
 
     public static string NewDelimiter() => EvidenceBlocks.NewDelimiter();
 }

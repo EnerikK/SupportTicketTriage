@@ -79,8 +79,23 @@ public static class GenerationPrompt
     /// nothing in a verdict file could say which text produced it, and two
     /// runs an hour apart were silently incomparable. The hash is computed at
     /// run time and recorded in provenance; the version stays the label.
+    ///
+    /// **Newlines are normalised to LF before hashing, and that is not
+    /// cosmetic.** A raw string literal embeds the newlines of the source file
+    /// it is written in. With no `.gitattributes` and `core.autocrlf` on, this
+    /// file is CRLF in a Windows working tree and LF in CI - so the identical
+    /// prompt hashed to `c9d138e9…` on a laptop and `83fccb7f…` on Linux, and
+    /// two runs of the same wording looked like different experiments. The
+    /// hash is supposed to identify the wording; without this it identified
+    /// the wording and the checkout.
+    ///
+    /// Fifth appearance of the family [[ADR-017]] and [[ADR-019]] name: a value
+    /// that crosses into a comparison or a key is not what it looks like
+    /// unless something makes it so.
     public static string Sha256 =>
-        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Canonical))).ToLowerInvariant();
+        Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(Canonical.ReplaceLineEndings("\n"))))
+            .ToLowerInvariant();
 
     public static string NewDelimiter() => EvidenceBlocks.NewDelimiter();
 }
