@@ -30,6 +30,8 @@ CLAUDE.MD
 docs/BUILD-SPEC.MD
 docs/PROJECT-STATE.MD
 docs/INTERVIEW-STUDY-GUIDE.md
+AUDIT.md
+docs/dashboard-feasibility.md
 
 # Generated evaluation reports. The committed baseline lives in eval/baseline/.
 eval/results/
