@@ -28,7 +28,7 @@ Thumbs.db
 # not an assistant one. See ADR-032.
 CLAUDE.MD
 docs/BUILD-SPEC.MD
-docs/PROJECT-STATE.MD
+docs/PROJECT-STATE.md
 docs/INTERVIEW-STUDY-GUIDE.md
 AUDIT.md
 docs/dashboard-feasibility.md
