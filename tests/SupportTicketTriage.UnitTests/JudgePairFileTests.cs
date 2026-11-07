@@ -1,3 +1,4 @@
+using SupportTicketTriage.Infrastructure.Ai;
 using SupportTicketTriage.Eval.Judging;
 
 namespace SupportTicketTriage.UnitTests;
@@ -53,6 +54,58 @@ public sealed class JudgePairFileTests : IDisposable
         Assert.Contains("q-ho-shipping-strike-delay", ex.Message);
         Assert.Contains("q-ho-product-how-loud", ex.Message);
         Assert.DoesNotContain("q-ho-fault-restore-deleted-records", ex.Message);
+    }
+
+    /// An export stamps what wrote the drafts, so a judge that does not exist
+    /// yet can say what it is scoring. The drafting model retires before these
+    /// pairs stop being useful.
+    [Fact]
+    public async Task An_export_records_what_generated_the_drafts()
+    {
+        await JudgePairFile.WriteAsync(_path, [Pair(0.8643)], generationModel: "gpt-4.1-mini");
+
+        var read = await JudgePairFile.ReadAsync(_path);
+
+        Assert.Equal(GenerationPrompt.Version, read.GenerationPromptVersion);
+        Assert.Equal(GenerationPrompt.Sha256, read.GenerationPromptSha256);
+        Assert.Equal("gpt-4.1-mini", read.GenerationModel);
+        Assert.NotNull(read.ExportedAt);
+
+        // Captured at generation time, so there is nothing to disclose. The
+        // field is only non-null where provenance was reconstructed afterwards.
+        Assert.Null(read.ProvenanceReconstructedFrom);
+    }
+
+    /// The committed held-out pairs must have been written by the prompt that
+    /// is in this tree.
+    ///
+    /// Their provenance was reconstructed rather than captured, so this is the
+    /// check that makes the reconstruction verifiable instead of asserted: the
+    /// recorded hash either matches the prompt here or it does not. It also
+    /// catches the drift it was reconstructed because of - reword the
+    /// generation prompt without re-exporting and the 93 labelled drafts
+    /// quietly stop describing the prompt they came from.
+    [Fact]
+    public async Task The_committed_holdout_pairs_match_the_generation_prompt_in_this_tree()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "SupportTicketTriage.sln")))
+        {
+            directory = directory.Parent;
+        }
+
+        Assert.NotNull(directory);
+
+        var path = Path.Combine(directory.FullName, "eval", "judge", "holdout-pairs.json");
+        Assert.True(File.Exists(path), $"No committed held-out pair file at {path}.");
+
+        var file = await JudgePairFile.ReadAsync(path);
+
+        Assert.Equal(93, file.Pairs.Count);
+        Assert.Equal(GenerationPrompt.Version, file.GenerationPromptVersion);
+        Assert.Equal(GenerationPrompt.Sha256, file.GenerationPromptSha256);
+        Assert.Equal("8211969", file.ProvenanceReconstructedFrom);
     }
 
     public void Dispose()

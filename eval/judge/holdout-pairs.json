@@ -1,6 +1,11 @@
 {
   "rubricVersion": "judge-v2",
-  "instructions": "Set \u0022grounded\u0022 on each pair to true or false.\r\n\r\nSet \u0022abstained\u0022 on every pair as well: did the draft avoid presenting an answer\r\nthe evidence does not provide? true / false. Answer it on every pair, not only\r\nwhere you expect it to matter - a file where only some pairs carry it would say\r\nwhich queries were expected to have no answer. It is a separate question from\r\ngroundedness and does not change the rules below: a draft that abstains is still\r\njudged grounded or ungrounded on whatever claims it does make.\r\n\r\nA draft is GROUNDED when every MATERIAL claim it makes is supported.\r\n\r\nEVIDENCE. Only the resolution of a cited precedent establishes facts. The\r\nincoming ticket, and each precedent\u0027s subject and body, are accounts - what a\r\ncustomer said - and never establish a fact. The customer is authoritative about\r\ntheir own experience and intent: what they did, what they saw, what they want.\r\nThat may be restated directly. Claims about causes, system state, eligibility,\r\nor what anyone else did need either attribution (\u0022you mentioned...\u0022) or support\r\nfrom a resolution.\r\n\r\nMATERIALITY. A claim is material if it asserts a cause of the problem the\r\ncustomer reported, a policy or rule, an amount, a timeline, an eligibility, or\r\nan action taken or a specific outcome promised. An offer to investigate or\r\nassist is not material; a promise of a refund, a replacement, a fix, or when one\r\nwill happen, is. Descriptive wording that asserts none of these cannot make a\r\ndraft ungrounded. Ignore greetings, apologies and offers to help further.\r\n\r\nPRECEDENTS. A resolution is evidence about ONE case. It may be used as a similar\r\ncase, as a hedged possibility, or as general policy ONLY where the resolution is\r\nitself phrased in general terms - \u0022a replacement is sent\u0022 and \u0022enrolments are\r\ntied to the device\u0022 license a policy statement, \u0022the discount was applied\u0022 and\r\n\u0022the browser was configured\u0022 describe one past case and do not.\r\n\r\nMark UNGROUNDED when a draft asserts a precedent\u0027s circumstances or actions as\r\nthis customer\u0027s facts, or turns one case into a general practice, a prevalence\r\nclaim (\u0022commonly\u0022, \u0022a few common reasons\u0022), a guarantee (\u0022you will be\r\nnotified\u0022), or a prediction about this customer\u0027s outcome or timing. A\r\nconditional asserts its consequent as a general rule, so hedging must attach to\r\nthe claim itself rather than only to the circumstances that trigger it.\r\n\r\nLeave \u0022grounded\u0022 as null to skip a pair. Skipped pairs are dropped from the\r\ncomparison rather than counted either way. The \u0022note\u0022 field is for you; the tool\r\nignores it.",
+  "instructions": "Set \"grounded\" on each pair to true or false.\r\n\r\nSet \"abstained\" on every pair as well: did the draft avoid presenting an answer\r\nthe evidence does not provide? true / false. Answer it on every pair, not only\r\nwhere you expect it to matter - a file where only some pairs carry it would say\r\nwhich queries were expected to have no answer. It is a separate question from\r\ngroundedness and does not change the rules below: a draft that abstains is still\r\njudged grounded or ungrounded on whatever claims it does make.\r\n\r\nA draft is GROUNDED when every MATERIAL claim it makes is supported.\r\n\r\nEVIDENCE. Only the resolution of a cited precedent establishes facts. The\r\nincoming ticket, and each precedent's subject and body, are accounts - what a\r\ncustomer said - and never establish a fact. The customer is authoritative about\r\ntheir own experience and intent: what they did, what they saw, what they want.\r\nThat may be restated directly. Claims about causes, system state, eligibility,\r\nor what anyone else did need either attribution (\"you mentioned...\") or support\r\nfrom a resolution.\r\n\r\nMATERIALITY. A claim is material if it asserts a cause of the problem the\r\ncustomer reported, a policy or rule, an amount, a timeline, an eligibility, or\r\nan action taken or a specific outcome promised. An offer to investigate or\r\nassist is not material; a promise of a refund, a replacement, a fix, or when one\r\nwill happen, is. Descriptive wording that asserts none of these cannot make a\r\ndraft ungrounded. Ignore greetings, apologies and offers to help further.\r\n\r\nPRECEDENTS. A resolution is evidence about ONE case. It may be used as a similar\r\ncase, as a hedged possibility, or as general policy ONLY where the resolution is\r\nitself phrased in general terms - \"a replacement is sent\" and \"enrolments are\r\ntied to the device\" license a policy statement, \"the discount was applied\" and\r\n\"the browser was configured\" describe one past case and do not.\r\n\r\nMark UNGROUNDED when a draft asserts a precedent's circumstances or actions as\r\nthis customer's facts, or turns one case into a general practice, a prevalence\r\nclaim (\"commonly\", \"a few common reasons\"), a guarantee (\"you will be\r\nnotified\"), or a prediction about this customer's outcome or timing. A\r\nconditional asserts its consequent as a general rule, so hedging must attach to\r\nthe claim itself rather than only to the circumstances that trigger it.\r\n\r\nLeave \"grounded\" as null to skip a pair. Skipped pairs are dropped from the\r\ncomparison rather than counted either way. The \"note\" field is for you; the tool\r\nignores it.",
+  "generationPromptVersion": "draft-v2",
+  "generationPromptSha256": "c9d138e91623cf33efe2bfaf23776d777ee7f1619598b8138ef047ddf6949f27",
+  "generationModel": "gpt-4.1-mini",
+  "exportedAt": "2026-11-01T00:00:00+00:00",
+  "provenanceReconstructedFrom": "8211969",
   "pairs": [
     {
       "queryId": "q-ho-billing-trial-became-paid",
@@ -42,13 +47,13 @@
       "queryId": "q-ho-billing-tax-still-charged",
       "ticketSubject": "Tax still on our invoices",
       "redactedTicket": "Tax still on our invoices\n\nWe sent over our exemption certificate when the account was set up and tax is still being added every month. Our finance team have asked me to get this corrected and the amounts charged since then credited back.",
-      "draft": "Thank you for your message. You mentioned that you sent over your exemption certificate when the account was set up but tax is still being added to your invoices each month. In a similar case, exemption is applied once a valid certificate is recorded against the billing profile; until then, tax is charged by default. When the certificate is validated, exemption is enabled, and tax charged on invoices since the certificate\u0027s effective date is credited back. Please let us know if your exemption certificate has been validated and recorded on your account so we can assist further with correcting the tax charges and crediting the amounts charged since then.",
+      "draft": "Thank you for your message. You mentioned that you sent over your exemption certificate when the account was set up but tax is still being added to your invoices each month. In a similar case, exemption is applied once a valid certificate is recorded against the billing profile; until then, tax is charged by default. When the certificate is validated, exemption is enabled, and tax charged on invoices since the certificate's effective date is credited back. Please let us know if your exemption certificate has been validated and recorded on your account so we can assist further with correcting the tax charges and crediting the amounts charged since then.",
       "citedSources": [
         {
           "ticketId": "01a196ce-5457-7571-8a8b-9e41a5e3251c",
           "subject": "We should not be charged tax",
           "redactedText": "We hold an exemption certificate but tax is still being added to our invoices.",
-          "resolution": "Exemption is applied once a valid certificate is recorded against the billing profile; until then tax is charged by default. The certificate was validated, exemption was enabled, and tax charged on the two invoices since the certificate\u0027s effective date was credited back."
+          "resolution": "Exemption is applied once a valid certificate is recorded against the billing profile; until then tax is charged by default. The certificate was validated, exemption was enabled, and tax charged on the two invoices since the certificate's effective date was credited back."
         }
       ],
       "topSimilarity": 0.7460122227329331,
@@ -120,7 +125,7 @@
           "ticketId": "01a196ce-2f18-74ac-8fcc-e0750144dfdc",
           "subject": "Switch from monthly to annual billing",
           "redactedText": "I pay monthly at the moment. I would like to move to paying once a year instead.",
-          "resolution": "Switching to annual is done from the plan page and takes effect immediately. The unused portion of the current month is credited against the annual price, so the customer only pays the difference. Annual is charged at ten months\u0027 equivalent."
+          "resolution": "Switching to annual is done from the plan page and takes effect immediately. The unused portion of the current month is credited against the annual price, so the customer only pays the difference. Annual is charged at ten months' equivalent."
         }
       ],
       "topSimilarity": 0.7569416818614538,
@@ -132,13 +137,13 @@
       "queryId": "q-ho-billing-extra-line-on-invoice",
       "ticketSubject": "There is a line on this bill I do not recognise",
       "redactedTicket": "There is a line on this bill I do not recognise\n\nMy invoice has the normal plan amount and then a second smaller amount underneath it with a description I cannot make sense of. I have not changed anything about the account this month so I have no idea where it has come from.",
-      "draft": "Thank you for reaching out about the unfamiliar line on your bill. While I don\u0027t have specific details about your account charges, in a similar case, an additional line on the bill was due to usage above the plan\u0027s included allowance, billed at the per-unit overage rate. If you have not changed anything about your account this month, it might be worth checking if there was any usage beyond your plan\u0027s allowance. If you need further clarification, please provide more details or contact support directly for a detailed explanation of your bill.",
+      "draft": "Thank you for reaching out about the unfamiliar line on your bill. While I don't have specific details about your account charges, in a similar case, an additional line on the bill was due to usage above the plan's included allowance, billed at the per-unit overage rate. If you have not changed anything about your account this month, it might be worth checking if there was any usage beyond your plan's allowance. If you need further clarification, please provide more details or contact support directly for a detailed explanation of your bill.",
       "citedSources": [
         {
           "ticketId": "01a196ce-3305-70ca-bd06-152a38eb3041",
           "subject": "Extra amount on top of my plan fee",
           "redactedText": "My bill has the usual plan fee plus another line I do not recognise.",
-          "resolution": "The additional line was usage above the plan\u0027s included allowance, billed at the per-unit overage rate. Usage alerts are off by default on this plan; they were enabled at eighty per cent of the allowance so the customer is warned before it happens again."
+          "resolution": "The additional line was usage above the plan's included allowance, billed at the per-unit overage rate. Usage alerts are off by default on this plan; they were enabled at eighty per cent of the allowance so the customer is warned before it happens again."
         }
       ],
       "topSimilarity": 0.7359095622496837,
@@ -150,13 +155,13 @@
       "queryId": "q-ho-billing-refund-to-dead-card",
       "ticketSubject": "Refund sent to a card that no longer exists",
       "redactedTicket": "Refund sent to a card that no longer exists\n\nYou have refunded me to the card I originally paid with. That account was closed in the summer when I switched banks. Nobody at either end can tell me where the money has actually gone and it is not a small amount. The order was 90712, the closed card ended 3304, and I am on [EMAIL].",
-      "draft": "You mentioned that the refund was sent to the card you originally paid with, which has since been closed. In a similar case, refunds must return to the original payment method, and when the card is closed, the customer\u0027s bank typically routes the funds to the replacement or successor account rather than rejecting them. The bank confirmed receipt and the amount cleared five working days later (precedent 01a196ce-3414-71fe-b598-4f1dc7ae4156). If you have not been able to locate the funds, we recommend contacting your bank to trace the refund on their end.",
+      "draft": "You mentioned that the refund was sent to the card you originally paid with, which has since been closed. In a similar case, refunds must return to the original payment method, and when the card is closed, the customer's bank typically routes the funds to the replacement or successor account rather than rejecting them. The bank confirmed receipt and the amount cleared five working days later (precedent 01a196ce-3414-71fe-b598-4f1dc7ae4156). If you have not been able to locate the funds, we recommend contacting your bank to trace the refund on their end.",
       "citedSources": [
         {
           "ticketId": "01a196ce-3414-71fe-b598-4f1dc7ae4156",
           "subject": "Refund sent to a card I no longer have",
           "redactedText": "You refunded me to the card I paid with, but that account is closed now. Where has the money gone?",
-          "resolution": "Refunds must return to the original payment method. When the card is closed, the customer\u0027s bank routes the funds to the replacement or successor account rather than rejecting them. The bank confirmed receipt and the amount cleared five working days later."
+          "resolution": "Refunds must return to the original payment method. When the card is closed, the customer's bank routes the funds to the replacement or successor account rather than rejecting them. The bank confirmed receipt and the amount cleared five working days later."
         }
       ],
       "topSimilarity": 0.848452276642412,
@@ -239,7 +244,7 @@
     {
       "queryId": "q-ho-billing-new-card-still-refused",
       "ticketSubject": "Added the new card and it still will not take payment",
-      "redactedTicket": "Added the new card and it still will not take payment\n\nThe old card expired so I put the replacement on the account last week, and this month\u0027s payment has been refused anyway. Nothing else has changed at my end. The new card works everywhere else I have used it.",
+      "redactedTicket": "Added the new card and it still will not take payment\n\nThe old card expired so I put the replacement on the account last week, and this month's payment has been refused anyway. Nothing else has changed at my end. The new card works everywhere else I have used it.",
       "draft": "You mentioned that you added the new card last week but the payment was still refused this month, and that the new card works elsewhere. In a similar case, payment declines with no record at the bank were often due to the billing address check failing before authorization was sent. We recommend confirming that the billing address on your account exactly matches the address on your card statement. If the address is correct and the issue persists, please let us know so we can assist further.",
       "citedSources": [
         {
@@ -258,7 +263,7 @@
       "queryId": "q-ho-billing-reminder-came-after-charge",
       "ticketSubject": "Renewal warning arrived after you took the money",
       "redactedTicket": "Renewal warning arrived after you took the money\n\nI did get the email about the renewal, but it landed in my inbox two days after the payment had already come out. That is not much use as a warning. I would have cancelled if it had arrived when it was meant to.",
-      "draft": "Thank you for letting us know about the timing of the renewal warning email. You mentioned that the email arrived two days after the payment was already taken, which did not give you a useful warning. We understand how important it is to receive renewal notices in a timely manner. While we do not have specific information about your account\u0027s notification timing in the evidence provided, we acknowledge your experience as you described it. If you would like us to look into this further or assist with any changes to your subscription, please let us know.",
+      "draft": "Thank you for letting us know about the timing of the renewal warning email. You mentioned that the email arrived two days after the payment was already taken, which did not give you a useful warning. We understand how important it is to receive renewal notices in a timely manner. While we do not have specific information about your account's notification timing in the evidence provided, we acknowledge your experience as you described it. If you would like us to look into this further or assist with any changes to your subscription, please let us know.",
       "citedSources": [],
       "topSimilarity": 0.6192763687813017,
       "grounded": null,
@@ -311,13 +316,13 @@
       "queryId": "q-ho-account-recovery-codes-gone",
       "ticketSubject": "Cannot find my backup codes",
       "redactedTicket": "Cannot find my backup codes\n\nWhen I set up the second step I printed the recovery codes and put them somewhere safe. I have now turned the house upside down and they are nowhere. My phone still works so I am not locked out yet, but I would like a fresh set before that changes.",
-      "draft": "Since you still have access to your phone and are not locked out yet, we can help you get a fresh set of recovery codes. Recovery codes cannot be retrieved once lost because only a hash is stored. However, after verifying your identity through your account\u0027s secondary channel, the second factor can be reset and a new set of recovery codes issued for you to store safely. Please let us know if you would like to proceed with this process.",
+      "draft": "Since you still have access to your phone and are not locked out yet, we can help you get a fresh set of recovery codes. Recovery codes cannot be retrieved once lost because only a hash is stored. However, after verifying your identity through your account's secondary channel, the second factor can be reset and a new set of recovery codes issued for you to store safely. Please let us know if you would like to proceed with this process.",
       "citedSources": [
         {
           "ticketId": "01a196ce-7b27-73e9-8014-52a75c05e8ca",
           "subject": "Lost my recovery codes",
           "redactedText": "I saved the backup codes when I set this up and I cannot find them anywhere now.",
-          "resolution": "Recovery codes cannot be retrieved because only a hash is stored. Identity was verified through the account\u0027s secondary channel, the second factor was reset, and a fresh set of codes was issued with a prompt to store them outside the device."
+          "resolution": "Recovery codes cannot be retrieved because only a hash is stored. Identity was verified through the account's secondary channel, the second factor was reset, and a fresh set of codes was issued with a prompt to store them outside the device."
         }
       ],
       "topSimilarity": 0.8153853583984885,
@@ -353,7 +358,7 @@
           "ticketId": "01a196ce-76b2-76c6-9ea4-9e3de94ffaaa",
           "subject": "Cannot remember which email I signed up with",
           "redactedText": "I have two addresses and I do not know which one the account is under.",
-          "resolution": "The account lookup tool confirms whether an address is registered without revealing anything about the account. The customer\u0027s work address was the registered one, and a reset was sent there."
+          "resolution": "The account lookup tool confirms whether an address is registered without revealing anything about the account. The customer's work address was the registered one, and a reset was sent there."
         }
       ],
       "topSimilarity": 0.7207970925650143,
@@ -401,7 +406,7 @@
       "queryId": "q-ho-account-some-staff-not-recognised",
       "ticketSubject": "A few of the team are refused by company sign in",
       "redactedTicket": "A few of the team are refused by company sign in\n\nMost of us get in through our provider without any trouble. Four people are told their account is not recognised. They are all on the same team, so I assume it is something to do with their permissions.",
-      "draft": "It sounds like the issue with the four team members being refused by company sign in could be related to their account permissions or domain verification. In a similar case, some members were not recognized because their email addresses were on a secondary domain that had not been verified alongside the primary one. Adding and verifying the second domain resolved the issue and allowed them to sign in through the company provider. You might want to check if the affected team members\u0027 accounts are associated with any unverified domains or if their permissions differ from those who can sign in successfully.",
+      "draft": "It sounds like the issue with the four team members being refused by company sign in could be related to their account permissions or domain verification. In a similar case, some members were not recognized because their email addresses were on a secondary domain that had not been verified alongside the primary one. Adding and verifying the second domain resolved the issue and allowed them to sign in through the company provider. You might want to check if the affected team members' accounts are associated with any unverified domains or if their permissions differ from those who can sign in successfully.",
       "citedSources": [
         {
           "ticketId": "01a196ce-91c0-77ee-991e-5399e18df668",
@@ -419,7 +424,7 @@
       "queryId": "q-ho-account-new-starter-no-access",
       "ticketSubject": "New colleague cannot get in",
       "redactedTicket": "New colleague cannot get in\n\nWe added her to our directory first thing this morning and she still cannot sign in. Everyone else is fine. She does not start properly until Monday so it is not urgent, but I would rather have it sorted before then.",
-      "draft": "Thank you for letting us know about the issue with your new colleague\u0027s sign-in. Since you mentioned that she was added to your directory this morning but still cannot sign in, it may be due to the directory synchronization running on a scheduled cycle rather than instantly. In a similar case, a manual sync was triggered which allowed the new member to sign in straight away. You might want to try triggering a manual sync to resolve this before her start date on Monday.",
+      "draft": "Thank you for letting us know about the issue with your new colleague's sign-in. Since you mentioned that she was added to your directory this morning but still cannot sign in, it may be due to the directory synchronization running on a scheduled cycle rather than instantly. In a similar case, a manual sync was triggered which allowed the new member to sign in straight away. You might want to try triggering a manual sync to resolve this before her start date on Monday.",
       "citedSources": [
         {
           "ticketId": "01a196ce-93ba-757a-8b10-484cd129bc5c",
@@ -455,13 +460,13 @@
       "queryId": "q-ho-account-app-signs-me-out",
       "ticketSubject": "App makes me sign in every time, the website does not",
       "redactedTicket": "App makes me sign in every time, the website does not\n\nOn my laptop I stay signed in for weeks at a time. On the phone app I am asked for my password practically every time I open it. Same account, same password.",
-      "draft": "You mentioned that the app on your phone asks for your password practically every time you open it, while on your laptop you stay signed in for weeks. In a similar case, the app\u0027s stored credential was being cleared by the phone\u0027s background data restrictions, which the browser is not subject to. Exempting the app from those restrictions kept the session in place (id=01a196ce-97ac-74aa-b2b4-71782fc95857). You might want to check if your phone has any background data restrictions or similar settings that could be clearing the app\u0027s stored credentials and causing you to sign in repeatedly. If this does not resolve your issue, please provide more details about your device and app settings so we can assist further.",
+      "draft": "You mentioned that the app on your phone asks for your password practically every time you open it, while on your laptop you stay signed in for weeks. In a similar case, the app's stored credential was being cleared by the phone's background data restrictions, which the browser is not subject to. Exempting the app from those restrictions kept the session in place (id=01a196ce-97ac-74aa-b2b4-71782fc95857). You might want to check if your phone has any background data restrictions or similar settings that could be clearing the app's stored credentials and causing you to sign in repeatedly. If this does not resolve your issue, please provide more details about your device and app settings so we can assist further.",
       "citedSources": [
         {
           "ticketId": "01a196ce-97ac-74aa-b2b4-71782fc95857",
           "subject": "Phone app signs me out but the website does not",
           "redactedText": "The app asks me to sign in every time while the same account stays signed in on my laptop.",
-          "resolution": "The app\u0027s stored credential was being cleared by the phone\u0027s background data restrictions, which the browser is not subject to. Exempting the app from those restrictions kept the session in place."
+          "resolution": "The app's stored credential was being cleared by the phone's background data restrictions, which the browser is not subject to. Exempting the app from those restrictions kept the session in place."
         }
       ],
       "topSimilarity": 0.8447241856364239,
@@ -491,7 +496,7 @@
       "queryId": "q-ho-account-saved-password-wrong",
       "ticketSubject": "Browser is filling in an old password",
       "redactedTicket": "Browser is filling in an old password\n\nMy browser fills the password in automatically and it is always refused, but if I type it out by hand it works fine.",
-      "draft": "It sounds like your browser\u0027s password manager is filling in an old password that was saved before you changed it. In a similar case, the password manager held an entry saved before a password change and was filling the superseded value. Updating the stored entry in the password manager resolved the issue. You might want to check your browser\u0027s saved passwords and update or remove the old entry so it fills in the correct, current password.",
+      "draft": "It sounds like your browser's password manager is filling in an old password that was saved before you changed it. In a similar case, the password manager held an entry saved before a password change and was filling the superseded value. Updating the stored entry in the password manager resolved the issue. You might want to check your browser's saved passwords and update or remove the old entry so it fills in the correct, current password.",
       "citedSources": [
         {
           "ticketId": "01a196ce-9ea0-7d84-82e9-feda2656fc12",
@@ -526,14 +531,14 @@
     {
       "queryId": "q-ho-account-codes-refused-clock-checked",
       "ticketSubject": "Authenticator codes refused even though the clock is right",
-      "redactedTicket": "Authenticator codes refused even though the clock is right\n\nEvery code the app gives me is rejected, including ones I type within a second of them appearing. I have already checked the phone\u0027s clock, automatic time is switched on and it matches to the second. I am fairly sure this is not the usual clock problem.",
-      "draft": "You mentioned that your phone\u0027s clock is set correctly with automatic time enabled and matches to the second, yet the authenticator codes are still rejected immediately. In a similar case, the issue was caused by the phone\u0027s clock drifting by about ninety seconds, and enabling automatic time sync fixed it without needing to re-enroll (id=01a196ce-78f5-77bd-92bc-7d336ee7b878). Since you have already checked your clock and automatic time is on, this may not be the cause in your situation. Unfortunately, based on the information provided and the precedents available, there is no further resolution to suggest for your issue. Please let us know if there are any other details or symptoms you observe, and we will do our best to assist you further.",
+      "redactedTicket": "Authenticator codes refused even though the clock is right\n\nEvery code the app gives me is rejected, including ones I type within a second of them appearing. I have already checked the phone's clock, automatic time is switched on and it matches to the second. I am fairly sure this is not the usual clock problem.",
+      "draft": "You mentioned that your phone's clock is set correctly with automatic time enabled and matches to the second, yet the authenticator codes are still rejected immediately. In a similar case, the issue was caused by the phone's clock drifting by about ninety seconds, and enabling automatic time sync fixed it without needing to re-enroll (id=01a196ce-78f5-77bd-92bc-7d336ee7b878). Since you have already checked your clock and automatic time is on, this may not be the cause in your situation. Unfortunately, based on the information provided and the precedents available, there is no further resolution to suggest for your issue. Please let us know if there are any other details or symptoms you observe, and we will do our best to assist you further.",
       "citedSources": [
         {
           "ticketId": "01a196ce-78f5-77bd-92bc-7d336ee7b878",
           "subject": "Authenticator codes are all rejected",
           "redactedText": "My app shows a code but every one I type is refused, even straight after it refreshes.",
-          "resolution": "The phone\u0027s clock had drifted by roughly ninety seconds, and time-based codes are only accepted inside a thirty-second window either side. Enabling automatic time sync on the device fixed it without re-enrolling."
+          "resolution": "The phone's clock had drifted by roughly ninety seconds, and time-based codes are only accepted inside a thirty-second window either side. Enabling automatic time sync on the device fixed it without re-enrolling."
         }
       ],
       "topSimilarity": 0.7544227706790038,
@@ -587,7 +592,7 @@
           "ticketId": "01a196ce-79f7-7d37-acf8-01739eef8e91",
           "subject": "Changed phone and cannot complete sign in",
           "redactedText": "I moved to a new handset and the authenticator no longer has my account in it.",
-          "resolution": "Authenticator enrolments are tied to the device and do not transfer with a phone migration unless the app\u0027s own backup was used. Identity was verified against the account\u0027s recovery details, the old enrolment was removed, and the customer re-enrolled on the new handset."
+          "resolution": "Authenticator enrolments are tied to the device and do not transfer with a phone migration unless the app's own backup was used. Identity was verified against the account's recovery details, the old enrolment was removed, and the customer re-enrolled on the new handset."
         }
       ],
       "topSimilarity": 0.7471334746266262,
@@ -605,7 +610,7 @@
           "ticketId": "01a196ce-b0ab-73f9-b248-b8fa2bbbb2df",
           "subject": "Accented characters come out wrong in the export",
           "redactedText": "Names with accents appear as strings of odd symbols when I open the downloaded file.",
-          "resolution": "The file is written as UTF-8 without a byte order mark, and the customer\u0027s spreadsheet defaulted to a legacy code page when opening it directly. Importing with the encoding set explicitly rendered it correctly, and a byte order mark is now written for compatibility."
+          "resolution": "The file is written as UTF-8 without a byte order mark, and the customer's spreadsheet defaulted to a legacy code page when opening it directly. Importing with the encoding set explicitly rendered it correctly, and a byte order mark is now written for compatibility."
         }
       ],
       "topSimilarity": 0.77567201084937,
@@ -797,13 +802,13 @@
       "queryId": "q-ho-fault-alerts-make-no-sound",
       "ticketSubject": "Notifications are silent on my phone",
       "redactedTicket": "Notifications are silent on my phone\n\nThey show up on the screen but there is never any sound, so I keep missing them.",
-      "draft": "It sounds like your phone\u0027s notification channel might be set to silent, which can cause notifications to appear on the screen without making any sound. Adjusting the notification channel settings on your device should restore the sound for notifications. The in-app notification setting is linked to the device\u0027s notification channel, so changing the device setting will affect the app\u0027s notification sounds.",
+      "draft": "It sounds like your phone's notification channel might be set to silent, which can cause notifications to appear on the screen without making any sound. Adjusting the notification channel settings on your device should restore the sound for notifications. The in-app notification setting is linked to the device's notification channel, so changing the device setting will affect the app's notification sounds.",
       "citedSources": [
         {
           "ticketId": "01a196ce-ddcf-7ff4-a1ea-9688800f811b",
           "subject": "Phone alerts arrive with no sound",
           "redactedText": "Notifications appear on my lock screen but never make a noise.",
-          "resolution": "The notification channel on the device had been set to silent, which overrides the application\u0027s own setting. Adjusting the channel restored sound. The in-app setting now links to the device channel to avoid the confusion."
+          "resolution": "The notification channel on the device had been set to silent, which overrides the application's own setting. Adjusting the channel restored sound. The in-app setting now links to the device channel to avoid the confusion."
         }
       ],
       "topSimilarity": 0.7645360708610277,
@@ -851,7 +856,7 @@
           "ticketId": "01a196ce-b434-7acb-8448-15f414408513",
           "subject": "Report totals do not match the detail",
           "redactedText": "The summary figure at the top is different from the sum of the rows underneath it.",
-          "resolution": "The summary was computed in the account\u0027s reporting timezone while the rows were rendered in the viewer\u0027s local timezone, so entries near midnight fell on different days. Both now use the account timezone and the figures agree."
+          "resolution": "The summary was computed in the account's reporting timezone while the rows were rendered in the viewer's local timezone, so entries near midnight fell on different days. Both now use the account timezone and the figures agree."
         },
         {
           "ticketId": "01a196ce-c83d-7bef-ac63-6da7b8c65304",
@@ -898,7 +903,7 @@
       "queryId": "q-ho-shipping-nothing-has-shipped",
       "ticketSubject": "No dispatch confirmation after nine days",
       "redactedTicket": "No dispatch confirmation after nine days\n\nI ordered nine days ago and there has been nothing since the order confirmation. No tracking, no dispatch email, nothing. Every item showed as in stock when I placed it.",
-      "draft": "Thank you for reaching out about your order. We understand that you have not received any dispatch confirmation, tracking information, or further updates since your order confirmation nine days ago, despite all items showing as in stock at the time of purchase. While we do not have specific information about your order\u0027s status from the evidence provided, in a similar case where an order had not shipped after a week, it was because one item was on backorder and the order was set to ship complete, causing a delay in dispatch until all items were available. If your order was configured similarly, this might explain the delay. However, we do not have confirmation of this for your order. Please let us know if you would like us to investigate further or provide additional details about your order.",
+      "draft": "Thank you for reaching out about your order. We understand that you have not received any dispatch confirmation, tracking information, or further updates since your order confirmation nine days ago, despite all items showing as in stock at the time of purchase. While we do not have specific information about your order's status from the evidence provided, in a similar case where an order had not shipped after a week, it was because one item was on backorder and the order was set to ship complete, causing a delay in dispatch until all items were available. If your order was configured similarly, this might explain the delay. However, we do not have confirmation of this for your order. Please let us know if you would like us to investigate further or provide additional details about your order.",
       "citedSources": [
         {
           "ticketId": "01a196ce-f6c1-7b96-9400-bce57afe9d42",
@@ -946,13 +951,13 @@
       "queryId": "q-ho-shipping-courier-wants-money",
       "ticketSubject": "Courier is asking me to pay before handing it over",
       "redactedTicket": "Courier is asking me to pay before handing it over\n\nI have had a card through the door asking for a payment before my parcel can be delivered. I have already paid for the order in full so I do not understand what this is supposed to be. I am not paying anything to anybody until somebody explains it to me.",
-      "draft": "Thank you for your message. You mentioned that you have already paid for your order in full and are being asked by the courier to pay again before delivery. In a similar case, the charge requested by the courier was for import duty and the carrier\u0027s handling fee, which are levied by the destination country rather than by us. Our prices exclude import charges, which is stated at checkout for international destinations. This amount is not refundable by us. If your situation is similar, this may explain the payment request you received. If you believe this does not apply to your order, please let us know so we can assist further.",
+      "draft": "Thank you for your message. You mentioned that you have already paid for your order in full and are being asked by the courier to pay again before delivery. In a similar case, the charge requested by the courier was for import duty and the carrier's handling fee, which are levied by the destination country rather than by us. Our prices exclude import charges, which is stated at checkout for international destinations. This amount is not refundable by us. If your situation is similar, this may explain the payment request you received. If you believe this does not apply to your order, please let us know so we can assist further.",
       "citedSources": [
         {
           "ticketId": "01a196cf-014e-7128-83fa-eb6d28319b78",
           "subject": "Asked to pay a fee before delivery",
           "redactedText": "The courier is demanding a payment before they will hand over my parcel.",
-          "resolution": "The charge was import duty and the carrier\u0027s handling fee, levied by the destination country rather than by us. Our prices exclude import charges, which is stated at checkout for international destinations. The amount is not refundable by us."
+          "resolution": "The charge was import duty and the carrier's handling fee, levied by the destination country rather than by us. Our prices exclude import charges, which is stated at checkout for international destinations. The amount is not refundable by us."
         }
       ],
       "topSimilarity": 0.7818069348171857,
@@ -982,13 +987,13 @@
       "queryId": "q-ho-shipping-missed-the-driver",
       "ticketSubject": "I was out when the driver came",
       "redactedTicket": "I was out when the driver came\n\nThere is a card through the door saying they tried to deliver. What do I do now?",
-      "draft": "You mentioned that you were out when the driver came and found a card through the door saying they tried to deliver. Redelivery can be arranged using the carrier\u0027s tracking link and the reference number on the card. You can set the redelivery for a different date or to a neighbouring address. Please note that parcels are held for ten days before being returned to us.",
+      "draft": "You mentioned that you were out when the driver came and found a card through the door saying they tried to deliver. Redelivery can be arranged using the carrier's tracking link and the reference number on the card. You can set the redelivery for a different date or to a neighbouring address. Please note that parcels are held for ten days before being returned to us.",
       "citedSources": [
         {
           "ticketId": "01a196cf-1164-7bc5-a562-ed242545521b",
           "subject": "Missed the delivery, what now",
           "redactedText": "I was out when the driver called and I have a card through the door.",
-          "resolution": "Redelivery is arranged from the carrier\u0027s tracking link using the reference on the card, and can be set for a different date or a neighbouring address. Parcels are held for ten days before being returned to us."
+          "resolution": "Redelivery is arranged from the carrier's tracking link using the reference on the card, and can be set for a different date or a neighbouring address. Parcels are held for ten days before being returned to us."
         }
       ],
       "topSimilarity": 0.8020312469366911,
@@ -999,8 +1004,8 @@
     {
       "queryId": "q-ho-shipping-tracking-ref-not-found",
       "ticketSubject": "Tracking reference not recognised",
-      "redactedTicket": "Tracking reference not recognised\n\nI have put the number from my confirmation email into the carrier\u0027s site and it says there is no such parcel. I have checked it twice and typed it out rather than pasting it, same result.",
-      "draft": "Thank you for your message. The tracking number you received is issued when the shipping label is created, but it only becomes searchable after the first scan by the carrier, which typically happens at the evening collection. This means that the tracking information may not be immediately available on the carrier\u0027s site. Usually, the tracking updates and becomes visible the next morning. The confirmation email should indicate when tracking becomes active. If you continue to have trouble, please let us know.",
+      "redactedTicket": "Tracking reference not recognised\n\nI have put the number from my confirmation email into the carrier's site and it says there is no such parcel. I have checked it twice and typed it out rather than pasting it, same result.",
+      "draft": "Thank you for your message. The tracking number you received is issued when the shipping label is created, but it only becomes searchable after the first scan by the carrier, which typically happens at the evening collection. This means that the tracking information may not be immediately available on the carrier's site. Usually, the tracking updates and becomes visible the next morning. The confirmation email should indicate when tracking becomes active. If you continue to have trouble, please let us know.",
       "citedSources": [
         {
           "ticketId": "01a196cf-15a5-7e51-aace-eafc453a3ef3",
@@ -1137,7 +1142,7 @@
       "queryId": "q-ho-shipping-address-not-found-but-correct",
       "ticketSubject": "Driver says address not found and the flat number was on the label",
       "redactedTicket": "Driver says address not found and the flat number was on the label\n\nMy delivery came back marked as address not found. The flat number is on the label, I have checked it against the confirmation. The entryphone for the building has been broken for a fortnight, which I suspect is the real reason, though the card does not say so.",
-      "draft": "Thank you for your message. You mentioned that the driver marked your delivery as address not found despite the flat number being on the label, and that the entryphone for your building has been broken for a fortnight, which you suspect is the real reason for the delivery issue. In a similar case, the flat number was not visible to the driver because it was truncated on the label, and the order was re-shipped with the flat number in the primary address line and a note for the entryphone (precedent 01a196ce-fccb-7f0e-a2cd-a62b47324421). However, your situation may be different due to the broken entryphone. Unfortunately, the evidence does not provide specific information on how to resolve delivery issues caused by a broken entryphone. You may want to contact the carrier directly to arrange redelivery or provide additional delivery instructions. If you have a card from the driver, redelivery can often be arranged using the carrier\u0027s tracking link (precedent 01a196cf-1164-7bc5-a562-ed242545521b).",
+      "draft": "Thank you for your message. You mentioned that the driver marked your delivery as address not found despite the flat number being on the label, and that the entryphone for your building has been broken for a fortnight, which you suspect is the real reason for the delivery issue. In a similar case, the flat number was not visible to the driver because it was truncated on the label, and the order was re-shipped with the flat number in the primary address line and a note for the entryphone (precedent 01a196ce-fccb-7f0e-a2cd-a62b47324421). However, your situation may be different due to the broken entryphone. Unfortunately, the evidence does not provide specific information on how to resolve delivery issues caused by a broken entryphone. You may want to contact the carrier directly to arrange redelivery or provide additional delivery instructions. If you have a card from the driver, redelivery can often be arranged using the carrier's tracking link (precedent 01a196cf-1164-7bc5-a562-ed242545521b).",
       "citedSources": [
         {
           "ticketId": "01a196ce-fccb-7f0e-a2cd-a62b47324421",
@@ -1149,7 +1154,7 @@
           "ticketId": "01a196cf-1164-7bc5-a562-ed242545521b",
           "subject": "Missed the delivery, what now",
           "redactedText": "I was out when the driver called and I have a card through the door.",
-          "resolution": "Redelivery is arranged from the carrier\u0027s tracking link using the reference on the card, and can be set for a different date or a neighbouring address. Parcels are held for ten days before being returned to us."
+          "resolution": "Redelivery is arranged from the carrier's tracking link using the reference on the card, and can be set for a different date or a neighbouring address. Parcels are held for ten days before being returned to us."
         }
       ],
       "topSimilarity": 0.7433026455537005,
@@ -1159,8 +1164,8 @@
     },
     {
       "queryId": "q-ho-shipping-strike-delay",
-      "ticketSubject": "Delayed by the carrier\u0027s strike and I paid for express",
-      "redactedTicket": "Delayed by the carrier\u0027s strike and I paid for express\n\nMy parcel has not moved for four days because the carrier is on strike, which was in the news before I even ordered. I paid extra for the quicker service and I have not had it. I would like that charge back at the very least.",
+      "ticketSubject": "Delayed by the carrier's strike and I paid for express",
+      "redactedTicket": "Delayed by the carrier's strike and I paid for express\n\nMy parcel has not moved for four days because the carrier is on strike, which was in the news before I even ordered. I paid extra for the quicker service and I have not had it. I would like that charge back at the very least.",
       "draft": "Thank you for your message. You mentioned that your parcel has not moved for four days due to a carrier strike and that you paid extra for express service but have not received the quicker delivery you expected. Unfortunately, the evidence provided does not include information about refunds or compensation related to delays caused by carrier strikes. Therefore, I am unable to confirm whether the express charge can be refunded in this situation based on the information available.",
       "citedSources": [],
       "topSimilarity": 0.6062582817992588,
@@ -1171,8 +1176,8 @@
     {
       "queryId": "q-ho-shipping-someone-elses-parcel",
       "ticketSubject": "A parcel has arrived that is not mine",
-      "redactedTicket": "A parcel has arrived that is not mine\n\nA box turned up this morning with my address on the label but somebody else\u0027s name on it, and the packing note inside is for an order I have never placed. My own order is still showing as in transit on the tracking. I do not want to open it any further and I am not going to throw it away. What do you want me to do with it?",
-      "draft": "Thank you for letting us know about the parcel that arrived with your address but someone else\u0027s name and order details. Since you do not want to open it further or dispose of it, please hold on to the parcel safely. We will investigate the issue and advise you on the next steps shortly.",
+      "redactedTicket": "A parcel has arrived that is not mine\n\nA box turned up this morning with my address on the label but somebody else's name on it, and the packing note inside is for an order I have never placed. My own order is still showing as in transit on the tracking. I do not want to open it any further and I am not going to throw it away. What do you want me to do with it?",
+      "draft": "Thank you for letting us know about the parcel that arrived with your address but someone else's name and order details. Since you do not want to open it further or dispose of it, please hold on to the parcel safely. We will investigate the issue and advise you on the next steps shortly.",
       "citedSources": [],
       "topSimilarity": 0.6150521504617207,
       "grounded": null,
@@ -1195,7 +1200,7 @@
           "ticketId": "01a196cf-2a0e-7da0-a7c7-8f4881c99987",
           "subject": "Item did not work out of the box",
           "redactedText": "It was faulty the moment I unpacked it and had never been used.",
-          "resolution": "Goods faulty on arrival are replaced or refunded at the customer\u0027s choice with return postage paid by us, and no inspection period is required. A replacement was despatched the same day."
+          "resolution": "Goods faulty on arrival are replaced or refunded at the customer's choice with return postage paid by us, and no inspection period is required. A replacement was despatched the same day."
         }
       ],
       "topSimilarity": 0.7425913925360352,
@@ -1207,13 +1212,13 @@
       "queryId": "q-ho-returns-engraved-item",
       "ticketSubject": "Can I return something with initials on it",
       "redactedTicket": "Can I return something with initials on it\n\nI had a set of initials put on and the person I bought it for has since been given the same thing by somebody else. It has not been used or even taken out of the box.",
-      "draft": "Items made to a customer\u0027s specification, such as those with initials engraved, are exempt from change-of-mind returns because they cannot be resold. This exemption applies even if the item is unused and still in its original packaging. The exemption does not apply if the item is faulty or the personalisation is incorrect, but you have not mentioned either of these issues. Therefore, it is unlikely that you can return the item with initials on it for a change of mind.",
+      "draft": "Items made to a customer's specification, such as those with initials engraved, are exempt from change-of-mind returns because they cannot be resold. This exemption applies even if the item is unused and still in its original packaging. The exemption does not apply if the item is faulty or the personalisation is incorrect, but you have not mentioned either of these issues. Therefore, it is unlikely that you can return the item with initials on it for a change of mind.",
       "citedSources": [
         {
           "ticketId": "01a196cf-2552-75f8-b4c4-c448f9c8230c",
           "subject": "Told I cannot return an engraved item",
           "redactedText": "I ordered something with my initials on it and now want to send it back.",
-          "resolution": "Items made to a customer\u0027s specification are exempt from change-of-mind returns because they cannot be resold, which is stated at the point of personalisation. The exemption does not apply if the item is faulty or the personalisation is incorrect, neither of which applied here."
+          "resolution": "Items made to a customer's specification are exempt from change-of-mind returns because they cannot be resold, which is stated at the point of personalisation. The exemption does not apply if the item is faulty or the personalisation is incorrect, neither of which applied here."
         }
       ],
       "topSimilarity": 0.7120337906349609,
@@ -1243,7 +1248,7 @@
       "queryId": "q-ho-returns-swap-size-unavailable",
       "ticketSubject": "The size I need is not in stock",
       "redactedTicket": "The size I need is not in stock\n\nI wanted to exchange for the larger size and it is showing as unavailable. I do not want to end up waiting indefinitely with neither the item nor my money.",
-      "draft": "Since the larger size you want is currently unavailable, the return will be refunded instead of waiting indefinitely. You can also set a back-in-stock alert for the size you need, which will notify you as soon as it becomes available again. This way, you won\u0027t be left waiting without your money or the item. If you want to proceed with the return and refund, please let us know.",
+      "draft": "Since the larger size you want is currently unavailable, the return will be refunded instead of waiting indefinitely. You can also set a back-in-stock alert for the size you need, which will notify you as soon as it becomes available again. This way, you won't be left waiting without your money or the item. If you want to proceed with the return and refund, please let us know.",
       "citedSources": [
         {
           "ticketId": "01a196cf-360b-7948-ac22-06e764e10e21",
@@ -1315,7 +1320,7 @@
       "queryId": "q-ho-returns-too-heavy-to-post",
       "ticketSubject": "Return is too heavy for me to take anywhere",
       "redactedTicket": "Return is too heavy for me to take anywhere\n\nThis weighs a good deal and I do not drive. There is no realistic way I am getting it to a drop off point on my own.",
-      "draft": "You mentioned that the return item is too heavy for you to take anywhere and that you do not drive. In a similar case where the item was above the parcel size limit and too big to take anywhere, the item was collected from the customer\u0027s address rather than requiring a drop off. This collection is booked through the return screen with a two-hour window. Additionally, collection is free if the return is due to a fault. You may want to check if your return qualifies for this service and arrange a collection accordingly.",
+      "draft": "You mentioned that the return item is too heavy for you to take anywhere and that you do not drive. In a similar case where the item was above the parcel size limit and too big to take anywhere, the item was collected from the customer's address rather than requiring a drop off. This collection is booked through the return screen with a two-hour window. Additionally, collection is free if the return is due to a fault. You may want to check if your return qualifies for this service and arrange a collection accordingly.",
       "citedSources": [
         {
           "ticketId": "01a196cf-2ff5-7857-8012-69f56035265d",
@@ -1333,13 +1338,13 @@
       "queryId": "q-ho-returns-where-to-drop-off",
       "ticketSubject": "Where do I leave the parcel",
       "redactedTicket": "Where do I leave the parcel\n\nLabel is printed. Where can I actually hand it in?",
-      "draft": "You can hand in your parcel at any of the carrier\u0027s drop-off points, which are listed by postcode on the tracking page, as well as at their depots. Please keep the receipt you receive when you drop off the parcel, as it serves as proof of despatch.",
+      "draft": "You can hand in your parcel at any of the carrier's drop-off points, which are listed by postcode on the tracking page, as well as at their depots. Please keep the receipt you receive when you drop off the parcel, as it serves as proof of despatch.",
       "citedSources": [
         {
           "ticketId": "01a196cf-2f15-7508-b2cc-a04d34384b50",
           "subject": "Where can I hand my return in",
           "redactedText": "I have the label printed and need somewhere convenient to leave the parcel.",
-          "resolution": "The label is accepted at any of the carrier\u0027s drop-off points, listed by postcode on the tracking page, and at their depots. A receipt should be kept until the refund appears, as it carries the proof of despatch."
+          "resolution": "The label is accepted at any of the carrier's drop-off points, listed by postcode on the tracking page, and at their depots. A receipt should be kept until the refund appears, as it carries the proof of despatch."
         }
       ],
       "topSimilarity": 0.8370256264337108,
@@ -1668,13 +1673,13 @@
       "queryId": "q-ho-product-between-sizes-runs-small",
       "ticketSubject": "Between sizes and I hear it runs small",
       "redactedTicket": "Between sizes and I hear it runs small\n\nMy measurements put me between the medium and the large, and two of the reviews say this line comes up small. Does that mean I should be going up two sizes from my usual, or am I overthinking it?",
-      "draft": "You mentioned your measurements put you between medium and large, and you heard this line runs small. For this design, it is generally advised to size up for a regular fit, as it tends to run smaller than equivalent items elsewhere. If you want a close fit, the smaller size is recommended, but if you plan to wear it over other layers, the larger size is better. Either size can be exchanged without charge if it doesn\u0027t work out. So, you might consider going up one size rather than two, depending on your fit preference.",
+      "draft": "You mentioned your measurements put you between medium and large, and you heard this line runs small. For this design, it is generally advised to size up for a regular fit, as it tends to run smaller than equivalent items elsewhere. If you want a close fit, the smaller size is recommended, but if you plan to wear it over other layers, the larger size is better. Either size can be exchanged without charge if it doesn't work out. So, you might consider going up one size rather than two, depending on your fit preference.",
       "citedSources": [
         {
           "ticketId": "01a196cf-646e-74ea-ac5b-cdabd72f9378",
           "subject": "Should I order a bigger size",
           "redactedText": "I normally take a medium and want to know whether that will be right here.",
-          "resolution": "This line is cut close and most customers find it a size smaller than the equivalent elsewhere, so sizing up is advised for a regular fit. The guidance is drawn from return data rather than from the manufacturer\u0027s own chart."
+          "resolution": "This line is cut close and most customers find it a size smaller than the equivalent elsewhere, so sizing up is advised for a regular fit. The guidance is drawn from return data rather than from the manufacturer's own chart."
         },
         {
           "ticketId": "01a196cf-66ea-71ae-8d72-0e6065191772",
@@ -1709,14 +1714,14 @@
     {
       "queryId": "q-ho-product-commercial-use-guarantee",
       "ticketSubject": "What cover comes with it if we use it at work",
-      "redactedTicket": "What cover comes with it if we use it at work\n\nI want to know what guarantee comes with the item before I buy. These would be running most of the day in a workshop rather than sitting in somebody\u0027s kitchen.",
-      "draft": "The standard guarantee for the item is two years from delivery, which can be extended to three years if you register it within ninety days. This guarantee covers manufacturing defects but excludes wear, accidental damage, and consumable parts. Statutory rights also apply in addition to this guarantee. If you need to make a claim within the first year, it is handled directly by us as the seller. After the first year, the manufacturer\u0027s process is usually faster, though your statutory rights against us remain. Proof of purchase is your order confirmation, which never expires.",
+      "redactedTicket": "What cover comes with it if we use it at work\n\nI want to know what guarantee comes with the item before I buy. These would be running most of the day in a workshop rather than sitting in somebody's kitchen.",
+      "draft": "The standard guarantee for the item is two years from delivery, which can be extended to three years if you register it within ninety days. This guarantee covers manufacturing defects but excludes wear, accidental damage, and consumable parts. Statutory rights also apply in addition to this guarantee. If you need to make a claim within the first year, it is handled directly by us as the seller. After the first year, the manufacturer's process is usually faster, though your statutory rights against us remain. Proof of purchase is your order confirmation, which never expires.",
       "citedSources": [
         {
           "ticketId": "01a196cf-2bdb-7c86-bfe7-a71ca047d9b9",
           "subject": "How do I claim on the guarantee",
           "redactedText": "Something has developed a fault and I am not sure whether to come to you or the manufacturer.",
-          "resolution": "Claims in the first year are handled by us directly as the seller. Beyond that the manufacturer\u0027s process is usually faster, though statutory rights against us remain. Proof of purchase is the order confirmation, which never expires."
+          "resolution": "Claims in the first year are handled by us directly as the seller. Beyond that the manufacturer's process is usually faster, though statutory rights against us remain. Proof of purchase is the order confirmation, which never expires."
         },
         {
           "ticketId": "01a196cf-754b-71f5-b042-48326e02f4c7",

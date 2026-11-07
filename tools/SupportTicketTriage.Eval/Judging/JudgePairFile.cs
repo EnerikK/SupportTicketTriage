@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SupportTicketTriage.Infrastructure.Ai;
 
 namespace SupportTicketTriage.Eval.Judging;
 
@@ -65,6 +66,36 @@ public sealed record JudgePair(
 public sealed record JudgePairFile(
     string RubricVersion,
     string Instructions,
+    /// What wrote these drafts, recorded so a judge that does not exist yet
+    /// can still say what it is scoring.
+    ///
+    /// The drafting model retires on 2027-04-14 and the judge before it, so
+    /// these pairs will outlive both. A pair file whose origin is recorded
+    /// only in a working document is not re-scorable by anyone who does not
+    /// have that document - and the labels on it are the durable asset, not
+    /// the verdicts.
+    ///
+    /// Nullable because the v1 comparison artifacts predate the mechanism and
+    /// genuinely have no provenance; the same reasoning as [[ADR-034]]'s
+    /// prompt hashes, which an honest blank serves better than a claim.
+    string? GenerationPromptVersion,
+    /// The hash of the prompt text, not of the rendered prompt. The version is
+    /// a label a human chooses and should move when the contract moves; the
+    /// hash identifies the wording. [[ADR-034]].
+    string? GenerationPromptSha256,
+    /// **A deployment name, not a model version.** Repointing a deployment in
+    /// Azure would leave this field unchanged while the drafts came from a
+    /// different model - the same weakness the embedding stamp carries. The
+    /// model id and API version need plumbing in the recording layer that does
+    /// not exist yet; until it does, this is a weaker identifier than it looks.
+    string? GenerationModel,
+    DateTimeOffset? ExportedAt,
+    /// Non-null only where the provenance above was reconstructed after the
+    /// fact rather than captured when the drafts were written, naming the
+    /// commit it was reconstructed from. A reader must be able to tell the two
+    /// apart: one is a record, the other is an inference that happens to be
+    /// checkable.
+    string? ProvenanceReconstructedFrom,
     IReadOnlyList<JudgePair> Pairs)
 {
     /// What a labeller is answering, in the same words the judge is given.
@@ -126,7 +157,11 @@ public sealed record JudgePairFile(
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
     };
 
-    public static async Task WriteAsync(string path, IReadOnlyList<JudgePair> pairs, CancellationToken ct = default)
+    public static async Task WriteAsync(
+        string path,
+        IReadOnlyList<JudgePair> pairs,
+        string? generationModel = null,
+        CancellationToken ct = default)
     {
         var directory = Path.GetDirectoryName(Path.GetFullPath(path));
 
@@ -155,7 +190,16 @@ public sealed record JudgePairFile(
                 + "generation-side defect rather than an absence of retrieval.");
         }
 
-        var file = new JudgePairFile(GroundednessPrompt.Version, HowToLabel, pairs);
+        var file = new JudgePairFile(
+            GroundednessPrompt.Version,
+            HowToLabel,
+            GenerationPrompt.Version,
+            GenerationPrompt.Sha256,
+            generationModel,
+            DateTimeOffset.UtcNow,
+            // Captured at generation time, so nothing was reconstructed.
+            ProvenanceReconstructedFrom: null,
+            pairs);
 
         await File.WriteAllTextAsync(path, JsonSerializer.Serialize(file, Json), ct);
     }

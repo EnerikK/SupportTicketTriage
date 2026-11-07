@@ -87,7 +87,7 @@ public sealed class EvalRunner(
 
                 if (exportJudgePairsTo is not null)
                 {
-                    await JudgePairFile.WriteAsync(exportJudgePairsTo, generation.Pairs, ct);
+                    await JudgePairFile.WriteAsync(exportJudgePairsTo, generation.Pairs, chat.ChatModel, ct);
                 }
 
                 if (judge is not null)
