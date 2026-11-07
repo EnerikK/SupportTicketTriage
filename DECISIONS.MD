@@ -1340,6 +1340,45 @@ The v1 rule picked `gpt-5-mini` — best agreement, **worst miss rate**. A singl
 
 **What would reverse it.** A `judge-v3` rubric, which would supersede this the way v2 superseded v1 — with its own file committed before any v3 configuration runs. Or evidence that the 25% ceiling is unreachable by any deployable configuration, which would be an argument about the threshold rather than about the two-rate structure.
 
+### Amendment — 2026-11-07: the winner is provisional, roles are exclusive, and the separation guard is weaker than [[ADR-018]] claims
+
+Four things pre-registered **before any held-out verdict exists**. None changes the decision rule.
+
+**1. The winner validates the procedure, not the judge.** Every candidate retires within eight months — `gpt-5` at both efforts on 2027-02-09, `gpt-5-mini` on 2027-07-13. A judge chosen now cannot be the judge this project ships with. What this run establishes is that the selection procedure executes end to end on held-out data and yields a defensible answer, plus a reference groundedness figure computed while `gpt-5` still exists, which any successor comparison needs on the other side of the migration.
+
+Re-running the rule on successors before 2027-02-09 is therefore not a re-litigation: it is the same rule applied to the candidate set as it stands then, under the extension triggers in `DECISION-RULE-V2.md`. The cost accepted is that the README cannot say "we selected X as the judge" without also saying when X retires, and any published groundedness figure carries the judge that produced it and that judge's retirement date.
+
+**2. Role eligibility is exclusive.** `gpt-5-mini` is simultaneously a judge candidate here and a plausible replacement for `gpt-4.1-mini` as the drafting model — GA, cheap, and outliving the model it would replace. [[ADR-018]] forbids one deployment doing both.
+
+**If `gpt-5-mini` is selected as judge it is excluded as the drafting replacement; if it is adopted for drafting it leaves the judge candidate set.** Whichever role it takes, the other is filled by something else.
+
+Written before either decision has an answer, because the order in which the two arrive must not determine the outcome. Deciding it after seeing that `gpt-5-mini` won one of them would be choosing the constraint to fit the result. The honest cost: this may force a worse choice in the second role. That was always the price of [[ADR-018]]'s separation; it becomes visible only now that one model is a strong candidate for both.
+
+**3. Same-family pairings are permitted, and must be disclosed.** A `gpt-5` judge scoring a `gpt-5-mini` drafter satisfies [[ADR-018]]'s letter — different deployments, different models — while leaving the two sharing a training lineage and plausibly a set of blind spots. [[ADR-018]] already concedes this ("both models share a training lineage and may share blind spots"). Such a pairing is allowed rather than forbidden, because forbidding it would exclude most deployable combinations, **but it is named beside any groundedness figure it produces** rather than left for a reader to infer from two model names.
+
+**4. If nothing is eligible.** `DECISION-RULE-V2.md` already says no judge is adopted and no score is published. Pre-registering what follows, so it is not improvised under deadline:
+
+- The run is still reported — which configurations were tried, their two error rates, and that none cleared the 25% false-flag ceiling. A rule that selected nothing produced a result, and suppressing it would leave the next reader assuming the comparison was never run.
+- The candidate set may be extended **only** under `DECISION-RULE-V2.md`'s enumerated triggers, which already include "no listed configuration is eligible". The criteria do not move.
+- Groundedness remains unmeasured and the README continues to say so. **It does not fall back to a lower bar.** A metric published by a judge that failed its own eligibility test is worse than no metric, because it is quotable.
+- If no configuration is eligible before 2027-02-09, the pre-migration reference figure does not exist, and the post-migration comparison has nothing to compare against. That is a real possible outcome of this phase and is stated here rather than discovered then.
+
+### The separation guard does not do what [[ADR-018]] says it does
+
+**Found while writing this amendment, and not fixed by it.** The guard is a string comparison of *deployment names*:
+
+```csharp
+if (deployment == options.ChatDeployment)   // Program.cs
+```
+
+Two differently-named Azure deployments of the same underlying model therefore pass it, and so does a difference in casing. [[ADR-018]]'s guarantee is about the **model**, not the name pointed at it.
+
+**The complete fix is blocked on plumbing this repository does not have.** The model id Azure returns is never read anywhere — `RecordingChatClient` holds every `ChatResponse` and is the natural hook, but nothing uses it. Worse, under `--judge-pairs-from` no drafting call happens at all, so the only drafting identity available is the pair file's `generationModel`, which is itself a deployment name — the weakness already recorded when that field was added. Comparing resolved identity on both sides requires the model-id capture that the migration work owns.
+
+What is reachable now, and scoped as its own change rather than folded into a documentation commit: normalise the comparison for case and whitespace, record the model id observed on each call, and compare observed identities wherever both stages run in one process. That narrows the hole; it does not close it.
+
+**Until then the separation is enforced by configuration discipline rather than by the guard**, and this entry says so rather than letting [[ADR-018]]'s "throws rather than honouring" stand as though it were complete. Point 2 above is what currently carries the guarantee for `gpt-5-mini`, and a rule in a document is not a mechanism.
+
 ---
 
 ## Entries expected from the audit
