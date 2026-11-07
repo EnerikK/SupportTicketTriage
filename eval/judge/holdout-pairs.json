@@ -21,9 +21,9 @@
         }
       ],
       "topSimilarity": 0.7957437821148201,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The trial conversion rule and fourteen-day window are supported. The completed refund/free-tier actions remain scoped to the similar case; this customer is offered an eligibility check, not promised a refund."
     },
     {
       "queryId": "q-ho-billing-gift-card-not-used",
@@ -39,9 +39,9 @@
         }
       ],
       "topSimilarity": 0.6243948173437764,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Selection at payment is stated generally. The historical refund stays within the similar case, and the proposed cause for this customer is explicitly only a possibility."
     },
     {
       "queryId": "q-ho-billing-tax-still-charged",
@@ -57,9 +57,9 @@
         }
       ],
       "topSimilarity": 0.7460122227329331,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The certificate-recording rule is general, but crediting invoices since the effective date happened in one case. \"When the certificate is validated ... tax ... is credited back\" incorrectly turns that credit into a general entitlement."
     },
     {
       "queryId": "q-ho-billing-po-reference-missing",
@@ -75,9 +75,9 @@
         }
       ],
       "topSimilarity": 0.6524340014019367,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "Storing a PO reference for future invoices is general policy. Reissuing the existing invoice and voiding the original are past-case actions; the draft promises both for this customer without a generally stated rule."
     },
     {
       "queryId": "q-ho-billing-account-read-only",
@@ -93,9 +93,9 @@
         }
       ],
       "topSimilarity": 0.6318582232346263,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Insufficient funds, the retries, and immediate restoration are explicitly historical. Checking/updating the payment method is a suggested troubleshooting step, not an assertion that this account has already been fixed or a guaranteed restoration time."
     },
     {
       "queryId": "q-ho-billing-transfer-not-matched",
@@ -111,9 +111,9 @@
         }
       ],
       "topSimilarity": 0.7534975668147661,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "Requesting remittance advice and offering investigation are harmless. \"Ensure your payment is correctly allocated ... to avoid any late fees\" adds a specific successful allocation/no-fee outcome that only happened in the precedent."
     },
     {
       "queryId": "q-ho-billing-move-to-yearly",
@@ -129,9 +129,9 @@
         }
       ],
       "topSimilarity": 0.7569416818614538,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Immediate switching from the plan page and crediting the unused month are generally phrased in the resolution and support the direct answer."
     },
     {
       "queryId": "q-ho-billing-extra-line-on-invoice",
@@ -147,9 +147,9 @@
         }
       ],
       "topSimilarity": 0.7359095622496837,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The draft explicitly lacks this account's charge details, describes the overage only as a similar case, and proposes a check without identifying this customer's charge as an overage."
     },
     {
       "queryId": "q-ho-billing-refund-to-dead-card",
@@ -165,9 +165,9 @@
         }
       ],
       "topSimilarity": 0.848452276642412,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Original-method refunds and bank routing are general statements in the resolution. The bank receipt and five-day clearance remain historical, not a forecast for this refund."
     },
     {
       "queryId": "q-ho-billing-one-invoice-please",
@@ -183,9 +183,9 @@
         }
       ],
       "topSimilarity": 0.8895748318691352,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The resolution explicitly allows subscriptions on one account to share a cycle and invoice. Offering to align the four subscriptions applies that general capability."
     },
     {
       "queryId": "q-ho-billing-credit-note-for-seats",
@@ -201,9 +201,9 @@
         }
       ],
       "topSimilarity": 0.8007789828163484,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The PDF credit note and balance credit are described correctly as historical. Offering to proceed with raising this customer's credit note assumes an entitlement/action supported only by that individual precedent."
     },
     {
       "queryId": "q-ho-billing-old-office-on-invoice",
@@ -219,9 +219,9 @@
         }
       ],
       "topSimilarity": 0.8538002084306061,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "Separate billing and delivery addresses are supported. The offer to reissue this customer's recent invoices turns a past correction/reissue into an unqualified current capability and outcome."
     },
     {
       "queryId": "q-ho-billing-swap-card-on-file",
@@ -237,9 +237,9 @@
         }
       ],
       "topSimilarity": 0.8643716349242013,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The billing-page procedure, immediate default status, and conditional automatic removal are all stated generally in the resolution."
     },
     {
       "queryId": "q-ho-billing-new-card-still-refused",
@@ -255,9 +255,9 @@
         }
       ],
       "topSimilarity": 0.6018351059346568,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The resolution itself says address-check failures are usually responsible where the bank has no record. The draft keeps that condition and does not assert this customer's bank has no record."
     },
     {
       "queryId": "q-ho-billing-reminder-came-after-charge",
@@ -266,9 +266,9 @@
       "draft": "Thank you for letting us know about the timing of the renewal warning email. You mentioned that the email arrived two days after the payment was already taken, which did not give you a useful warning. We understand how important it is to receive renewal notices in a timely manner. While we do not have specific information about your account's notification timing in the evidence provided, we acknowledge your experience as you described it. If you would like us to look into this further or assist with any changes to your subscription, please let us know.",
       "citedSources": [],
       "topSimilarity": 0.6192763687813017,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "There are no cited resolutions. The draft confines itself to the customer's reported email/payment timing and explicitly withholds an account-specific explanation."
     },
     {
       "queryId": "q-ho-billing-code-entered-before-paying",
@@ -284,9 +284,9 @@
         }
       ],
       "topSimilarity": 0.6680831965972474,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The code/refund history is accurately scoped to the precedent. The draft recognises the different timing and explicitly cannot explain this customer's charge."
     },
     {
       "queryId": "q-ho-billing-instalment-plan-after-return",
@@ -308,9 +308,9 @@
         }
       ],
       "topSimilarity": 0.6157648670054212,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The two cancellation/refund cases are supported historical examples. The draft explicitly withholds a diagnosis or process for instalment-plan payments after a refund."
     },
     {
       "queryId": "q-ho-account-recovery-codes-gone",
@@ -326,9 +326,9 @@
         }
       ],
       "topSimilarity": 0.8153853583984885,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "Only non-retrievability/hash storage is stated generally. Verification through a secondary channel, resetting the factor, and issuing new codes happened in one case; the draft promotes them into a process available to this customer."
     },
     {
       "queryId": "q-ho-account-new-password-refused",
@@ -344,9 +344,9 @@
         }
       ],
       "topSimilarity": 0.7608865877195216,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The historical reuse-check explanation is supported, but \"the error message was updated\" claims completion. The resolution only says the error text \"is being made specific\"."
     },
     {
       "queryId": "q-ho-account-which-email-did-i-use",
@@ -362,9 +362,9 @@
         }
       ],
       "topSimilarity": 0.7207970925650143,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The account lookup tool's registration check and privacy properties are explicitly stated in the resolution. No email address is invented for this customer."
     },
     {
       "queryId": "q-ho-account-typo-in-registered-email",
@@ -380,9 +380,9 @@
         }
       ],
       "topSimilarity": 0.8149588028774585,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The payment-based verification and manual correction stay scoped to a similar case. Requesting details to verify ownership and assist with correction does not claim that verification/correction has already succeeded."
     },
     {
       "queryId": "q-ho-account-no-company-sign-in-option",
@@ -398,9 +398,9 @@
         }
       ],
       "topSimilarity": 0.7900253427639484,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "Connected identity provider and verified domain are general prerequisites. Metadata exchange is described only as a step completed in the past case; calling that particular step required for all customers exceeds the general rule."
     },
     {
       "queryId": "q-ho-account-some-staff-not-recognised",
@@ -416,9 +416,9 @@
         }
       ],
       "topSimilarity": 0.816599898735323,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The secondary-domain example is supported. The draft also supplies permissions as a possible cause without attributing it to the customer's assumption; no resolution supports that cause."
     },
     {
       "queryId": "q-ho-account-new-starter-no-access",
@@ -434,9 +434,9 @@
         }
       ],
       "topSimilarity": 0.7607883375353897,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Scheduled directory synchronisation is stated generally. The current cause is hedged with \"may\", the successful manual sync is historical, and the suggested trial does not promise a Monday resolution."
     },
     {
       "queryId": "q-ho-account-form-just-reloads",
@@ -452,9 +452,9 @@
         }
       ],
       "topSimilarity": 0.7019014353178713,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Blocked cookies and the successful fix are explicitly scoped to the similar case. The proposed browser check is tentative and does not assert this customer has that configuration."
     },
     {
       "queryId": "q-ho-account-app-signs-me-out",
@@ -470,9 +470,9 @@
         }
       ],
       "topSimilarity": 0.8447241856364239,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The credential-clearing explanation and successful exemption remain historical. The draft suggests checking a possibility and requests more information if it does not help."
     },
     {
       "queryId": "q-ho-account-signed-out-by-new-device",
@@ -488,9 +488,9 @@
         }
       ],
       "topSimilarity": 0.6089607151889389,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The three-session rule, security-page controls, and higher-plan limit are supported. Applicability to this customer is explicitly hedged rather than asserting their plan or session count."
     },
     {
       "queryId": "q-ho-account-saved-password-wrong",
@@ -506,9 +506,9 @@
         }
       ],
       "topSimilarity": 0.7253008373283124,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The old saved-entry explanation is presented as a tentative analogy supported by the resolution. Updating/removing the saved entry is advice, not a claim that a change or fix has already occurred."
     },
     {
       "queryId": "q-ho-account-close-it-permanently",
@@ -524,9 +524,9 @@
         }
       ],
       "topSimilarity": 0.6989930602064305,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The deletion procedure and tax-record exception are general. \"Everything else, including your order history, is erased\" classifies all order history as outside retained tax records, which the resolution does not establish."
     },
     {
       "queryId": "q-ho-account-codes-refused-clock-checked",
@@ -542,9 +542,9 @@
         }
       ],
       "topSimilarity": 0.7544227706790038,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The clock-drift fix is accurately historical. The draft acknowledges the customer has already checked the clock and explicitly lacks another supported resolution."
     },
     {
       "queryId": "q-ho-account-locked-after-vpn",
@@ -572,9 +572,9 @@
         }
       ],
       "topSimilarity": 0.6441517061169074,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": true,
+      "note": "The draft withholds a VPN-specific cause/solution. Its background claim that lockouts have been causes in the cited cases is unsupported: the security resolution describes a protective hold expressly separate from a failed-attempt lockout; none establishes a VPN-related lockout."
     },
     {
       "queryId": "q-ho-account-cannot-pass-verification",
@@ -596,9 +596,9 @@
         }
       ],
       "topSimilarity": 0.7471334746266262,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": true,
+      "note": "The draft acknowledges no supported employer/no-order recovery method. \"Typically relies\" and \"standard process\" generalise two individual verification methods into prevalence and policy not stated in either resolution."
     },
     {
       "queryId": "q-ho-fault-export-strange-characters",
@@ -614,9 +614,9 @@
         }
       ],
       "topSimilarity": 0.77567201084937,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The draft asserts that this customer's corruption is due to the cited UTF-8/BOM circumstances. The resolution establishes the spreadsheet/code-page cause for one customer, not this one."
     },
     {
       "queryId": "q-ho-fault-pdf-missing-content",
@@ -632,9 +632,9 @@
         }
       ],
       "topSimilarity": 0.7860839517161121,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The font-loading cause and renderer change are historical/general statements supported by the resolution. Checking the software version is advice without a promised fix."
     },
     {
       "queryId": "q-ho-fault-video-keeps-buffering",
@@ -650,9 +650,9 @@
         }
       ],
       "topSimilarity": 0.7131302616529333,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The fixed-bitrate cause and successful adaptive-selection fix are historical. Checking the player setting is a tentative suggestion, not a diagnosis or guarantee."
     },
     {
       "queryId": "q-ho-fault-wrong-typeface",
@@ -668,9 +668,9 @@
         }
       ],
       "topSimilarity": 0.7082281455333631,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The content-filter cause and font-host fix are accurately limited to the similar case; the current customer is asked to check a possibility."
     },
     {
       "queryId": "q-ho-fault-times-are-wrong",
@@ -686,9 +686,9 @@
         }
       ],
       "topSimilarity": 0.7336978608584426,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The UTC/fixed-offset cause and rendering change are supported historical details. \"May explain\" appropriately limits applicability to the current customer."
     },
     {
       "queryId": "q-ho-fault-total-off-by-a-penny",
@@ -704,9 +704,9 @@
         }
       ],
       "topSimilarity": 0.7911891780809744,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The historical rounding cause and current minor-unit calculation match the resolution. The explanation for this customer is only a possibility."
     },
     {
       "queryId": "q-ho-fault-two-entries-each-time",
@@ -722,9 +722,9 @@
         }
       ],
       "topSimilarity": 0.6963029124967,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Double submission, missing idempotency, request-key addition, and duplicate merging are all scoped to the precedent. The customer's cause remains hedged and no merge is promised."
     },
     {
       "queryId": "q-ho-fault-requests-start-failing",
@@ -740,9 +740,9 @@
         }
       ],
       "topSimilarity": 0.7290801228107037,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The throttling/backoff/batching account is scoped to the similar case. The draft suggests checking whether the same limit applies rather than asserting this integration is over its allowance."
     },
     {
       "queryId": "q-ho-fault-same-event-several-times",
@@ -758,9 +758,9 @@
         }
       ],
       "topSimilarity": 0.7810358377915256,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "At-least-once delivery, timeout-related repeats, and the requirement to use the event identifier as an idempotency key are general statements in the resolution."
     },
     {
       "queryId": "q-ho-fault-unusable-on-phone",
@@ -776,9 +776,9 @@
         }
       ],
       "topSimilarity": 0.7814126126807464,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The fixed-width cause and scrollable-container fix remain historical. The link to this customer's display issue is explicitly tentative."
     },
     {
       "queryId": "q-ho-fault-same-alert-several-copies",
@@ -794,9 +794,9 @@
         }
       ],
       "topSimilarity": 0.7591989161770349,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The individual/group overlap and deduplication are supported historical/current-resolution details. Checking for overlapping subscriptions is tentative."
     },
     {
       "queryId": "q-ho-fault-alerts-make-no-sound",
@@ -812,9 +812,9 @@
         }
       ],
       "topSimilarity": 0.7645360708610277,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "A silent channel is offered as a supported possibility. \"Adjusting ... should restore the sound\" then predicts this customer's fix from a single successful case without establishing that their channel is silent."
     },
     {
       "queryId": "q-ho-fault-new-records-not-searchable",
@@ -836,9 +836,9 @@
         }
       ],
       "topSimilarity": 0.6581588431980878,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": true,
+      "note": "The draft withholds a customer-specific fix. Its historical account combines queued deletions with additions waiting for a backlog to catch up; the other resolution instead describes an empty partition and an explicit reindex, not that delayed additions appeared as the queue caught up."
     },
     {
       "queryId": "q-ho-fault-export-disagrees-with-screen",
@@ -866,9 +866,9 @@
         }
       ],
       "topSimilarity": 0.6614493795357477,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The filter, timezone, and rounding examples are supported and presented as other cases/possible checks. The draft explicitly cannot determine the current export's cause."
     },
     {
       "queryId": "q-ho-fault-export-missing-a-column",
@@ -884,9 +884,9 @@
         }
       ],
       "topSimilarity": 0.6848155570681416,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The draft explicitly lacks evidence about missing columns, accurately describes the no-rows/filter precedent, and proposes an experiment without promising it will recover the reference column."
     },
     {
       "queryId": "q-ho-fault-restore-deleted-records",
@@ -895,9 +895,9 @@
       "draft": "You mentioned that you deleted about forty records last week and now need them restored, but they are no longer visible in the list or search. There is no information in the available evidence about restoring deleted records once they no longer appear in search or the list. Therefore, I am unable to confirm whether these records can be restored or how to do so based on the information provided.",
       "citedSources": [],
       "topSimilarity": 0.6618688282137445,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "There are no cited resolutions. The draft restates the deletion experience and explicitly cannot establish restorability or a restoration procedure."
     },
     {
       "queryId": "q-ho-shipping-nothing-has-shipped",
@@ -913,9 +913,9 @@
         }
       ],
       "topSimilarity": 0.6587814904309176,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The backorder/ship-complete explanation is correctly historical. Both its application and the current dispatch status are explicitly unconfirmed."
     },
     {
       "queryId": "q-ho-shipping-free-delivery-not-applied",
@@ -943,9 +943,9 @@
         }
       ],
       "topSimilarity": 0.7443977958004596,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The after-discount threshold and oversized/remote surcharges are supported generally. The draft explicitly withholds the specific reason this order incurred postage."
     },
     {
       "queryId": "q-ho-shipping-courier-wants-money",
@@ -961,9 +961,9 @@
         }
       ],
       "topSimilarity": 0.7818069348171857,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The import-charge explanation is framed as a similar case, while price exclusion and non-refundability are supported by the resolution. The current courier demand is only a possible match."
     },
     {
       "queryId": "q-ho-shipping-extra-charge-for-postcode",
@@ -979,9 +979,9 @@
         }
       ],
       "topSimilarity": 0.8023977201613198,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The postcode surcharge rule is general, the alternative carrier is historical, and the draft offers investigation without confirming this postcode belongs on the list."
     },
     {
       "queryId": "q-ho-shipping-missed-the-driver",
@@ -997,9 +997,9 @@
         }
       ],
       "topSimilarity": 0.8020312469366911,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Tracking-link redelivery, alternative dates/addresses, and the ten-day holding period are all stated generally in the resolution."
     },
     {
       "queryId": "q-ho-shipping-tracking-ref-not-found",
@@ -1015,9 +1015,9 @@
         }
       ],
       "topSimilarity": 0.841316317519628,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "Label creation, first scan, and typical evening collection are general. \"Usually ... visible the next morning\" converts one parcel's next-morning tracking result into a prevalence/timing claim."
     },
     {
       "queryId": "q-ho-shipping-will-they-leave-it",
@@ -1033,9 +1033,9 @@
         }
       ],
       "topSimilarity": 0.6821234996385641,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The value/signature/safe-place rules are supported. The resolution says the dispatch confirmation states the signature requirement, but does not say it reports whether safe-place delivery is enabled for the account."
     },
     {
       "queryId": "q-ho-shipping-afternoon-delivery",
@@ -1051,9 +1051,9 @@
         }
       ],
       "topSimilarity": 0.7451042102967128,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "Carrier time-window selection through tracking is general. An afternoon slot was selected in one case; the draft presents an afternoon slot as available for this customer without establishing availability."
     },
     {
       "queryId": "q-ho-shipping-make-it-come-faster",
@@ -1069,9 +1069,9 @@
         }
       ],
       "topSimilarity": 0.7436109485899783,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Upgrade until picking, payment of the difference, and the post-picking cancel/reorder restriction are generally stated. Stock constraints are appropriately conditional."
     },
     {
       "queryId": "q-ho-shipping-address-fields-wrong",
@@ -1087,9 +1087,9 @@
         }
       ],
       "topSimilarity": 0.7068426774490563,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The manual order/form correction is historical. The draft acknowledges no direct address-format solution and only offers a possibility of further/manual assistance."
     },
     {
       "queryId": "q-ho-shipping-box-address-refused",
@@ -1105,9 +1105,9 @@
         }
       ],
       "topSimilarity": 0.7966174962365411,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The physical-address/signature restriction and historical alternative service are supported. The draft offers to check availability rather than guaranteeing an alternative for this customer."
     },
     {
       "queryId": "q-ho-shipping-three-boxes-three-days",
@@ -1123,9 +1123,9 @@
         }
       ],
       "topSimilarity": 0.7740134502439477,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "Independent consignments are generally supported. One prior order was not charged extra; \"likely that you have not been charged three times\" infers this customer's billing state/probability from that single case."
     },
     {
       "queryId": "q-ho-shipping-neighbour-despite-instruction",
@@ -1134,9 +1134,9 @@
       "draft": "You mentioned that you had previously set your account so parcels are not left with neighbours, yet the driver left your parcel with a neighbour again. I understand that the card says number 14 while you are at 18 Cromer Street, and you do not know these people or want to knock on their door. Unfortunately, the evidence does not provide information on why this happened despite your account settings or what can be done next. Please let us know if you need further assistance.",
       "citedSources": [],
       "topSimilarity": 0.6675047330500782,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "With no cited resolutions, the draft confines itself to the customer's instructions/experience and explicitly withholds a cause or next-step resolution."
     },
     {
       "queryId": "q-ho-shipping-address-not-found-but-correct",
@@ -1158,9 +1158,9 @@
         }
       ],
       "topSimilarity": 0.7433026455537005,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The broken-entryphone explanation is attributed to the customer's suspicion. The truncation case stays historical, redelivery guidance is generally supported, and no entryphone-specific resolution is asserted."
     },
     {
       "queryId": "q-ho-shipping-strike-delay",
@@ -1169,9 +1169,9 @@
       "draft": "Thank you for your message. You mentioned that your parcel has not moved for four days due to a carrier strike and that you paid extra for express service but have not received the quicker delivery you expected. Unfortunately, the evidence provided does not include information about refunds or compensation related to delays caused by carrier strikes. Therefore, I am unable to confirm whether the express charge can be refunded in this situation based on the information available.",
       "citedSources": [],
       "topSimilarity": 0.6062582817992588,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "There are no cited resolutions. The strike account is explicitly attributed to the customer and the draft withholds express-refund eligibility."
     },
     {
       "queryId": "q-ho-shipping-someone-elses-parcel",
@@ -1180,9 +1180,9 @@
       "draft": "Thank you for letting us know about the parcel that arrived with your address but someone else's name and order details. Since you do not want to open it further or dispose of it, please hold on to the parcel safely. We will investigate the issue and advise you on the next steps shortly.",
       "citedSources": [],
       "topSimilarity": 0.6150521504617207,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The draft does not invent the parcel mix-up's cause, ownership resolution, or collection/refund procedure. Holding the parcel and an offer to investigate/advise are assistance, not a promised substantive resolution."
     },
     {
       "queryId": "q-ho-returns-broken-on-opening",
@@ -1204,9 +1204,9 @@
         }
       ],
       "topSimilarity": 0.7425913925360352,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The customer's account of the damaged item is attributed. Refund/replacement choice, free return postage, and no inspection period are expressly general rules in the resolutions."
     },
     {
       "queryId": "q-ho-returns-engraved-item",
@@ -1222,9 +1222,9 @@
         }
       ],
       "topSimilarity": 0.7120337906349609,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Specification-made goods are generally exempt from change-of-mind returns, with faulty/incorrect-personalisation exceptions. Applying that rule to the customer's reported initials is supported."
     },
     {
       "queryId": "q-ho-returns-sale-item-rights",
@@ -1240,9 +1240,9 @@
         }
       ],
       "topSimilarity": 0.8557864071590866,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The general reduced-item policy is supported, but \"this one was not\" final sale copies the precedent's eligibility finding into this customer's purchase. The resulting unconditional eligibility conclusion is unsupported."
     },
     {
       "queryId": "q-ho-returns-swap-size-unavailable",
@@ -1258,9 +1258,9 @@
         }
       ],
       "topSimilarity": 0.843194833496126,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The unavailable-replacement refund policy is general. Being able to set an alert does not support a guarantee that it \"will notify you as soon as\" stock becomes available."
     },
     {
       "queryId": "q-ho-returns-exchange-price-gone-up",
@@ -1276,9 +1276,9 @@
         }
       ],
       "topSimilarity": 0.6162573169761384,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The resolution generally honours same-product variant exchanges at the original price, supporting no additional price difference for the reported colour exchange."
     },
     {
       "queryId": "q-ho-returns-cancel-just-ordered",
@@ -1294,9 +1294,9 @@
         }
       ],
       "topSimilarity": 0.7167401183557706,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The pre-picking cancellation/payment-release rule and post-picking receipt/return requirement are general. The draft does not assert that this particular order has or has not entered picking."
     },
     {
       "queryId": "q-ho-returns-already-dispatched",
@@ -1312,9 +1312,9 @@
         }
       ],
       "topSimilarity": 0.6922034781569123,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Non-cancellation after dispatch, free refusal, cheapest-route status, and refund after warehouse receipt are all stated generally in the resolution."
     },
     {
       "queryId": "q-ho-returns-too-heavy-to-post",
@@ -1330,9 +1330,9 @@
         }
       ],
       "topSimilarity": 0.7505777742312502,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Collection above the parcel-size limit, the return-screen booking/two-hour window, and free faulty-item collection are general rules. The draft asks the customer to check qualification instead of assuming that weight alone qualifies."
     },
     {
       "queryId": "q-ho-returns-where-to-drop-off",
@@ -1348,9 +1348,9 @@
         }
       ],
       "topSimilarity": 0.8370256264337108,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Carrier drop-off/depot acceptance, postcode lookup, and proof-of-dispatch receipt advice directly match generally phrased resolution guidance."
     },
     {
       "queryId": "q-ho-returns-who-pays-for-the-label",
@@ -1366,9 +1366,9 @@
         }
       ],
       "topSimilarity": 0.7346917351099829,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "Paid change-of-mind labels and free faulty/incorrect/damaged returns are general rules. \"Only free if\" makes those free-return conditions exhaustive, whereas the resolution says they qualify without excluding every other category."
     },
     {
       "queryId": "q-ho-returns-money-held-back",
@@ -1384,9 +1384,9 @@
         }
       ],
       "topSimilarity": 0.6749145318070506,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Special-order-only restocking deductions and exclusion of stocked lines are general rules. The current deduction is offered as a possible explanation, not identified definitively as restocking."
     },
     {
       "queryId": "q-ho-returns-faulty-postage-not-refunded",
@@ -1402,9 +1402,9 @@
         }
       ],
       "topSimilarity": 0.7043732245343106,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The resolution explicitly states the fault-related outbound-postage refund rule even though its own customer had a change-of-mind return. The draft applies the general rule to the customer's reported fault without inventing a completed refund."
     },
     {
       "queryId": "q-ho-returns-returned-the-free-one",
@@ -1420,9 +1420,9 @@
         }
       ],
       "topSimilarity": 0.7545278595539403,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The three-item condition, repricing, and deduction are past-case findings. The draft states them as the rule governing this customer's offer and refund; the general statement that a condition is shown at checkout does not establish this offer's specific repricing terms."
     },
     {
       "queryId": "q-ho-returns-bought-just-before-november",
@@ -1444,9 +1444,9 @@
         }
       ],
       "topSimilarity": 0.6947069828574045,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The November-to-Christmas-Eve extension and hygiene-seal rule are general and accurately conditional. The draft explicitly cannot confirm a longer period for this October purchase."
     },
     {
       "queryId": "q-ho-returns-sent-wrong-item-back",
@@ -1455,9 +1455,9 @@
       "draft": "Thank you for your message. You mentioned that you packed the wrong item in your return and that we have received something you never meant to send back. Unfortunately, the evidence provided does not include information about the process for handling returns when the wrong item is sent or whether the item can be located and returned to you. Please let us know if you have any additional details or questions.",
       "citedSources": [],
       "topSimilarity": 0.6535212553652142,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "There are no cited resolutions. The draft attributes receipt/wrong-item details to the customer and explicitly withholds a retrieval/return process or outcome."
     },
     {
       "queryId": "q-ho-product-how-much-weight",
@@ -1473,9 +1473,9 @@
         }
       ],
       "topSimilarity": 0.7273860382639719,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Distributed static loading, reduced capacity for concentrated/dynamic loads, assembly/fixings assumptions, and wall dependency all directly match general statements in the resolution."
     },
     {
       "queryId": "q-ho-product-how-loud",
@@ -1491,9 +1491,9 @@
         }
       ],
       "topSimilarity": 0.6905385323259903,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "The measurement distance/setting, louder boost mode, and ten-decibel perceived-loudness comparison are supported. The draft supplies no invented noise rating or unsupported assurance of bedroom suitability."
     },
     {
       "queryId": "q-ho-product-running-cost",
@@ -1509,9 +1509,9 @@
         }
       ],
       "topSimilarity": 0.6754245369173485,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "Specification/standby-draw and efficiency-label guidance is general and supported. No annual monetary cost or missing wattage/tariff is invented."
     },
     {
       "queryId": "q-ho-product-size-when-built",
@@ -1533,9 +1533,9 @@
         }
       ],
       "topSimilarity": 0.771530737812152,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "Both resolutions support the dimension/packaging/assembly-clearance guidance and where to find it. The draft avoids inventing the actual assembled measurements or clearance figures that are absent from the evidence."
     },
     {
       "queryId": "q-ho-product-what-comes-with-it",
@@ -1551,9 +1551,9 @@
         }
       ],
       "topSimilarity": 0.6813344802017371,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The unit, stand, single cable, excluded contextual props, and updated listing text all directly match the resolution."
     },
     {
       "queryId": "q-ho-product-storing-over-winter",
@@ -1569,9 +1569,9 @@
         }
       ],
       "topSimilarity": 0.6209736632306185,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Dry storage, avoiding sunlight, and roughly half-charged long-term battery storage are stated generally in the resolution; the draft adds no unsupported garage-temperature guarantee."
     },
     {
       "queryId": "q-ho-product-guarantee-length",
@@ -1587,9 +1587,9 @@
         }
       ],
       "topSimilarity": 0.8205294815553325,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "The two-/three-year periods, ninety-day registration condition, coverage/exclusions, and additional statutory rights are all general statements in the resolution."
     },
     {
       "queryId": "q-ho-product-replacement-part",
@@ -1605,9 +1605,9 @@
         }
       ],
       "topSimilarity": 0.6870511441842616,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Wear-part availability, seven-year retention, and the structural-component restriction are general. The recommendation remains conditional on the unidentified part being a wearing part."
     },
     {
       "queryId": "q-ho-product-conformity-paperwork",
@@ -1623,9 +1623,9 @@
         }
       ],
       "topSimilarity": 0.735122127016286,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Availability on request and coverage of the current production revision are expressly stated. The draft does not claim to have already sent documents."
     },
     {
       "queryId": "q-ho-product-where-is-it-made",
@@ -1641,9 +1641,9 @@
         }
       ],
       "topSimilarity": 0.747524754224391,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": true,
+      "note": "Rating-plate/specification location and declared-origin guidance match the resolution. The actual manufacturing country is absent from the evidence and is not invented."
     },
     {
       "queryId": "q-ho-product-what-is-in-it",
@@ -1665,9 +1665,9 @@
         }
       ],
       "topSimilarity": 0.6009436790652456,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "The specifications location is supported. Supplying one past ingredient declaration matching its pack does not establish that this customer can receive a matching declaration; the inability to email or call is also an unsupported service/capability rule."
     },
     {
       "queryId": "q-ho-product-between-sizes-runs-small",
@@ -1689,9 +1689,9 @@
         }
       ],
       "topSimilarity": 0.6181483445080506,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "Sizing-up advice, fit/layering distinctions, and free exchange are generally stated in the resolutions. Suggesting consideration of one size up is conditional advice, not an asserted exact fit."
     },
     {
       "queryId": "q-ho-product-spares-for-discontinued",
@@ -1707,9 +1707,9 @@
         }
       ],
       "topSimilarity": 0.6124249867184323,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": false,
+      "abstained": false,
+      "note": "Shared fitting/dimensions do not establish interchangeability of the requested spare. The pre-2019 cutoff, mounting-bracket example, and adapter-plate requirement are entirely absent from the cited resolution."
     },
     {
       "queryId": "q-ho-product-commercial-use-guarantee",
@@ -1731,9 +1731,9 @@
         }
       ],
       "topSimilarity": 0.6168088571057524,
-      "grounded": null,
-      "abstained": null,
-      "note": null
+      "grounded": true,
+      "abstained": false,
+      "note": "All stated standard-guarantee and claim-process details are supported by generally phrased resolutions. Separately, the draft does not acknowledge or withhold judgment on the unsupported commercial/workshop-use applicability; generic coverage is presented as the answer."
     }
   ]
 }
