@@ -1,0 +1,128 @@
+{
+  "pass": 2,
+  "sampleSeed": 20261102,
+  "orderSeed": 20261112,
+  "labelledAt": "2026-11-12T20:23:35.324Z",
+  "labels": [
+    {
+      "queryId": "q-ho-account-recovery-codes-gone",
+      "grounded": false,
+      "abstained": false,
+      "note": null
+    },
+    {
+      "queryId": "q-ho-account-typo-in-registered-email",
+      "grounded": true,
+      "abstained": true,
+      "note": "The completed actions are explicitly attributed to the precedent. The draft offers verification and assistance without promising that this customer’s email will be corrected."
+    },
+    {
+      "queryId": "q-ho-billing-instalment-plan-after-return",
+      "grounded": true,
+      "abstained": true,
+      "note": "The draft accurately summarises the subscription precedents and explicitly declines to apply them to instalment payments or confirm this customer’s refund status."
+    },
+    {
+      "queryId": "q-ho-billing-move-to-yearly",
+      "grounded": true,
+      "abstained": false,
+      "note": "The resolution explicitly supports the switching process, immediate effect, and crediting the unused monthly payment against the annual price."
+    },
+    {
+      "queryId": "q-ho-billing-one-invoice-please",
+      "grounded": true,
+      "abstained": false,
+      "note": "The resolution explicitly establishes that subscriptions on the same account can share a billing cycle and monthly invoice. The draft applies that policy without claiming alignment has already occurred."
+    },
+    {
+      "queryId": "q-ho-billing-transfer-not-matched",
+      "grounded": false,
+      "abstained": false,
+      "note": "Requesting remittance advice to investigate is acceptable, but promising correct allocation and avoidance of late fees extends one precedent’s outcome to this customer without support."
+    },
+    {
+      "queryId": "q-ho-fault-new-records-not-searchable",
+      "grounded": false,
+      "abstained": true,
+      "note": "The draft adds delayed search visibility of new additions to the precedents, which establish an empty partition and delayed removals. It nevertheless hedges the current cause and explicitly abstains from providing a fix."
+    },
+    {
+      "queryId": "q-ho-fault-pdf-missing-content",
+      "grounded": true,
+      "abstained": true,
+      "note": "The font-loading cause and renderer change are attributed to a similar case. The draft does not assert that this is the current cause or promise that updating will fix it."
+    },
+    {
+      "queryId": "q-ho-product-between-sizes-runs-small",
+      "grounded": true,
+      "abstained": false,
+      "note": "All sizing and exchange claims are supported by the resolutions; the draft provides a recommendation rather than abstaining"
+    },
+    {
+      "queryId": "q-ho-product-commercial-use-guarantee",
+      "grounded": false,
+      "abstained": false,
+      "note": "The precedents establish standard guarantee terms but not eligibility for intensive workplace use. The draft presents those terms as applicable without acknowledging that gap."
+    },
+    {
+      "queryId": "q-ho-product-how-loud",
+      "grounded": true,
+      "abstained": true,
+      "note": "All claims match the resolution. The draft avoids inventing a noise level or asserting that the device is suitable for a bedroom."
+    },
+    {
+      "queryId": "q-ho-product-what-is-in-it",
+      "grounded": false,
+      "abstained": false,
+      "note": "A declaration supplied in one past case does not establish that one can be supplied here or will match the packaging. The claimed inability to email or phone is also unsupported."
+    },
+    {
+      "queryId": "q-ho-returns-broken-on-opening",
+      "grounded": true,
+      "abstained": false,
+      "note": "The resolutions support refund or replacement at the customer’s choice, seller-paid return postage, and no inspection period. The draft attributes the packing circumstances to the customer and gives a supported answer."
+    },
+    {
+      "queryId": "q-ho-returns-engraved-item",
+      "grounded": true,
+      "abstained": false,
+      "note": "The resolution supports the personalised-item exclusion and its exceptions. Being unused or boxed does not override that rule, and the draft answers the return question directly."
+    },
+    {
+      "queryId": "q-ho-returns-exchange-price-gone-up",
+      "grounded": true,
+      "abstained": false,
+      "note": "The resolution explicitly states that direct exchanges for another variant retain the original price, supporting the answer that no difference is payable."
+    },
+    {
+      "queryId": "q-ho-returns-money-held-back",
+      "grounded": true,
+      "abstained": true,
+      "note": "The draft accurately describes the precedent and presents restocking as a possible explanation, without confirming it caused this customer’s refund shortfall."
+    },
+    {
+      "queryId": "q-ho-returns-too-heavy-to-post",
+      "grounded": true,
+      "abstained": true,
+      "note": "The collection process, two-hour window, and fault-related fee exemption are supported. The draft leaves this return’s eligibility unconfirmed and suggests checking it."
+    },
+    {
+      "queryId": "q-ho-returns-who-pays-for-the-label",
+      "grounded": false,
+      "abstained": false,
+      "note": "The deduction and advance disclosure are supported. However, “only free if” adds an exclusive restriction: the resolution identifies qualifying cases without stating these are the only ones."
+    },
+    {
+      "queryId": "q-ho-shipping-box-address-refused",
+      "grounded": true,
+      "abstained": true,
+      "note": "The draft accurately describes the precedent and offers to check availability, without asserting the same cause or promising an alternative service for this order."
+    },
+    {
+      "queryId": "q-ho-shipping-will-they-leave-it",
+      "grounded": false,
+      "abstained": false,
+      "note": "The delivery rules are supported, but the resolution only says the despatch confirmation states the signature requirement—not whether safe-place delivery is enabled on the account."
+    }
+  ]
+}
