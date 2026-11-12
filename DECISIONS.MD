@@ -1379,6 +1379,34 @@ What is reachable now, and scoped as its own change rather than folded into a do
 
 **Until then the separation is enforced by configuration discipline rather than by the guard**, and this entry says so rather than letting [[ADR-018]]'s "throws rather than honouring" stand as though it were complete. Point 2 above is what currently carries the guarantee for `gpt-5-mini`, and a rule in a document is not a mechanism.
 
+### Result — 2026-11-13: the rule selected `gpt-5` at Low reasoning effort
+
+**Recorded here the day the verdicts were committed**, because the failure this entry exists to
+document was a decision log that lagged its own artifacts for eight days and therefore read as
+current. The full working is in `eval/judge/holdout/RESULT.md`; this is the entry pointing at it.
+
+| configuration | missed-ungrounded | false-flag | eligible |
+|---|---|---|---|
+| `gpt-5` / Default | 4/25 = 16.0% | 22/68 = 32.4% | no |
+| `gpt-5` / Low | 4/25 = 16.0% | 17/68 = 25.0% | **yes — selected** |
+| `gpt-5-mini` / Default | 11/25 = 44.0% | 17/68 = 25.0% | yes |
+
+The ceiling removed `gpt-5` at default effort; lowest missed-ungrounded decided between the
+other two, confirmed by McNemar restricted to the 25 ungrounded-labelled pairs (8 against 1,
+p = 0.0391). Cost was never reached as a tiebreak and would have reversed the outcome —
+`gpt-5-mini` ran at roughly a quarter of the price.
+
+**Three things this result does not license.** It does not make the rule safe: both eligible
+configurations sat on exactly 17/68, one pair from ineligibility, and a successor comparison
+before 2027-02-09 should expect "nothing is eligible" as the likely case. It does not publish a
+groundedness score — selecting a judge and publishing a figure are separate steps. And it does
+not settle abstention, which [[ADR-038]] governs.
+
+**What it does settle:** role eligibility under the amendment's point 2. `gpt-5-mini` was not
+selected as judge, so it remains available as the `gpt-4.1-mini` drafting replacement. The
+constraint did not bind — the rule removed it on its own terms — but it was written before
+either answer existed, which is the only reason that sentence is worth anything.
+
 ---
 
 ## ADR-038 — Abstention is reported as six cases, not as a rate
