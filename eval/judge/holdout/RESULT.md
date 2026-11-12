@@ -140,7 +140,8 @@ mechanism, and it is not used in the selection.
 
 **The groundedness score itself.** Selecting a judge and publishing a figure are separate
 steps. [[ADR-018]] makes the judge-agreement figure a precondition for publishing one, and the
-figure is now available; producing and publishing the score is the next piece of work.
+figure above is it — the score computed from these verdicts is in `GROUNDEDNESS.md`, alongside
+the population it is over and the exclusions applied to it.
 
 **The abstention breakdown.** [[ADR-038]] fixes how it is reported — six engineered hard
 negatives described individually, no rate — and that write-up is owed separately.
