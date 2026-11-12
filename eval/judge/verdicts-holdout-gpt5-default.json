@@ -1,0 +1,1190 @@
+{
+  "model": "gpt-5",
+  "rubricVersion": "judge-v2",
+  "rubricSha256": "9a0b0300a5ba2980abc9efd87ac35f965822f29be3776feeead3885629c9bfc8",
+  "generationPromptSha256": "83fccb7fe317afbab2a51280b4c70dcc8ec712cba39dfdede4a41e04f989669c",
+  "effort": "Default",
+  "runAt": "2026-11-12T21:36:29.1554266+00:00",
+  "verdicts": [
+    {
+      "queryId": "q-ho-billing-trial-became-paid",
+      "grounded": false,
+      "unsupportedClaim": "If the charge was within the fourteen-day refund window, it was refunded in full and the account returned to the free tier.",
+      "inputTokens": 1248,
+      "outputTokens": 2032,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-gift-card-not-used",
+      "grounded": false,
+      "unsupportedClaim": "if not selected, the balance remains untouched and is still available",
+      "inputTokens": 1248,
+      "outputTokens": 2083,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-tax-still-charged",
+      "grounded": false,
+      "unsupportedClaim": "tax charged on invoices since the certificate\u0027s effective date is credited back | crediting the amounts charged since then",
+      "inputTokens": 1250,
+      "outputTokens": 3117,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-po-reference-missing",
+      "grounded": false,
+      "unsupportedClaim": "We can reissue the invoice | the original invoice will be voided | we will update the invoice accordingly",
+      "inputTokens": 1211,
+      "outputTokens": 2350,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-account-read-only",
+      "grounded": false,
+      "unsupportedClaim": "to restore full access",
+      "inputTokens": 1230,
+      "outputTokens": 2203,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-transfer-not-matched",
+      "grounded": false,
+      "unsupportedClaim": "ensure your payment is correctly allocated to your invoice | to avoid any late fees",
+      "inputTokens": 1208,
+      "outputTokens": 2727,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-move-to-yearly",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1142,
+      "outputTokens": 1046,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-extra-line-on-invoice",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1244,
+      "outputTokens": 854,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-refund-to-dead-card",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1266,
+      "outputTokens": 3606,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-one-invoice-please",
+      "grounded": false,
+      "unsupportedClaim": "we can align your four subscriptions | so you receive one combined invoice each month",
+      "inputTokens": 1220,
+      "outputTokens": 3623,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-credit-note-for-seats",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1231,
+      "outputTokens": 2070,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-old-office-on-invoice",
+      "grounded": false,
+      "unsupportedClaim": "reissue recent invoices with the correct registered address | We can update the billing address on your account to reflect your new premises | which is why deliveries are going to the correct place but the invoices still show your old office address",
+      "inputTokens": 1189,
+      "outputTokens": 2501,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-swap-card-on-file",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1175,
+      "outputTokens": 790,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-new-card-still-refused",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1228,
+      "outputTokens": 2326,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-reminder-came-after-charge",
+      "grounded": false,
+      "unsupportedClaim": "The draft cited no sources.",
+      "inputTokens": null,
+      "outputTokens": null,
+      "additionalCounts": null
+    },
+    {
+      "queryId": "q-ho-billing-code-entered-before-paying",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1292,
+      "outputTokens": 726,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-billing-instalment-plan-after-return",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1428,
+      "outputTokens": 1366,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-recovery-codes-gone",
+      "grounded": false,
+      "unsupportedClaim": "we can help you get a fresh set of recovery codes. | after verifying your identity through your account\u0027s secondary channel | the second factor can be reset | a new set of recovery codes issued",
+      "inputTokens": 1221,
+      "outputTokens": 2303,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-new-password-refused",
+      "grounded": false,
+      "unsupportedClaim": "the error message was updated to be more specific",
+      "inputTokens": 1201,
+      "outputTokens": 2336,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-which-email-did-i-use",
+      "grounded": false,
+      "unsupportedClaim": "without accidentally creating a second account",
+      "inputTokens": 1129,
+      "outputTokens": 3101,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-typo-in-registered-email",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1234,
+      "outputTokens": 1494,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-no-company-sign-in-option",
+      "grounded": false,
+      "unsupportedClaim": "only the email and password form will be shown | as these are required for the company sign-in option to be available to all members on your domain",
+      "inputTokens": 1197,
+      "outputTokens": 2485,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-some-staff-not-recognised",
+      "grounded": false,
+      "unsupportedClaim": "could be related to their account permissions",
+      "inputTokens": 1203,
+      "outputTokens": 2014,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-new-starter-no-access",
+      "grounded": false,
+      "unsupportedClaim": "try triggering a manual sync",
+      "inputTokens": 1180,
+      "outputTokens": 2716,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-form-just-reloads",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1213,
+      "outputTokens": 1622,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-app-signs-me-out",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1278,
+      "outputTokens": 726,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-signed-out-by-new-device",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1206,
+      "outputTokens": 1110,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-saved-password-wrong",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1183,
+      "outputTokens": 2198,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-close-it-permanently",
+      "grounded": false,
+      "unsupportedClaim": "I cannot provide an exact timescale beyond the fourteen-day period | including your order history, is erased",
+      "inputTokens": 1177,
+      "outputTokens": 1580,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-codes-refused-clock-checked",
+      "grounded": false,
+      "unsupportedClaim": "no further resolution to suggest",
+      "inputTokens": 1303,
+      "outputTokens": 1628,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-locked-after-vpn",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1621,
+      "outputTokens": 2838,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-account-cannot-pass-verification",
+      "grounded": false,
+      "unsupportedClaim": "typically relies on information such as recent order numbers, billing postcodes, or recovery details | it may be difficult to verify your identity through the standard process | We do not have evidence here of an alternative verification method for accounts set up by employers without orders",
+      "inputTokens": 1480,
+      "outputTokens": 2891,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-export-strange-characters",
+      "grounded": false,
+      "unsupportedClaim": "is due to the file being written as UTF-8 without a byte order mark",
+      "inputTokens": 1272,
+      "outputTokens": 2279,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-pdf-missing-content",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1194,
+      "outputTokens": 2711,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-video-keeps-buffering",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1154,
+      "outputTokens": 982,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-wrong-typeface",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1184,
+      "outputTokens": 726,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-times-are-wrong",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1174,
+      "outputTokens": 790,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-total-off-by-a-penny",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1193,
+      "outputTokens": 1494,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-two-entries-each-time",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1209,
+      "outputTokens": 662,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-requests-start-failing",
+      "grounded": false,
+      "unsupportedClaim": "where requests started failing after a few minutes",
+      "inputTokens": 1215,
+      "outputTokens": 4639,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-same-event-several-times",
+      "grounded": false,
+      "unsupportedClaim": "which resolves the duplicated processing | prevent duplicate records",
+      "inputTokens": 1192,
+      "outputTokens": 1569,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-unusable-on-phone",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1196,
+      "outputTokens": 790,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-same-alert-several-copies",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1170,
+      "outputTokens": 2454,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-alerts-make-no-sound",
+      "grounded": false,
+      "unsupportedClaim": "should restore the sound for notifications.",
+      "inputTokens": 1129,
+      "outputTokens": 2718,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-new-records-not-searchable",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1415,
+      "outputTokens": 3286,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-export-disagrees-with-screen",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1615,
+      "outputTokens": 2262,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-export-missing-a-column",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1231,
+      "outputTokens": 1174,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-fault-restore-deleted-records",
+      "grounded": false,
+      "unsupportedClaim": "The draft cited no sources.",
+      "inputTokens": null,
+      "outputTokens": null,
+      "additionalCounts": null
+    },
+    {
+      "queryId": "q-ho-shipping-nothing-has-shipped",
+      "grounded": false,
+      "unsupportedClaim": "since your order confirmation nine days ago",
+      "inputTokens": 1255,
+      "outputTokens": 1886,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-free-delivery-not-applied",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1603,
+      "outputTokens": 1558,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-courier-wants-money",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1251,
+      "outputTokens": 1302,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-extra-charge-for-postcode",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1203,
+      "outputTokens": 1110,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-missed-the-driver",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1144,
+      "outputTokens": 534,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-tracking-ref-not-found",
+      "grounded": false,
+      "unsupportedClaim": "Usually, the tracking updates and becomes visible the next morning.",
+      "inputTokens": 1192,
+      "outputTokens": 1827,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-will-they-leave-it",
+      "grounded": false,
+      "unsupportedClaim": "or if safe-place delivery is enabled for your account.",
+      "inputTokens": 1202,
+      "outputTokens": 3170,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-afternoon-delivery",
+      "grounded": false,
+      "unsupportedClaim": "You can choose an afternoon delivery slot",
+      "inputTokens": 1085,
+      "outputTokens": 1374,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-make-it-come-faster",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1185,
+      "outputTokens": 1174,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-address-fields-wrong",
+      "grounded": false,
+      "unsupportedClaim": "ensure it is correct",
+      "inputTokens": 1232,
+      "outputTokens": 2587,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-box-address-refused",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1179,
+      "outputTokens": 982,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-three-boxes-three-days",
+      "grounded": false,
+      "unsupportedClaim": "it is likely that you have not been charged three times for delivery",
+      "inputTokens": 1225,
+      "outputTokens": 1508,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-neighbour-despite-instruction",
+      "grounded": false,
+      "unsupportedClaim": "The draft cited no sources.",
+      "inputTokens": null,
+      "outputTokens": null,
+      "additionalCounts": null
+    },
+    {
+      "queryId": "q-ho-shipping-address-not-found-but-correct",
+      "grounded": false,
+      "unsupportedClaim": "contact the carrier directly to arrange redelivery | provide additional delivery instructions | redelivery can often be arranged using the carrier\u0027s tracking link",
+      "inputTokens": 1506,
+      "outputTokens": 3443,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-shipping-strike-delay",
+      "grounded": false,
+      "unsupportedClaim": "The draft cited no sources.",
+      "inputTokens": null,
+      "outputTokens": null,
+      "additionalCounts": null
+    },
+    {
+      "queryId": "q-ho-shipping-someone-elses-parcel",
+      "grounded": false,
+      "unsupportedClaim": "The draft cited no sources.",
+      "inputTokens": null,
+      "outputTokens": null,
+      "additionalCounts": null
+    },
+    {
+      "queryId": "q-ho-returns-broken-on-opening",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1440,
+      "outputTokens": 2198,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-engraved-item",
+      "grounded": false,
+      "unsupportedClaim": "it is unlikely that you can return the item | applies even if the item is unused and still in its original packaging",
+      "inputTokens": 1201,
+      "outputTokens": 2224,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-sale-item-rights",
+      "grounded": false,
+      "unsupportedClaim": "this one was not | the normal return rules still apply",
+      "inputTokens": 1175,
+      "outputTokens": 1315,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-swap-size-unavailable",
+      "grounded": false,
+      "unsupportedClaim": "will notify you as soon as it becomes available again",
+      "inputTokens": 1179,
+      "outputTokens": 2977,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-exchange-price-gone-up",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1102,
+      "outputTokens": 2326,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-cancel-just-ordered",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1195,
+      "outputTokens": 726,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-already-dispatched",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1197,
+      "outputTokens": 1302,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-too-heavy-to-post",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1183,
+      "outputTokens": 2838,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-where-to-drop-off",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1138,
+      "outputTokens": 790,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-who-pays-for-the-label",
+      "grounded": false,
+      "unsupportedClaim": "Return postage is only free if the item is faulty, incorrect, or damaged.",
+      "inputTokens": 1198,
+      "outputTokens": 1191,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-money-held-back",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1218,
+      "outputTokens": 2070,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-faulty-postage-not-refunded",
+      "grounded": false,
+      "unsupportedClaim": "postage should be refunded | aligns with a fault-related return",
+      "inputTokens": 1215,
+      "outputTokens": 3237,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-returned-the-free-one",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1252,
+      "outputTokens": 1558,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-bought-just-before-november",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1440,
+      "outputTokens": 2774,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-returns-sent-wrong-item-back",
+      "grounded": false,
+      "unsupportedClaim": "The draft cited no sources.",
+      "inputTokens": null,
+      "outputTokens": null,
+      "additionalCounts": null
+    },
+    {
+      "queryId": "q-ho-product-how-much-weight",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1155,
+      "outputTokens": 598,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-how-loud",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1170,
+      "outputTokens": 726,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-running-cost",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1189,
+      "outputTokens": 726,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-size-when-built",
+      "grounded": false,
+      "unsupportedClaim": "the flat measurements for every size are supplied",
+      "inputTokens": 1391,
+      "outputTokens": 5279,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-what-comes-with-it",
+      "grounded": false,
+      "unsupportedClaim": "includes the main unit, the stand, and one cable | Items shown in the photograph for context ... are not included | This is now stated beneath the images as well as in the description",
+      "inputTokens": 1131,
+      "outputTokens": 894,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-storing-over-winter",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1172,
+      "outputTokens": 406,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-guarantee-length",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1172,
+      "outputTokens": 470,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-replacement-part",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1229,
+      "outputTokens": 1046,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-conformity-paperwork",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1126,
+      "outputTokens": 1110,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-where-is-it-made",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1146,
+      "outputTokens": 406,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-what-is-in-it",
+      "grounded": false,
+      "unsupportedClaim": "we cannot send this information directly to your email or call you by phone. | will match the packaging | can be supplied | typically listed under specifications",
+      "inputTokens": 1442,
+      "outputTokens": 2102,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-between-sizes-runs-small",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1407,
+      "outputTokens": 1686,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-spares-for-discontinued",
+      "grounded": false,
+      "unsupportedClaim": "parts from the new model should fit your old model. | if your model is from before 2019, some components like mounting brackets may require an adapter plate.",
+      "inputTokens": 1179,
+      "outputTokens": 2616,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    },
+    {
+      "queryId": "q-ho-product-commercial-use-guarantee",
+      "grounded": true,
+      "unsupportedClaim": null,
+      "inputTokens": 1416,
+      "outputTokens": 790,
+      "additionalCounts": {
+        "InputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AudioTokenCount": 0,
+        "OutputTokenDetails.AcceptedPredictionTokenCount": 0,
+        "OutputTokenDetails.RejectedPredictionTokenCount": 0
+      }
+    }
+  ],
+  "reasoningTokens": null
+}
