@@ -1381,6 +1381,37 @@ What is reachable now, and scoped as its own change rather than folded into a do
 
 ---
 
+## ADR-038 — Abstention is reported as six cases, not as a rate
+
+**Status:** **Accepted** — 2026-11-12, raised and accepted the same day. Follows from the intra-rater result in `eval/judge/INTRA-RATER-RESULT.md`; changes nothing in `DECISION-RULE-V2.md`, whose criteria are frozen.
+
+**The problem.** `DECISION-RULE-V2.md`'s addendum asks for an appropriate-abstention breakdown over the six engineered hard negatives that cleared Gate B. The intra-rater re-label measured the labeller's self-agreement on `abstained` at **75.0%** (15/20, κ 0.419, AC1 0.584) against **95.0%** on `grounded`. A rate computed over six cases, read through a label that reliable, moves 16.7 points per flipped judgement and cannot be reported as a measurement.
+
+**Decision.** Publish **no abstention rate**. Report the six hard negatives **individually and descriptively** — what each draft was offered and what it did — and let a reader judge. Keep the labels in the file as internal signal.
+
+**Alternatives.**
+
+*Publish the rate with the 75% ceiling stated beside it.* Rejected: a percentage over six items is read as a measurement whatever caveat sits next to it, and this project's own rule is that a figure which cannot go down measures nothing. "67% appropriate abstention (n=6, label self-consistency 75%)" invites exactly the quotation the caveat was meant to prevent.
+
+*Tighten the abstention definition and re-label.* Not rejected — **deferred, at a known cost**, and the diagnosis below is what makes it a real option rather than a gesture. It needs a written rubric, a fresh pre-registration, and another labelling pass, none of which is on the path to the Tier 1 groundedness figure that `gpt-5`'s retirement is putting a clock on.
+
+*Drop abstention entirely and delete the labels.* Rejected: they were collected under a committed procedure, and removing a recorded answer because it proved inconvenient is the move this file exists to prevent.
+
+**Why this is not a dodge.** Six cases is a worked example, not a sample, and the honest form of a worked example is the cases themselves. The interesting claim was never "the abstention rate is X" — it is "six drafts were engineered to tempt the model with evidence that looked sufficient and was not, and here is what each one did." That claim survives a 75%-reliable label, because a reader checking six drafts against six resolutions is not relying on the label at all.
+
+**The diagnosis, which is the part worth keeping.** The two labels differ in reliability because they differ in specification, not because one question is harder:
+
+| | specification | self-agreement |
+|---|---|---|
+| `grounded` | 2,058 characters across **EVIDENCE**, **MATERIALITY** and **PRECEDENTS**, plus an explicit "Mark UNGROUNDED when…" list | 95.0% |
+| `abstained` | **one sentence** — "did the draft avoid presenting an answer the evidence does not provide?" | 75.0% |
+
+The rest of the abstention paragraph governs *when* to answer it, not *what counts*. There is no materiality rule, no evidence rule, no boundary case. [[ADR-033]] established that a judge and a writer held to one shared specification stop disagreeing about things that were never specified; the same mechanism applies to a labeller disagreeing with themselves. **75% is what an unspecified label scores, and it should not be read as the ceiling on a specified one.**
+
+**What would reverse it.** A written abstention rubric of comparable weight to the groundedness one, pre-registered, with a re-label showing self-agreement near the groundedness figure. At that point a rate becomes defensible — though the denominator is still six, and that constraint is about the dataset rather than the label. Enlarging it means engineering more hard negatives that clear Gate B, which is its own piece of work.
+
+---
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.
