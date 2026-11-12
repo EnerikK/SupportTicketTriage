@@ -149,6 +149,64 @@ public class GroundednessMetricsTests
             agreement.AgreementUpper - agreement.AgreementLower > 0.3,
             "five pairs should not produce a tight interval");
     }
+
+    /// The two rates DECISION-RULE-V2.md selects on, and the mistake that
+    /// would make both of them wrong in the same direction: dividing by the
+    /// number of pairs compared instead of by the pairs each rate is about.
+    ///
+    /// They have different denominators by construction. missed-ungrounded is
+    /// over what the labels call ungrounded; false-flag is over what the
+    /// labels call grounded. Over 93 pairs the wrong denominator produces a
+    /// smaller, friendlier-looking number for both.
+    [Fact]
+    public void TheTwoErrorRates_UseTheirOwnDenominators()
+    {
+        // Labels: a, b, c grounded; d, e ungrounded.
+        // Judge:  b flagged (one false flag of three), d passed (one miss of two).
+        var agreement = GroundednessMetrics.Compare(
+            [Judged("a", true), Judged("b", false), Judged("c", true),
+             Judged("d", true), Judged("e", false)],
+            new Dictionary<string, bool>
+            {
+                ["a"] = true, ["b"] = true, ["c"] = true, ["d"] = false, ["e"] = false,
+            });
+
+        Assert.Equal(5, agreement.Compared);
+
+        Assert.Equal(1, agreement.MissedUngrounded.Count);
+        Assert.Equal(2, agreement.MissedUngrounded.Denominator);
+        Assert.Equal(0.5, agreement.MissedUngrounded.Value, 10);
+
+        Assert.Equal(1, agreement.FalseFlag.Count);
+        Assert.Equal(3, agreement.FalseFlag.Denominator);
+        Assert.Equal(1.0 / 3, agreement.FalseFlag.Value, 10);
+    }
+
+    /// "At most 25%" includes 25%.
+    ///
+    /// Not hypothetical: the judge-v2 held-out run put two configurations on
+    /// exactly 17/68, and whether they were eligible decided the comparison.
+    [Fact]
+    public void AnErrorRateExactlyOnTheCeiling_IsEligible()
+    {
+        Assert.True(GroundednessMetrics.RateOf(17, 68).AtOrUnder(25));
+        Assert.False(GroundednessMetrics.RateOf(18, 68).AtOrUnder(25));
+    }
+
+    /// The ceiling test is integer arithmetic, not a comparison of two
+    /// doubles. 1/3 is not representable in binary, and a rate that is just
+    /// over a ceiling must not pass because the quotient rounded down.
+    [Theory]
+    [InlineData(1, 3, 33, false)]     // 33.33% - over 33%
+    [InlineData(2, 3, 67, true)]      // 66.67% - under 67%
+    [InlineData(33, 100, 33, true)]   // exactly on it
+    [InlineData(1, 7, 14, false)]     // 14.28% - over 14%
+    [InlineData(0, 0, 25, true)]      // nothing measured: 0 <= 0, and no divide
+    public void TheCeilingTest_DoesNotGoThroughAFloatingPointQuotient(
+        int count, int denominator, int ceiling, bool eligible)
+    {
+        Assert.Equal(eligible, GroundednessMetrics.RateOf(count, denominator).AtOrUnder(ceiling));
+    }
 }
 
 public class McNemarTests
@@ -322,5 +380,89 @@ public class JudgeComparisonReportTests
         Assert.Equal(1, report.LabelCount);
         Assert.Equal("1", Assert.Single(report.JudgedButUnlabelled));
         Assert.Contains("`1`", report.ToMarkdown());
+    }
+
+    /// The ceiling ADR-037 froze. A test that fails when somebody edits the
+    /// constant is the point: "the 25% false-flag ceiling, the ordering, and
+    /// the no-eligible-configuration outcome are not revisable by this
+    /// addendum or by any later one." Moving it should cost a red test and a
+    /// reading of why it was 25.
+    [Fact]
+    public void TheFalseFlagCeiling_IsTheOneTheDecisionRuleFroze()
+    {
+        Assert.Equal(25, JudgeComparisonReport.FalseFlagCeilingPercent);
+    }
+
+    /// The restricted McNemar is a different test, not a relabelled one.
+    ///
+    /// DECISION-RULE-V2.md asks for it over the ungrounded-labelled pairs
+    /// because that is where the primary criterion lives. Here the two
+    /// configurations are built to disagree on every pair, so the all-pairs
+    /// test sees four discordant items and the restricted one sees two - if
+    /// the restriction were dropped the two tables would be identical and
+    /// nothing in the document would say so.
+    [Fact]
+    public void TheUngroundedOnlyMcNemar_IgnoresGroundedLabelledPairs()
+    {
+        var report = JudgeComparisonReport.Build(
+            Provenance(),
+            new Dictionary<string, bool> { ["0"] = false, ["1"] = false, ["2"] = true, ["3"] = true },
+            [
+                Verdicts("expensive", JudgeReasoningEffort.Default, false, true, true, false),
+                Verdicts("cheap", JudgeReasoningEffort.Low, true, false, false, true),
+            ],
+            Pricing());
+
+        var all = Assert.Single(report.AgainstBaseline).Result;
+        var ungrounded = Assert.Single(report.AgainstBaselineUngroundedOnly).Result;
+
+        Assert.Equal(4, all.Discordant);
+        Assert.Equal(2, all.OnlyFirstCorrect);
+        Assert.Equal(2, all.OnlySecondCorrect);
+
+        Assert.Equal(2, ungrounded.Discordant);
+        Assert.Equal(1, ungrounded.OnlyFirstCorrect);
+        Assert.Equal(1, ungrounded.OnlySecondCorrect);
+    }
+
+    /// Eligibility is in the table, named, with the reason.
+    ///
+    /// A reader applying the rule needs to see which configurations the first
+    /// step removed, not recompute it from two percentages and a sentence
+    /// somewhere else in the document.
+    [Fact]
+    public void TheTable_SaysWhichConfigurationsTheCeilingExcludes()
+    {
+        var report = JudgeComparisonReport.Build(
+            Provenance(),
+            new Dictionary<string, bool>
+            {
+                ["0"] = true, ["1"] = true, ["2"] = true, ["3"] = true, ["4"] = false,
+            },
+            [
+                // Flags two of four grounded drafts: 50%, over the ceiling.
+                Verdicts("expensive", JudgeReasoningEffort.Default, false, false, true, true, false),
+                // Flags none: 0%, eligible - and it misses the one ungrounded
+                // draft, which is exactly what the ceiling alone cannot catch.
+                Verdicts("cheap", JudgeReasoningEffort.Low, true, true, true, true, true),
+            ],
+            Pricing());
+
+        var over = report.Configurations[0].Agreement.FalseFlag;
+        var under = report.Configurations[1].Agreement.FalseFlag;
+
+        Assert.Equal(4, over.Denominator);
+        Assert.False(over.AtOrUnder(JudgeComparisonReport.FalseFlagCeilingPercent));
+        Assert.True(under.AtOrUnder(JudgeComparisonReport.FalseFlagCeilingPercent));
+
+        var markdown = report.ToMarkdown();
+
+        Assert.Contains("| 2/4 = 50.0% [", markdown);
+        Assert.Contains("false-flag over the 25% ceiling", markdown);
+
+        // And the rule's own words, so the table carries the criterion it is
+        // read against rather than assuming the reader has the file open.
+        Assert.Contains("lowest missed-ungrounded", markdown);
+        Assert.Contains("no groundedness score is published", markdown);
     }
 }

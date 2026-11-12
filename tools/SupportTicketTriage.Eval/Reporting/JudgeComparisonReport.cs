@@ -36,8 +36,21 @@ public sealed record JudgeComparisonReport(
     string RubricVersion,
     IReadOnlyList<JudgeConfigurationResult> Configurations,
     IReadOnlyList<(string Config, McNemarResult Result)> AgainstBaseline,
+    IReadOnlyList<(string Config, McNemarResult Result)> AgainstBaselineUngroundedOnly,
     string Currency)
 {
+    /// The false-flag ceiling, in whole percent, from
+    /// eval/judge/DECISION-RULE-V2.md.
+    ///
+    /// A constant rather than an option because ADR-037 freezes it: "the 25%
+    /// false-flag ceiling, the ordering, and the no-eligible-configuration
+    /// outcome are not revisable by this addendum or by any later one."
+    /// A threshold a caller could pass on the command line is a threshold
+    /// that can be moved after seeing the numbers, which is the one thing the
+    /// pre-registration exists to prevent. Changing it means editing this
+    /// line in a commit that a reviewer can date against the verdicts.
+    public const int FalseFlagCeilingPercent = 25;
+
     public string ToMarkdown()
     {
         var md = new StringBuilder();
@@ -59,6 +72,76 @@ public sealed record JudgeComparisonReport(
                 + "pair is dropped rather than guessed; counting it either way would put invented "
                 + "data into the figure this table exists to produce.");
         }
+
+        md.AppendLine();
+        md.AppendLine("## The selection criteria");
+        md.AppendLine();
+        md.AppendLine(
+            "`eval/judge/DECISION-RULE-V2.md`, committed before any `" + RubricVersion
+            + "` configuration judged a pair. A configuration is eligible only if its false-flag "
+            + "rate is at most " + FalseFlagCeilingPercent.ToString(CultureInfo.InvariantCulture)
+            + "%; among eligible configurations the order is lowest missed-ungrounded, then lowest "
+            + "false-flag, then cheapest. If none is eligible, none is adopted and no groundedness "
+            + "score is published.");
+        md.AppendLine();
+        md.AppendLine("| configuration | missed-ungrounded | false-flag | eligible |");
+        md.AppendLine("|---|---|---|---|");
+
+        foreach (var c in Configurations)
+        {
+            var eligible = c.Agreement.FalseFlag.AtOrUnder(FalseFlagCeilingPercent);
+
+            md.AppendLine(
+                $"| `{c.Model}` / {c.Effort} | {Rate(c.Agreement.MissedUngrounded)} | "
+                + $"{Rate(c.Agreement.FalseFlag)} | "
+                + (eligible
+                    ? "yes |"
+                    : $"**no** - false-flag over the {FalseFlagCeilingPercent.ToString(CultureInfo.InvariantCulture)}% ceiling |"));
+        }
+
+        md.AppendLine();
+        md.AppendLine(
+            "**missed-ungrounded** is over the pairs the labels call ungrounded; **false-flag** is "
+            + "over the pairs the labels call grounded. Two different denominators, because the two "
+            + "rates answer questions about two different sets of drafts - averaging them is what "
+            + "the v1 rule did, and it named as winner the configuration most likely to certify the "
+            + "failure the measurement exists to catch.");
+        md.AppendLine();
+        md.AppendLine(
+            "Intervals are Wilson at 95%. The ceiling is applied to the **point estimate**, as the "
+            + "rule says in terms: at these denominators the intervals are wide enough that testing "
+            + "the bound instead would let almost anything through.");
+        md.AppendLine();
+        md.AppendLine(
+            "This table reports the rates and eligibility. **It does not name a winner.** The third "
+            + "tiebreak is cost, which is null for any model absent from the pricing file, and a "
+            + "selection that silently depended on how complete that file happened to be would be "
+            + "worse than three ordered comparisons a reader can make from the rows above.");
+
+        md.AppendLine();
+        md.AppendLine("### McNemar, restricted to the ungrounded-labelled pairs");
+        md.AppendLine();
+        md.AppendLine("| configuration | baseline only correct | this only correct | p | |");
+        md.AppendLine("|---|---|---|---|---|");
+
+        foreach (var (config, result) in AgainstBaselineUngroundedOnly)
+        {
+            md.AppendLine(McNemarRow(config, result));
+        }
+
+        md.AppendLine();
+        md.AppendLine(
+            "The comparison the primary criterion rests on, and the only one the rule asks for: "
+            + "restricted to pairs the labels call ungrounded, so it speaks to missed-ungrounded "
+            + "alone. The all-pairs version below mixes both error directions.");
+
+        md.AppendLine();
+        md.AppendLine("## Reported, not decisive");
+        md.AppendLine();
+        md.AppendLine(
+            "Overall agreement, its interval and Cohen's kappa describe each configuration. They "
+            + "are not used to select, because averaging the two error directions is what produced "
+            + "the v1 result.");
 
         md.AppendLine();
         md.AppendLine("| configuration | agreement | 95% CI | kappa | grounded/ungrounded | output tokens | cost |");
@@ -98,18 +181,14 @@ public sealed record JudgeComparisonReport(
 
         md.AppendLine();
         md.AppendLine(
-            $"## Against the baseline (`{Configurations[0].Model}` / {Configurations[0].Effort})");
+            $"### Against the baseline (`{Configurations[0].Model}` / {Configurations[0].Effort}), all labelled pairs");
         md.AppendLine();
         md.AppendLine("| configuration | baseline only correct | this only correct | p | |");
         md.AppendLine("|---|---|---|---|---|");
 
         foreach (var (config, result) in AgainstBaseline)
         {
-            var p = result.PValue.ToString("F4", CultureInfo.InvariantCulture);
-
-            md.AppendLine(
-                $"| {config} | {result.OnlyFirstCorrect} | {result.OnlySecondCorrect} | "
-                + $"{p} | {(result.Significant ? "**significant**" : "not significant")} |");
+            md.AppendLine(McNemarRow(config, result));
         }
 
         md.AppendLine();
@@ -209,6 +288,25 @@ public sealed record JudgeComparisonReport(
                 Result: McNemar.Compare(labels, baseline, ToMap(f))))
             .ToList();
 
+        // The same test over the ungrounded-labelled pairs only, which is the
+        // one DECISION-RULE-V2.md asks for: "McNemar's exact test is reported
+        // between configurations restricted to ungrounded-labelled pairs,
+        // which is the comparison the primary criterion rests on."
+        //
+        // Restricting the labels is the whole of it - McNemar already drops
+        // any pair it has no label for, so a filtered dictionary gives the
+        // restricted test without a second implementation to keep in step.
+        var ungroundedLabels = labels
+            .Where(l => !l.Value)
+            .ToDictionary(l => l.Key, l => l.Value);
+
+        var againstUngrounded = verdictFiles
+            .Skip(1)
+            .Select(f => (
+                Config: $"`{f.Model}` / {f.Effort}",
+                Result: McNemar.Compare(ungroundedLabels, baseline, ToMap(f))))
+            .ToList();
+
         var judged = verdictFiles[0].Verdicts.Select(v => v.QueryId).ToList();
 
         return new JudgeComparisonReport(
@@ -221,8 +319,20 @@ public sealed record JudgeComparisonReport(
             verdictFiles[0].RubricVersion,
             configurations,
             against,
+            againstUngrounded,
             pricing?.Currency ?? "USD");
     }
+
+    /// "4/25 = 16.0% [6, 35]" - the count, the denominator, the point
+    /// estimate and the interval, in that order.
+    private static string Rate(ErrorRate rate) =>
+        $"{rate.Count}/{rate.Denominator} = {Percent(rate.Value, 1)}% "
+        + $"[{Percent(rate.Lower, 0)}, {Percent(rate.Upper, 0)}]";
+
+    private static string McNemarRow(string config, McNemarResult result) =>
+        $"| {config} | {result.OnlyFirstCorrect} | {result.OnlySecondCorrect} | "
+        + $"{result.PValue.ToString("F4", CultureInfo.InvariantCulture)} | "
+        + $"{(result.Significant ? "**significant**" : "not significant")} |";
 
     private static string Percent(double value, int decimals) =>
         (value * 100).ToString($"F{decimals}", CultureInfo.InvariantCulture);

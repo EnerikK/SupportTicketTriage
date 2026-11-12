@@ -15,6 +15,28 @@ public sealed record GroundednessScore(
     int Ungrounded,
     int Unjudged);
 
+/// One of the two error rates the judge is selected on, as a count over the
+/// denominator it belongs to, with a Wilson interval.
+///
+/// Numerator and denominator are carried rather than only the quotient
+/// because the denominators here are small and unequal - the two rates are
+/// measured over the ungrounded-labelled and grounded-labelled pairs
+/// respectively - and "16.0%" over 25 items moves in 4-point steps. A reader
+/// who cannot see the denominator cannot see that.
+public sealed record ErrorRate(int Count, int Denominator, double Lower, double Upper)
+{
+    public double Value => Denominator == 0 ? 0 : (double)Count / Denominator;
+
+    /// Whether this rate is at or under a ceiling given in whole percent.
+    ///
+    /// Integer arithmetic, not `Value <= ceiling / 100.0`, because a
+    /// configuration can land exactly on the ceiling and the rule's wording
+    /// is "at most". The judge-v2 held-out run did exactly that: two
+    /// configurations at 17/68, which is 25.000%. Whether such a case passes
+    /// must not depend on how the quotient rounds in binary.
+    public bool AtOrUnder(int ceilingPercent) => Count * 100 <= Denominator * ceilingPercent;
+}
+
 /// How well the judge agrees with hand labels.
 ///
 /// Both numbers are reported, and the second is the one that matters.
@@ -35,7 +57,27 @@ public sealed record JudgeAgreement(
     int BothGrounded,
     int BothUngrounded,
     int JudgeGroundedHumanNot,
-    int HumanGroundedJudgeNot);
+    int HumanGroundedJudgeNot)
+{
+    /// **missed-ungrounded** - the labels say ungrounded and the judge said
+    /// grounded. Over the ungrounded-labelled pairs, which is the only
+    /// denominator the rate means anything against.
+    ///
+    /// DECISION-RULE-V2.md ranks on this first: a judge that misses
+    /// unsupported claims flatters the published score, and a flattering
+    /// groundedness figure is worse than none because it is quotable.
+    public ErrorRate MissedUngrounded =>
+        GroundednessMetrics.RateOf(JudgeGroundedHumanNot, JudgeGroundedHumanNot + BothUngrounded);
+
+    /// **false-flag** - the labels say grounded and the judge said
+    /// ungrounded. Over the grounded-labelled pairs.
+    ///
+    /// Not ranked first, but it carries the eligibility ceiling: ranking on
+    /// misses alone is won outright by a judge that answers "ungrounded" to
+    /// everything, which has no misses and no information.
+    public ErrorRate FalseFlag =>
+        GroundednessMetrics.RateOf(HumanGroundedJudgeNot, HumanGroundedJudgeNot + BothGrounded);
+}
 
 public static class GroundednessMetrics
 {
@@ -110,6 +152,14 @@ public static class GroundednessMetrics
             BothUngrounded: bothUngrounded,
             JudgeGroundedHumanNot: judgeOnly,
             HumanGroundedJudgeNot: humanOnly);
+    }
+
+    /// A count over its denominator, with the Wilson interval.
+    public static ErrorRate RateOf(int count, int denominator)
+    {
+        var (lower, upper) = Wilson(count, denominator);
+
+        return new ErrorRate(count, denominator, lower, upper);
     }
 
     /// Wilson score interval at 95%.
