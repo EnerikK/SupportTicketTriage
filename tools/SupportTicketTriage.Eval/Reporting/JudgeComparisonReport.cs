@@ -120,6 +120,48 @@ public sealed record JudgeComparisonReport(
         return md.ToString();
     }
 
+    /// Where a comparison run may write its table, or null for "print only".
+    ///
+    /// **There is deliberately no default.** The default used to be
+    /// `eval/judge`, which holds `COMPARISON.md` - the committed judge-v1
+    /// result, named in DECISION-RULE.md as the record that "stands as
+    /// recorded". Any later comparison run without `--output` would have
+    /// replaced it and said `Wrote ...`.
+    ///
+    /// That is the same trap `DevCheck.ResolveReportPath` was written for,
+    /// one command over. The shape is copied rather than shared: two call
+    /// sites with different filenames and different explanations is not yet
+    /// an abstraction, and the alternative was editing a guard that already
+    /// has passing tests in order to add a second caller.
+    ///
+    /// An existing table is never overwritten either. Comparisons are how a
+    /// superseded rule stays readable - v1's result is evidence for why v2
+    /// exists - so replacing one silently destroys the thing the next
+    /// comparison is argued against.
+    ///
+    /// The console already carries the whole table, so a run that writes
+    /// nothing loses nothing.
+    public static string? ResolveReportPath(string? outputDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(outputDirectory))
+        {
+            return null;
+        }
+
+        var path = Path.Combine(outputDirectory, "COMPARISON.md");
+
+        if (File.Exists(path))
+        {
+            throw new InvalidOperationException(
+                $"'{Path.GetFullPath(path)}' already exists and would be overwritten. A comparison "
+                + "table is the record of one candidate set judged under one rubric; replacing it "
+                + "silently loses the result a later rule is argued against. Point --output at a "
+                + "different directory, or remove that file deliberately.");
+        }
+
+        return path;
+    }
+
     public static JudgeComparisonReport Build(
         LabelProvenance provenance,
         IReadOnlyDictionary<string, bool> labels,
