@@ -6,7 +6,7 @@ An incoming ticket is classified, matched against resolved tickets by vector sim
 
 It is built to demonstrate the parts of an LLM-backed system that are usually skipped: measured retrieval quality, guardrails that hold against a hostile model, and a documented account of what has and has not been proven. Features were cut before any of that was.
 
-**Status:** feature-complete through grounded generation, human review and the React review UI, and exercised end to end against a live Azure OpenAI deployment (see [Verified end to end](#verified-end-to-end)). Evaluation covers retrieval, classification, citation validity, latency and cost. Groundedness is the one quantity still carrying no number, and the [judge built to measure it](#the-groundedness-judge-and-why-it-still-has-no-number) is deliberately unpublished until it is validated — see [What has actually been measured](#what-has-actually-been-measured), which is blunt about the difference.
+**Status:** feature-complete through grounded generation, human review and the React review UI, and exercised end to end against a live Azure OpenAI deployment (see [Verified end to end](#verified-end-to-end)). Evaluation covers retrieval, classification, citation validity, latency, cost and — since 2026-11-13 — [groundedness](#groundedness), measured on a held-out query set by an LLM judge selected under a rule committed before any candidate ran. See [What has actually been measured](#what-has-actually-been-measured), which is blunt about what each number does and does not establish.
 
 ---
 
@@ -169,13 +169,19 @@ The whole 300-ticket run cost about **$0.075**, and:
 
 A stage where any call fails to report usage is reported as unpriced rather than summed partially — adding up only the calls that did report would give a number wrong by an unknown amount that looks exactly like a right one.
 
-### What still carries no number
+### Groundedness
 
-**Groundedness.** It is the only one left, and the judge that measures it is built — which makes the absence of a number a choice rather than a gap.
+**60.9% of held-out drafts are grounded** — 53 of 87, 95% CI [50.4, 70.5], judged by `gpt-5` at Low reasoning effort under rubric `judge-v2`.
 
-### The groundedness judge, and why it still has no number
+The agreement figure belongs in the same breath, because an LLM-as-judge metric is worth exactly what stands behind it: that judge agrees with hand labels on **77.4%** of 93 pairs, κ 0.51. It was selected on two error rates rather than on agreement, under a rule committed thirteen days before it judged anything — [`eval/judge/holdout/RESULT.md`](eval/judge/holdout/RESULT.md) is the working, including the fact that it cleared its eligibility ceiling by exactly one pair.
 
-An LLM-as-judge metric is only worth the agreement figure behind it, so the agreement against hand-labelled pairs is a **precondition for quoting the score at all**, not a footnote beside it. That figure does not exist yet, so neither does the score.
+**The score understates draft quality, and by a knowable amount.** The same 87 drafts carry hand labels, and the labeller found 63 of them grounded — 72.4%. The judge flags 22.2% of those as ungrounded. No correction is applied: a figure adjusted by two estimated error rates would read as more precise than either, and the gap says more than a number that hides it.
+
+The population, the exclusions and what a reader should not conclude from 60.9% are in [`eval/judge/holdout/GROUNDEDNESS.md`](eval/judge/holdout/GROUNDEDNESS.md). The short version: 111 held-out queries, 18 refused by Gate B before any draft existed, and the 6 engineered hard negatives that cleared the floor excluded by a rule written before the run. The judge retires 2027-02-09, which is a property of the figure rather than a footnote to it.
+
+### The groundedness judge, and what it took to trust it
+
+An LLM-as-judge metric is only worth the agreement figure behind it, so agreement against hand-labelled pairs was treated as a **precondition for quoting the score at all**, not a footnote beside it. Reaching a number took a held-out query set, 93 hand labels, a re-label of 20 of them five days later to measure the labeller against themselves, and a selection rule committed before any candidate configuration ran.
 
 The judge runs on a second, stronger deployment than the one that writes the drafts; a judge deployment equal to the drafting deployment throws rather than quietly producing a plausible number with a structural bias nobody can see. Labels are hand-made: a model labelling its own judge would measure two models agreeing with each other.
 
@@ -187,7 +193,9 @@ Each verdict file records a **SHA-256 of the exact prompt text** that produced i
 
 `--dev-check` runs the judge against verdicts derived by hand beforehand and prints mismatches rather than a score, because those pairs *produced* the rules and any number computed on them measures how well the wording was fitted to its own examples.
 
-**The open blocker is honest and awkward:** every query in the dataset capable of producing a citable draft is already in that development set, so there is no held-out material to validate against. Closing it needs new query tickets, not another run. Working notes are in [`eval/judge/`](eval/judge/).
+**The blocker that held this up was real, and closing it needed data rather than effort:** every query in the original dataset capable of producing a citable draft was already in that development set, so there was nothing held out to validate against. [`eval/dataset/judge-holdout.json`](eval/dataset/judge-holdout.json) is the answer — 111 new query tickets, 18 of them engineered hard negatives, written for this and nothing else.
+
+**The labels were then checked against themselves.** Twenty of the 93 were re-labelled five days later under a procedure committed beforehand, with the first-pass answers stripped from the page and their absence asserted at build time: 95.0% self-agreement on `grounded`, 75.0% on `abstained`. The second figure is why [ADR-038](DECISIONS.MD) publishes abstention as six described cases and no rate. Working notes are in [`eval/judge/`](eval/judge/).
 
 ### The regression gate
 
@@ -328,7 +336,7 @@ Nothing in the UI shows a score as a percentage. A gated ticket names the gate t
 
 **A prompt's version is a label; its identity is a hash.** Every verdict file records a SHA-256 of the prompt text that produced it, computed at run time. A version should move when the contract moves, not every time a sentence is reworded — but then two runs under the same label and different text are indistinguishable after the fact. The hash is taken over the text with the per-request delimiter replaced by a placeholder, because that delimiter is random by design and hashing the rendered prompt would identify nothing.
 
-Every non-obvious choice in this repository has an entry in [`DECISIONS.MD`](DECISIONS.MD) — 36 of them, with the alternative that was rejected and what would reverse the decision. Several record reversals of earlier entries rather than quietly replacing them.
+Every non-obvious choice in this repository has an entry in [`DECISIONS.MD`](DECISIONS.MD) — 39 of them, with the alternative that was rejected and what would reverse the decision. Several record reversals of earlier entries rather than quietly replacing them.
 
 
 ## Running it
@@ -396,7 +404,9 @@ With no Azure credentials it falls back to a lexical stand-in embedder, which is
 
 Named here rather than left for a reader to discover:
 
-- **A published groundedness score.** The judge is built, runs on a separate stronger deployment, and has been compared across three configurations against 47 hand-labelled pairs. What is missing is validation: those pairs produced the rubric, so they cannot also test it, and the dataset holds no held-out queries to validate against. Closing it needs new query tickets rather than another run. Groundedness is therefore absent from the regression gate too, which covers retrieval, classification, citation validity and cost.
+- **Groundedness in the regression gate.** The score is published; the gate does not cover it, so the gate still guards retrieval, classification, citation validity, latency and cost. The reason is a population mismatch rather than an oversight: `evaluation-baseline.json` is regenerated from runs over the dataset queries, while the published figure is over the held-out set, and gating one against the other would compare two different things. Closing it needs a decision about which population the gate judges and what a judging run costs per CI invocation — roughly USD 0.67 per 93 pairs today.
+- **A second held-out set.** The three judge configurations were compared using the labels on the same 93 pairs the score is computed over, so the selected judge is the one that fitted that sample best among three. With three candidates and a rule fixed in advance the bias is small, but the honest fix is more held-out material rather than a disclaimer.
+- **The six hard negatives that cleared Gate B.** [ADR-038](DECISIONS.MD) fixes how they are reported — individually and descriptively, with no rate, because the abstention label is only 75% self-consistent and the denominator is six. That write-up is owed.
 - **Observability and resilience in the running application.** The evaluation harness now records per-call latency and tokens, but it does so by wrapping the model clients in its own code — the API itself still has no tracing, no per-request token recording, and no timeouts or bounded retry. The measured 4 call failures in 300 above are what the absence of retry currently costs.
 - **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval backfills, which closes this for reviewed tickets and leaves it open for the rest.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.

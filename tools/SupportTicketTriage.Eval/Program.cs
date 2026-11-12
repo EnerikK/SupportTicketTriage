@@ -58,6 +58,12 @@ if (arguments.Value("compare-judges") is { } verdictList)
         return 1;
     }
 
+    // Resolved before a single file is read, for the reason the dev check
+    // resolves its own path before a single judge call: a run that is going
+    // to refuse to write its report refuses before doing the work it would
+    // then have nowhere to put.
+    var comparisonPath = JudgeComparisonReport.ResolveReportPath(arguments.Value("output"));
+
     // Same guard as a judging run: an agreement figure is only evidence if
     // the labels demonstrably predate the verdicts being compared.
     var comparisonProvenance = LabelProvenance.For(labelsForComparison);
@@ -100,14 +106,21 @@ if (arguments.Value("compare-judges") is { } verdictList)
     var comparison = JudgeComparisonReport.Build(
         comparisonProvenance, comparisonLabels, files, comparisonPricing);
 
-    var comparisonOut = arguments.Value("output") ?? Path.Combine("eval", "judge");
-    Directory.CreateDirectory(comparisonOut);
-    var comparisonPath = Path.Combine(comparisonOut, "COMPARISON.md");
-
-    await File.WriteAllTextAsync(comparisonPath, comparison.ToMarkdown());
-
     Console.WriteLine(comparison.ToMarkdown());
-    Console.WriteLine($"Wrote {Path.GetFullPath(comparisonPath)}.");
+
+    if (comparisonPath is null)
+    {
+        Console.WriteLine(
+            "Table printed above and not written. Pass --output <directory> to keep it; there is "
+            + "deliberately no default, because the old one overwrote the committed "
+            + "eval/judge/COMPARISON.md.");
+    }
+    else
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(comparisonPath))!);
+        await File.WriteAllTextAsync(comparisonPath, comparison.ToMarkdown());
+        Console.WriteLine($"Wrote {Path.GetFullPath(comparisonPath)}.");
+    }
 
     return 0;
 }
