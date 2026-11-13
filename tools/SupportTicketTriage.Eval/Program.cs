@@ -654,7 +654,7 @@ static GroundednessJudge? BuildJudge(AiCallRecorder recorder, JudgeReasoningEffo
         Endpoint = options.Endpoint,
         ApiKey = options.ApiKey,
         ChatDeployment = deployment,
-    });
+    }, AiCallLimits.Judge);
 
     return client is null
         ? null

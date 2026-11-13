@@ -13,17 +13,27 @@ namespace SupportTicketTriage.Infrastructure.Ai;
 /// that says nothing the two method names do not.
 public static class AzureOpenAiChatFactory
 {
-    public static IChatClient? Create(AzureOpenAiOptions options)
+    /// <param name="limits">Defaults to <see cref="AiCallLimits.Chat"/>, which
+    /// the API and the harness's drafting stages share so the harness measures
+    /// what the application does. Only the judge passes anything else.</param>
+    public static IChatClient? Create(AzureOpenAiOptions options, AiCallLimits? limits = null)
     {
         if (!options.IsChatConfigured)
         {
             return null;
         }
 
-        return new AzureOpenAIClient(
+        limits ??= AiCallLimits.Chat;
+
+        var client = new AzureOpenAIClient(
                 new Uri(options.Endpoint!),
-                new ApiKeyCredential(options.ApiKey!))
+                new ApiKeyCredential(options.ApiKey!),
+                AzureOpenAiClientOptions.From(limits))
             .GetChatClient(options.ChatDeployment!)
             .AsIChatClient();
+
+        return limits.Deadline is { } deadline
+            ? client.AsBuilder().Use(inner => new DeadlineChatClient(inner, deadline)).Build()
+            : client;
     }
 }
