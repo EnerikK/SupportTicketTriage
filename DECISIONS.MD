@@ -1440,6 +1440,39 @@ The rest of the abstention paragraph governs *when* to answer it, not *what coun
 
 ---
 
+## ADR-039 — Retry stays in the SDK; the deadline lives in middleware, and it throws `TimeoutException`
+
+**Status:** Accepted — 2026-11-14. Amends [[ADR-001]], which put retry in the `ChatClientBuilder` pipeline. First slice of Phase 6.
+
+**What was actually there.** The README said there was no retry anywhere in the system. That was wrong, and [[ADR-022]]'s diagnostic had already shown it: `Retry failed after 4 tries` is the Azure SDK's default pipeline, three retries at up to 100 s per attempt, inherited rather than chosen. So the gap was never "no retry". It was **no stated policy and no bound on the whole call**: a ticket's synchronous ingest could in principle wait four attempts of 100 s each before giving up.
+
+**Decision.** Two layers, each doing the one job it is positioned for, set together in `AiCallLimits`:
+
+- **Per-attempt timeout and retry count go to the SDK's own pipeline** (`NetworkTimeout`, `ClientRetryPolicy`), made explicit.
+- **An overall deadline goes in M.E.AI middleware** — `DeadlineChatClient` and `DeadlineEmbeddingGenerator` — covering every attempt and every backoff.
+
+| client | per attempt | retries | deadline |
+|---|---|---|---|
+| Chat (classification and generation) | 15 s | 3 | 40 s |
+| Embedding | 5 s | 3 | 15 s |
+| Evaluation judge | 100 s | 3 | none |
+
+**Why retry is not moved into middleware, as [[ADR-001]] said it would be.** Middleware above `IChatClient` sees an exception. The SDK sees the HTTP response: it knows which status codes are transient, and it honours `Retry-After` on a 429, which is the case that matters most against a rate-limited deployment. Moving retry up a layer would trade that knowledge for an exception-type guess. Adding a middleware layer *on top* would be worse, because nested retries multiply: three at each layer is sixteen attempts, not six. [[ADR-001]]'s reasoning — one visible home for cross-cutting concerns — still holds for the deadline, tracing and cost, which have no better place below.
+
+**The retry count is unchanged at three, on purpose.** The four classification failures in 300 calls each survived four attempts already. More retries is not the fix that evidence points to, and changing the count and the timeouts in the same slice would leave the next measurement unable to say which one moved it.
+
+**The exception type is the load-bearing part.** Every AI service catches `Exception when ex is not OperationCanceledException`, so a caller's cancellation propagates while a model failure degrades to "not classified" — the ingest-survives-an-outage behaviour [[ADR-003]] relies on. A deadline implemented as plain cancellation would slip through that filter and turn a slow model into a failed ingest. So the decorator rethrows any cancellation the *caller* did not request as `TimeoutException`. That also covers the SDK's per-attempt network timeout, which surfaces as a `TaskCanceledException` with no caller cancellation behind it — **the same hole existed before this change**, and a unit test now drives the real `TicketClassificationService` through a hung model to pin that it returns `false` instead of throwing. The SDK's exact exception on a network timeout is simulated in that test, not observed live.
+
+**How the values were chosen, and what that does not claim.** Only p50 and p95 were ever recorded — no maximum — so these are multiples of p95, not a fit to the tail. Per-attempt chat is about 4× generation's 3.9 s p95; the 40 s deadline admits four attempts at p95 plus the SDK's exponential backoff. Embedding's p95 was 615 ms. A call killed by these limits shows up in the harness's failure count, which is the evidence that would move them.
+
+**The harness uses the application's limits, except the judge.** Classification and generation in the eval go through the same factory default, so the harness keeps measuring what the API does — the argument `AzureOpenAiEmbeddingFactory` already makes for embeddings. The judge is the exception: it keeps exactly the SDK defaults its committed verdicts ran under, stated as values in `AiCallLimits.Judge` so that an SDK upgrade cannot change them underneath the results. It has no overall deadline, because `gpt-5`'s reasoning latency was never measured and a judge call is not on anyone's request path.
+
+**Alternatives.** *Polly via `Microsoft.Extensions.Http.Resilience`* — the standard .NET answer, rejected because the Azure SDK does not use the `HttpClient` pipeline that library hooks into; it would mean injecting a custom transport to reach a retry the SDK already does. *Configuration-bound limits* — deferred: no environment needs different values yet, and [[ADR-009]]'s note about locale-parsed numbers in config applies to `TimeSpan` too. Defaults in code with a test pinning them positive, as with the routing floors.
+
+**What would reverse it.** A measured tail showing the deadline is cutting off calls that would have succeeded — visible as new failures in a harness run. Or a move to background ingest, which takes the deadline off the request path and would justify a longer one for classification.
+
+---
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.
