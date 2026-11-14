@@ -1528,6 +1528,29 @@ The rest of the abstention paragraph governs *when* to answer it, not *what coun
 
 ---
 
+## ADR-042 — Sampling temperature is per-deployment configuration, and `omit` is a value
+
+**Status:** Accepted — 2026-11-14.
+
+**The problem.** Both pipeline stages hard-coded `Temperature = 0f`. That is right for `gpt-4.1-mini`, and reasoning models are documented to reject a temperature parameter. A drafter migration to a reasoning model would therefore fail every call, and [[ADR-003]]'s degradation would hide it: every ticket "unclassified", every draft "failed", with the cause only in a log.
+
+**Decision.** `AzureOpenAi:ChatTemperature` on the chat deployment:
+
+- absent → `0`, so existing deployments behave exactly as before;
+- a number from 0 to 2 → sent;
+- `omit` → no temperature is sent at all;
+- anything else → **startup fails**. Falling back to `0` would reproduce the silent failure above.
+
+Both stages build their options through one function, `JsonChatOptions.For`, so classification and drafting cannot disagree about it.
+
+**Why configuration rather than detecting reasoning models.** Detection means a list of model-name patterns in code that is wrong the day a new family ships. The deployment owner knows what the deployment is; the setting says it. Parsed with the invariant culture, for [[ADR-009]]'s reason.
+
+**Verified, partly.** One live call to `gpt-5-mini` with `omit` succeeded on 2026-11-14. That `0` is actually rejected by that model was **not** tested; only one call was run.
+
+**What would reverse it.** `Microsoft.Extensions.AI` or the provider SDK dropping an unsupported temperature itself, at which point the setting becomes redundant rather than wrong.
+
+---
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.

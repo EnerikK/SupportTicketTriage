@@ -32,6 +32,7 @@ public static class InfrastructureServiceCollectionExtensions
             ApiKey = section["ApiKey"],
             EmbeddingDeployment = section["EmbeddingDeployment"],
             ChatDeployment = section["ChatDeployment"],
+            ChatTemperature = AzureOpenAiOptions.ParseTemperature(section["ChatTemperature"]),
         };
 
         // The stack must still start when Azure OpenAI is unavailable, so each
@@ -64,6 +65,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped(sp => new TicketClassificationService(
             sp.GetService<IChatClient>(),
             azureOpenAi.ChatDeployment,
+            azureOpenAi.ChatTemperature,
             sp.GetRequiredService<PiiRedactor>(),
             sp.GetRequiredService<SupportTicketTriageDbContext>(),
             sp.GetRequiredService<ILogger<TicketClassificationService>>()));
@@ -77,6 +79,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped(sp => new TicketDraftService(
             sp.GetService<IChatClient>(),
             azureOpenAi.ChatDeployment,
+            azureOpenAi.ChatTemperature,
             sp.GetRequiredService<PiiRedactor>(),
             sp.GetRequiredService<SupportTicketTriageDbContext>(),
             sp.GetRequiredService<TicketRetrievalService>(),

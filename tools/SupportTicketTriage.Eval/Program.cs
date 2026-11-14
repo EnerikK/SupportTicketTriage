@@ -684,6 +684,7 @@ static ChatStages? BuildChatStages(
         new TicketClassificationService(
             new RecordingChatClient(chatClient, AiStage.Classification, recorder),
             options.ChatDeployment,
+            options.ChatTemperature,
             redactor,
             db,
             loggerFactory.CreateLogger<TicketClassificationService>()),
@@ -700,6 +701,7 @@ static ChatStages? BuildChatStages(
         new TicketDraftService(
             new RecordingChatClient(chatClient, AiStage.Generation, recorder),
             options.ChatDeployment,
+            options.ChatTemperature,
             redactor,
             db,
             retrieval,

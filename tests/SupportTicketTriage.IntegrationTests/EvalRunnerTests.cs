@@ -212,11 +212,11 @@ public sealed class EvalRunnerTests : IAsyncLifetime
             new AiCallRecorder(),
             new ChatStages(
                 new TicketClassificationService(
-                    chat, "fake-chat", redactor, _db, NullLogger<TicketClassificationService>.Instance),
+                    chat, "fake-chat", AzureOpenAiOptions.DefaultChatTemperature, redactor, _db, NullLogger<TicketClassificationService>.Instance),
                 new TicketRoutingService(
                     _db, retrieval, RoutingThresholds.Default, NullLogger<TicketRoutingService>.Instance),
                 new TicketDraftService(
-                    chat, "fake-chat", redactor, _db, retrieval, NullLogger<TicketDraftService>.Instance),
+                    chat, "fake-chat", AzureOpenAiOptions.DefaultChatTemperature, redactor, _db, retrieval, NullLogger<TicketDraftService>.Instance),
                 "fake-chat"));
     }
 
