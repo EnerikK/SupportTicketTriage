@@ -1507,6 +1507,27 @@ The rest of the abstention paragraph governs *when* to answer it, not *what coun
 
 ---
 
+## ADR-041 — Drafts and verdicts record the model that answered, not only the deployment asked
+
+**Status:** Accepted — 2026-11-14.
+
+**The problem.** Every draft and every judge verdict was stamped with the *deployment name*, which is a label this project chooses. Azure can upgrade the model behind a Global Standard deployment in place when a version retires. After an upgrade, rows from two different models would carry the same stamp, and a groundedness comparison across them would silently be a comparison between two judges. [[ADR-040]]'s same-judge requirement cannot be checked from deployment names alone.
+
+**Decision.** Persist `ChatResponse.ModelId`, the model version the provider reports (e.g. `gpt-5-2025-08-07`), beside the deployment name:
+
+- on `TicketDraft`, as a nullable `ResolvedModel` column (`varchar(200)`, migration `AddDraftResolvedModel`);
+- on each judge verdict, as `resolvedModel` in the verdict file and the self-agreement file.
+
+**Nullable, and never filled in.** Rows and files written before this have no value, and a provider is not obliged to report one. An absent value stays absent. Back-filling from configuration would record what we *believe* answered, which is exactly the claim this column exists to check.
+
+**Alternatives.** *Pin the model version in Azure and trust the pin* — still worth doing (`versionUpgradeOption: NoAutoUpgrade`, set by hand because this repository has no infrastructure-as-code), but a setting is not evidence; the recorded model is. *Record it on classifications too* — deferred: no published figure depends on which model classified, and the migration this serves is about drafts and the judge.
+
+**Verified live 2026-11-14.** A call to the `gpt-5-mini` deployment reported `gpt-5-mini-2025-08-07`; the judge smoke run recorded `gpt-5-2025-08-07`.
+
+**What would reverse it.** A provider that stops reporting a model id, which would leave the column null going forward and push this back onto deployment pinning alone.
+
+---
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.

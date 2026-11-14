@@ -253,7 +253,7 @@ public sealed record JudgeComparisonReport(
         {
             var cases = file.Verdicts
                 .Select(v => new GroundednessCase(v.QueryId, v.Grounded, v.UnsupportedClaim,
-                    v.InputTokens, v.OutputTokens, v.AdditionalCounts))
+                    v.InputTokens, v.OutputTokens, v.AdditionalCounts, v.ResolvedModel))
                 .ToList();
 
             var score = GroundednessMetrics.Summarise(cases);

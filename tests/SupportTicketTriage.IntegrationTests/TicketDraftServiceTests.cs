@@ -82,7 +82,8 @@ public class TicketDraftServiceTests(ClassificationApiFactory factory)
 
     private async Task<(Seeded Seed, DraftGenerationResult Result)> GenerateAsync(
         Func<SupportTicketTriageDbContext, Seeded> seed,
-        Func<Seeded, string> response)
+        Func<Seeded, string> response,
+        string? reportedModel = null)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
@@ -93,6 +94,7 @@ public class TicketDraftServiceTests(ClassificationApiFactory factory)
 
         factory.ChatClient.Reset();
         factory.ChatClient.ResponseText = response(seeded);
+        factory.ChatClient.ModelId = reportedModel;
 
         var result = await drafts.GenerateAsync(seeded.Query);
         return (seeded, result);
@@ -115,6 +117,35 @@ public class TicketDraftServiceTests(ClassificationApiFactory factory)
         Assert.Single(result.Draft.Sources, s => s.WasCited);
         Assert.Equal([1, 2], result.Draft.Sources.OrderBy(s => s.Rank).Select(s => s.Rank));
         Assert.Contains(result.Draft.Sources, s => s.SourceTicketId == seed.SourceIds[0] && s.WasCited);
+    }
+
+    /// The deployment name says what was asked for; Azure can upgrade the
+    /// model behind it in place. Read back through a fresh context, so this
+    /// pins the stored column rather than the in-memory object.
+    [Fact]
+    public async Task ADraft_RecordsTheModelTheProviderReported_BesideTheDeployment()
+    {
+        var (_, result) = await GenerateAsync(
+            db => SeedEligible(db),
+            s => DraftJson("Both charges relate to one order.", s.SourceIds[0]),
+            reportedModel: "gpt-test-2026-01-01");
+
+        using var scope = factory.Services.CreateScope();
+        var stored = await scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>()
+            .TicketDrafts.AsNoTracking().SingleAsync(d => d.Id == result.Draft!.Id);
+
+        Assert.Equal("gpt-test-2026-01-01", stored.ResolvedModel);
+        Assert.NotEqual(stored.ResolvedModel, stored.ChatModel);
+    }
+
+    [Fact]
+    public async Task ADraft_LeavesTheModelEmpty_WhenTheProviderReportsNone()
+    {
+        var (_, result) = await GenerateAsync(
+            db => SeedEligible(db),
+            s => DraftJson("Both charges relate to one order.", s.SourceIds[0]));
+
+        Assert.Null(result.Draft!.ResolvedModel);
     }
 
     [Fact]

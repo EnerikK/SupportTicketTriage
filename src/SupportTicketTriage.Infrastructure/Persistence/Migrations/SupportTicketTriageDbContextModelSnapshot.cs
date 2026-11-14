@@ -139,6 +139,10 @@ namespace SupportTicketTriage.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("ResolvedModel")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<Guid>("TicketId")
                         .HasColumnType("uuid");
 

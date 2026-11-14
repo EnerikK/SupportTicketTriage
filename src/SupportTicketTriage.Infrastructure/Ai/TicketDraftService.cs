@@ -139,7 +139,8 @@ public sealed class TicketDraftService(
                 citations,
                 chatModel,
                 GenerationPrompt.Version,
-                PiiRedactor.Version);
+                PiiRedactor.Version,
+                response.ModelId);
 
             db.TicketDrafts.Add(draft);
             await db.SaveChangesAsync(ct);

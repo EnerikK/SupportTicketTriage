@@ -28,7 +28,19 @@ public sealed class TicketDraft
     /// ones were cited.
     public int InvalidCitationCount { get; private init; }
 
+    /// The deployment name: what this project asked for.
     public string ChatModel { get; private init; } = null!;
+
+    /// The model that actually answered, as the provider reported it
+    /// (`ChatResponse.ModelId`, e.g. a dated model version).
+    ///
+    /// The deployment name alone is not provenance. Azure can upgrade the
+    /// model behind a deployment in place, so two drafts stamped with the
+    /// same `ChatModel` may come from different models. Null for rows written
+    /// before this existed, and whenever the provider does not report one -
+    /// an absent value is recorded as absent, never filled in from config.
+    public string? ResolvedModel { get; private init; }
+
     public string PromptVersion { get; private init; } = null!;
     public string RedactionVersion { get; private init; } = null!;
     public DateTimeOffset CreatedAt { get; private init; }
@@ -46,7 +58,8 @@ public sealed class TicketDraft
         CitationValidation citations,
         string chatModel,
         string promptVersion,
-        string redactionVersion)
+        string redactionVersion,
+        string? resolvedModel = null)
     {
         var draft = new TicketDraft
         {
@@ -56,6 +69,7 @@ public sealed class TicketDraft
             CitationsValid = citations.AllValid,
             InvalidCitationCount = citations.Invalid.Count,
             ChatModel = chatModel,
+            ResolvedModel = resolvedModel,
             PromptVersion = promptVersion,
             RedactionVersion = redactionVersion,
             CreatedAt = DateTimeOffset.UtcNow,

@@ -34,6 +34,10 @@ public sealed class FakeChatClient : IChatClient
 
     public bool ShouldThrow { get; set; }
 
+    /// The model id the "provider" reports on its response. Null by default,
+    /// as a provider that reports none would leave it.
+    public string? ModelId { get; set; }
+
     public void Reset()
     {
         lock (_received)
@@ -44,6 +48,7 @@ public sealed class FakeChatClient : IChatClient
         ResponseText = """{"category": "Billing", "priority": "High", "score": 0.91}""";
         ShouldThrow = false;
         Responder = null;
+        ModelId = null;
     }
 
     /// Every message of every call, flattened. Used to assert that no raw
@@ -68,7 +73,7 @@ public sealed class FakeChatClient : IChatClient
         var sent = messages.ToList();
         var reply = Responder?.Invoke(sent) ?? ResponseText;
 
-        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, reply)));
+        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, reply)) { ModelId = ModelId });
     }
 
     public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
