@@ -9,8 +9,13 @@ committed before it existed: the rubric, the selection rule, the labels, and the
 
 Judged by **`gpt-5` at Low reasoning effort**, selected under `DECISION-RULE-V2.md` and recorded
 in `RESULT.md`. That judge **retires 2027-02-09**, and this figure does not outlive it as a
-current measurement: a successor judge produces its own number, and this one becomes the
-pre-migration reference it is compared against.
+current measurement.
+
+**It is not comparable to a figure from any other judge.** A difference between two judges'
+scores mixes a change in the drafts with a change in the judge, and nothing separates the two.
+A comparison across the drafting-model migration therefore needs the **same judge** to score
+both the outgoing and the incoming drafter's drafts, which with this judge means before
+2027-02-09. A successor judge, selected under `DECISION-RULE-V3.md`, starts its own series.
 
 [[ADR-018]] makes the judge's agreement with hand labels a precondition for quoting the score at
 all, so it belongs in the same breath: **77.4%** agreement, κ 0.51, over all 93 labelled pairs.

@@ -10,6 +10,7 @@ namespace SupportTicketTriage.Infrastructure.Ai;
 public sealed class TicketClassificationService(
     IChatClient? chatClient,
     string? chatModel,
+    float? temperature,
     PiiRedactor redactor,
     SupportTicketTriageDbContext db,
     ILogger<TicketClassificationService> logger)
@@ -44,14 +45,7 @@ public sealed class TicketClassificationService(
                     new ChatMessage(ChatRole.System, ClassificationPrompt.System(delimiter)),
                     new ChatMessage(ChatRole.User, ClassificationPrompt.User(delimiter, redacted)),
                 ],
-                new ChatOptions
-                {
-                    // The task is a fixed choice from a closed list, so there is
-                    // nothing for sampling to contribute except variance between
-                    // identical inputs, which would make the eval unreproducible.
-                    Temperature = 0f,
-                    ResponseFormat = ChatResponseFormat.Json,
-                },
+                JsonChatOptions.For(temperature),
                 ct);
 
             if (!ClassificationResult.TryParse(response.Text, out var result, out var failure))

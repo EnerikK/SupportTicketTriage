@@ -1475,6 +1475,82 @@ The rest of the abstention paragraph governs *when* to answer it, not *what coun
 
 ---
 
+## ADR-040 — Judge selection moves to rule v3: a retirement trigger, a recall floor, and a new held-out set
+
+**Status:** Accepted — 2026-11-14. Supersedes `DECISION-RULE-V2.md` for future selections only. Does not change [[ADR-037]]'s 2026-11-13 outcome. Full rule: `eval/judge/DECISION-RULE-V3.md`.
+
+**The problem.** Two gaps showed up while planning the `gpt-5` migration (retirement 2027-02-09):
+
+- **The candidate set could not be extended in time.** v2's triggers fire when a configuration "becomes undeployable", which for `gpt-5` means 2027-02-09. A same-judge comparison across a migration needs the outgoing and incoming judges to exist at the same time.
+- **Nothing stopped a judge that under-flags.** v2's eligibility test bounds false flags only. `gpt-5-mini` missed 44% of ungrounded drafts and was eligible; it lost only because a better configuration was also eligible, at exactly the 25% ceiling.
+
+**Decision.**
+
+- A new rule file, v3, adds a third trigger: a **scheduled retirement date**, which fires once the date is published.
+- It adds an eligibility floor of **at least 80% ungrounded recall**, assessed per configuration (model, version and effort).
+- It measures eligibility only on a **new held-out set of at least 100 ungrounded pairs**, disjoint from all pairs used so far.
+- The ceiling, the ordering and the "adopt nothing" outcome are unchanged.
+
+**Why a new version rather than an amendment.** v2 declares its criteria "not revisable by this addendum or by any later one" (`DECISION-RULE-V2.md:135-138`). Amending it would contradict it. Superseding it follows the v1→v2 precedent and [[ADR-037]]'s own reversal clause, and leaves v2 and its result intact as a record.
+
+**Why 80%.** Every draft is reviewed by a human, so the judge's job is to measure how often that review is actually needed. A judge that misses more than one ungrounded draft in five makes review the real filter, and the score flatters the system by whatever the judge misses.
+
+**The cost, stated plainly.**
+
+- **The floor was chosen after seeing the results.** Recall was 84% for `gpt-5` at Low and 56% for `gpt-5-mini`, on n = 25. The argument above is independent of those numbers, but nobody can verify that, so v3 records it. This is the reason v2's results count as neither evidence for nor against any candidate under v3.
+- **Labelling.** About 100 ungrounded pairs is roughly 370 drafts at the v2 set's ratio (25 ungrounded in 93), all hand-labelled. That is the main cost of this decision.
+- **Weaker integrity.** A rule revised after its results is weaker than one that never was. The mitigation is the one v2 used for additions: everything is dated, and the change is disclosed in the rule itself.
+
+**Alternatives.** *Amend v2* — rejected; it contradicts its own text. *A recall floor measured on the existing 25 pairs* — rejected, because the interval is about 30 points wide and the pairs have already been read alongside verdicts. *No floor, relying on the ordering* — rejected, because the ordering only acts when two configurations are eligible, and the dangerous case is when only one is.
+
+**What would reverse it.** A new held-out set whose recall intervals show 80% cannot separate configurations even at n ≥ 100. Or a change to the review workflow that removes the human backstop the 80% argument rests on.
+
+---
+
+## ADR-041 — Drafts and verdicts record the model that answered, not only the deployment asked
+
+**Status:** Accepted — 2026-11-14.
+
+**The problem.** Every draft and every judge verdict was stamped with the *deployment name*, which is a label this project chooses. Azure can upgrade the model behind a Global Standard deployment in place when a version retires. After an upgrade, rows from two different models would carry the same stamp, and a groundedness comparison across them would silently be a comparison between two judges. [[ADR-040]]'s same-judge requirement cannot be checked from deployment names alone.
+
+**Decision.** Persist `ChatResponse.ModelId`, the model version the provider reports (e.g. `gpt-5-2025-08-07`), beside the deployment name:
+
+- on `TicketDraft`, as a nullable `ResolvedModel` column (`varchar(200)`, migration `AddDraftResolvedModel`);
+- on each judge verdict, as `resolvedModel` in the verdict file and the self-agreement file.
+
+**Nullable, and never filled in.** Rows and files written before this have no value, and a provider is not obliged to report one. An absent value stays absent. Back-filling from configuration would record what we *believe* answered, which is exactly the claim this column exists to check.
+
+**Alternatives.** *Pin the model version in Azure and trust the pin* — still worth doing (`versionUpgradeOption: NoAutoUpgrade`, set by hand because this repository has no infrastructure-as-code), but a setting is not evidence; the recorded model is. *Record it on classifications too* — deferred: no published figure depends on which model classified, and the migration this serves is about drafts and the judge.
+
+**Verified live 2026-11-14.** A call to the `gpt-5-mini` deployment reported `gpt-5-mini-2025-08-07`; the judge smoke run recorded `gpt-5-2025-08-07`.
+
+**What would reverse it.** A provider that stops reporting a model id, which would leave the column null going forward and push this back onto deployment pinning alone.
+
+---
+
+## ADR-042 — Sampling temperature is per-deployment configuration, and `omit` is a value
+
+**Status:** Accepted — 2026-11-14.
+
+**The problem.** Both pipeline stages hard-coded `Temperature = 0f`. That is right for `gpt-4.1-mini`, and reasoning models are documented to reject a temperature parameter. A drafter migration to a reasoning model would therefore fail every call, and [[ADR-003]]'s degradation would hide it: every ticket "unclassified", every draft "failed", with the cause only in a log.
+
+**Decision.** `AzureOpenAi:ChatTemperature` on the chat deployment:
+
+- absent → `0`, so existing deployments behave exactly as before;
+- a number from 0 to 2 → sent;
+- `omit` → no temperature is sent at all;
+- anything else → **startup fails**. Falling back to `0` would reproduce the silent failure above.
+
+Both stages build their options through one function, `JsonChatOptions.For`, so classification and drafting cannot disagree about it.
+
+**Why configuration rather than detecting reasoning models.** Detection means a list of model-name patterns in code that is wrong the day a new family ships. The deployment owner knows what the deployment is; the setting says it. Parsed with the invariant culture, for [[ADR-009]]'s reason.
+
+**Verified, partly.** One live call to `gpt-5-mini` with `omit` succeeded on 2026-11-14. That `0` is actually rejected by that model was **not** tested; only one call was run.
+
+**What would reverse it.** `Microsoft.Extensions.AI` or the provider SDK dropping an unsupported temperature itself, at which point the setting becomes redundant rather than wrong.
+
+---
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.

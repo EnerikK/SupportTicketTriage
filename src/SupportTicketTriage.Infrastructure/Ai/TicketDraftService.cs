@@ -31,6 +31,7 @@ public sealed record DraftGenerationResult(DraftOutcome Outcome, TicketDraft? Dr
 public sealed class TicketDraftService(
     IChatClient? chatClient,
     string? chatModel,
+    float? temperature,
     PiiRedactor redactor,
     SupportTicketTriageDbContext db,
     TicketRetrievalService retrieval,
@@ -109,7 +110,7 @@ public sealed class TicketDraftService(
                     new ChatMessage(ChatRole.System, GenerationPrompt.System(delimiter)),
                     new ChatMessage(ChatRole.User, GenerationPrompt.User(delimiter, redactedTicket, sources)),
                 ],
-                new ChatOptions { Temperature = 0f, ResponseFormat = ChatResponseFormat.Json },
+                JsonChatOptions.For(temperature),
                 ct);
 
             if (!DraftResult.TryParse(response.Text, out var result, out var failure))
@@ -139,7 +140,8 @@ public sealed class TicketDraftService(
                 citations,
                 chatModel,
                 GenerationPrompt.Version,
-                PiiRedactor.Version);
+                PiiRedactor.Version,
+                response.ModelId);
 
             db.TicketDrafts.Add(draft);
             await db.SaveChangesAsync(ct);

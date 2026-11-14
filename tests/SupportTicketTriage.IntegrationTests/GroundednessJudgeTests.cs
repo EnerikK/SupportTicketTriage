@@ -37,6 +37,35 @@ public class GroundednessJudgeTests
         Assert.Null(result.UnsupportedClaim);
     }
 
+    /// The verdict file names the deployment; only the reported model says
+    /// which judge actually ran if Azure upgraded the model behind it.
+    /// Round-tripped through the file, because the file is the artifact.
+    [Fact]
+    public async Task AVerdict_CarriesTheModelTheProviderReported_IntoTheVerdictFile()
+    {
+        var chat = new FakeChatClient
+        {
+            ResponseText = """{"grounded": true, "unsupported_claims": []}""",
+            ModelId = "gpt-judge-2026-01-01",
+        };
+
+        var result = await Judge(chat).JudgeAsync("q-1", "A draft.", Ticket, OneSource);
+        var path = Path.Combine(Path.GetTempPath(), $"verdicts-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await JudgeVerdictFile.WriteAsync(path, "test-judge-model", JudgeReasoningEffort.Low, [result]);
+            var read = await JudgeVerdictFile.ReadAsync(path);
+
+            Assert.Equal("test-judge-model", read.Model);
+            Assert.Equal("gpt-judge-2026-01-01", Assert.Single(read.Verdicts).ResolvedModel);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     [Fact]
     public async Task AnUngroundedVerdict_KeepsTheQuotedClaim()
     {

@@ -24,7 +24,12 @@ public sealed record GroundednessCase(
     /// a hardcoded key, so whatever the provider reports survives a rename.
     long? InputTokens = null,
     long? OutputTokens = null,
-    IReadOnlyDictionary<string, long>? AdditionalCounts = null);
+    IReadOnlyDictionary<string, long>? AdditionalCounts = null,
+    /// The model that answered, as the provider reported it. The deployment
+    /// name on the verdict file is what was asked for; Azure can upgrade the
+    /// model behind it in place, so only this says which judge actually ran.
+    /// Null when no call was made or the provider reported none.
+    string? ResolvedModel = null);
 
 /// Scores drafts for groundedness using a second, stronger chat deployment.
 ///
@@ -92,10 +97,10 @@ public sealed class GroundednessJudge(
             return verdict is null
                 ? new GroundednessCase(
                     queryId, Grounded: null, "The judge response could not be read.",
-                    usage?.InputTokenCount, usage?.OutputTokenCount, extra)
+                    usage?.InputTokenCount, usage?.OutputTokenCount, extra, response.ModelId)
                 : new GroundednessCase(
                     queryId, verdict.Grounded, Claims(verdict.UnsupportedClaims),
-                    usage?.InputTokenCount, usage?.OutputTokenCount, extra);
+                    usage?.InputTokenCount, usage?.OutputTokenCount, extra, response.ModelId);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

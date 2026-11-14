@@ -16,6 +16,7 @@ public sealed class TicketDraftConfiguration : IEntityTypeConfiguration<TicketDr
         builder.Property(d => d.CitationsValid).IsRequired();
         builder.Property(d => d.InvalidCitationCount).IsRequired();
         builder.Property(d => d.ChatModel).HasMaxLength(200).IsRequired();
+        builder.Property(d => d.ResolvedModel).HasMaxLength(200);
         builder.Property(d => d.PromptVersion).HasMaxLength(50).IsRequired();
         builder.Property(d => d.RedactionVersion).HasMaxLength(50).IsRequired();
         builder.Property(d => d.CreatedAt).IsRequired();

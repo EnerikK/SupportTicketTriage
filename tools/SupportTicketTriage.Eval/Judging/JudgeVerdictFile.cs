@@ -10,7 +10,10 @@ public sealed record JudgeVerdict(
     string? UnsupportedClaim,
     long? InputTokens,
     long? OutputTokens,
-    IReadOnlyDictionary<string, long>? AdditionalCounts);
+    IReadOnlyDictionary<string, long>? AdditionalCounts,
+    /// Absent from every verdict file written before 2026-11-14, which
+    /// deserialise it as null. See <see cref="GroundednessCase.ResolvedModel"/>.
+    string? ResolvedModel = null);
 
 /// What one judge configuration said, and what it spent saying it.
 ///
@@ -85,7 +88,8 @@ public sealed record JudgeVerdictFile(
                 c.UnsupportedClaim,
                 c.InputTokens,
                 c.OutputTokens,
-                c.AdditionalCounts)).ToList());
+                c.AdditionalCounts,
+                c.ResolvedModel)).ToList());
 
         await File.WriteAllTextAsync(path, JsonSerializer.Serialize(file, Json), ct);
     }

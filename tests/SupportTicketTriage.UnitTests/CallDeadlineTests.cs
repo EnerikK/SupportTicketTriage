@@ -179,6 +179,7 @@ public class CallDeadlineTests
         var service = new TicketClassificationService(
             client,
             "test-deployment",
+            AzureOpenAiOptions.DefaultChatTemperature,
             new PiiRedactor(),
             db: null!,
             NullLogger<TicketClassificationService>.Instance);

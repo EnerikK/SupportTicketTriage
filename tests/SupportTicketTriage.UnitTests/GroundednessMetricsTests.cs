@@ -177,6 +177,12 @@ public class GroundednessMetricsTests
         Assert.Equal(2, agreement.MissedUngrounded.Denominator);
         Assert.Equal(0.5, agreement.MissedUngrounded.Value, 10);
 
+        // Recall is the complement over the same denominator, counted
+        // directly rather than derived, so the two must sum to the whole.
+        Assert.Equal(1, agreement.UngroundedRecall.Count);
+        Assert.Equal(agreement.MissedUngrounded.Denominator, agreement.UngroundedRecall.Denominator);
+        Assert.Equal(1.0, agreement.UngroundedRecall.Value + agreement.MissedUngrounded.Value, 10);
+
         Assert.Equal(1, agreement.FalseFlag.Count);
         Assert.Equal(3, agreement.FalseFlag.Denominator);
         Assert.Equal(1.0 / 3, agreement.FalseFlag.Value, 10);
