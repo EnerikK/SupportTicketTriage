@@ -142,9 +142,11 @@ Two caveats. These are whole-call latencies as the harness experienced them, inc
 
 ### The four failures, and why they matter more than they look
 
-The classification row shows **4 failures out of 300 calls** — and this run reported exactly 4 tickets that could not be classified. The two numbers are the same tickets: every unclassifiable ticket in this run was a *transient call failure*, not the model returning something unparseable.
+The classification row shows **4 failures out of 300 calls** — and this run reported exactly 4 tickets that could not be classified. The two numbers are the same tickets: every unclassifiable ticket in this run was a *failed call*, not the model returning something unparseable.
 
-That distinction did not exist before this measurement. An unclassifiable ticket counts as wrong either way, which is the right call — the dataset carries the label, so a missing answer got it wrong. But *why* it was missing changes what to do about it: "add timeouts and bounded retry" is a different fix from "improve the prompt", and until now the two were indistinguishable in the metric. Each of these calls had already been retried three times by the Azure SDK's default pipeline, which was in place but never configured; [ADR-039](DECISIONS.MD) makes that policy explicit and adds a deadline on the whole call.
+**And none of the four was transient.** This was first read as transient failures that retry would fix. A re-run on 2026-11-14 reproduced exactly four, and the log names the cause: `HTTP 400 content_filter`. Azure's content filter rejected the prompt before the model saw it. The four are the dataset's injection tickets, which carry forwarded scam text. A 400 is not retried, and no timeout reaches it, so [ADR-039](DECISIONS.MD)'s retry and deadline work does not change this number.
+
+An unclassifiable ticket counts as wrong either way, which is the right call — the dataset carries the label, so a missing answer got it wrong. But *why* it was missing changes what to do about it, and here the answer is neither "improve the prompt" nor "add retry". It also narrows a guardrail claim: at classification, these injection tickets never reach the prompt, so the prompt-level injection defence is not exercised there on this deployment. Subtler injection tickets that pass the filter would close that gap.
 
 ### Cost
 
