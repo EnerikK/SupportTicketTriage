@@ -77,6 +77,16 @@ public sealed record JudgeAgreement(
     /// everything, which has no misses and no information.
     public ErrorRate FalseFlag =>
         GroundednessMetrics.RateOf(HumanGroundedJudgeNot, HumanGroundedJudgeNot + BothGrounded);
+
+    /// **ungrounded recall** - of the pairs the labels call ungrounded, the
+    /// share the judge also called ungrounded. `1 − missed-ungrounded`, over
+    /// the same denominator, with its own Wilson interval rather than one
+    /// mirrored from the miss rate.
+    ///
+    /// DECISION-RULE-V3.md puts an eligibility floor on this (80%), measured
+    /// only on its own held-out set of at least 100 ungrounded pairs.
+    public ErrorRate UngroundedRecall =>
+        GroundednessMetrics.RateOf(BothUngrounded, JudgeGroundedHumanNot + BothUngrounded);
 }
 
 public static class GroundednessMetrics

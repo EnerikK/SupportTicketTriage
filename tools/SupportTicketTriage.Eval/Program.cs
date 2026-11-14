@@ -262,6 +262,12 @@ if (arguments.Value("judge-pairs-from") is { } pairsPath)
 
     var toJudge = selected.ToList();
 
+    if (arguments.Has("judge-repeat"))
+    {
+        return await RunSelfAgreementAsync(
+            judgeOnly, toJudge, arguments.Value("judge-repeat"), arguments.Value("judge-verdicts"));
+    }
+
     Console.WriteLine(
         $"Judging {toJudge.Count} pairs from {pairsPath} with {judgeOnly.Deployment} "
         + $"at reasoning effort {judgeOnly.Effort} (rubric {GroundednessPrompt.Version}).");
@@ -616,6 +622,84 @@ static JudgeReasoningEffort ParseEffort(string? value) =>
             : throw new ArgumentException(
                 $"--judge-effort '{value}' is not one of: "
                 + string.Join(", ", Enum.GetNames<JudgeReasoningEffort>()).ToLowerInvariant());
+
+// The same judge over the same fixed drafts, N times. Each run is a full pass
+// rather than N calls per draft back to back, so a transient slow patch on the
+// deployment lands across many drafts instead of all N verdicts of one.
+static async Task<int> RunSelfAgreementAsync(
+    GroundednessJudge judge, IReadOnlyList<JudgePair> pairs, string? repeatText, string? outputPath)
+{
+    var runs = 5;
+
+    if (repeatText is not null && (!int.TryParse(repeatText, out runs) || runs < 2))
+    {
+        Console.Error.WriteLine($"--judge-repeat '{repeatText}' must be an integer of at least 2.");
+        return 1;
+    }
+
+    Console.WriteLine(
+        $"Self-agreement: {pairs.Count} pairs x {runs} runs with {judge.Deployment} "
+        + $"at reasoning effort {judge.Effort} (rubric {GroundednessPrompt.Version}).");
+
+    var results = new List<IReadOnlyList<GroundednessCase>>();
+
+    for (var run = 0; run < runs; run++)
+    {
+        var cases = new List<GroundednessCase>();
+
+        foreach (var pair in pairs)
+        {
+            var sources = pair.CitedSources
+                .Select(s => new EvidenceSource(s.TicketId, s.Subject, s.RedactedText, s.Resolution))
+                .ToList();
+            cases.Add(await judge.JudgeAsync(pair.QueryId, pair.Draft, pair.RedactedTicket, sources));
+        }
+
+        results.Add(cases);
+    }
+
+    var agreement = JudgeSelfAgreement.Compute(results);
+
+    foreach (var item in agreement.Items)
+    {
+        var verdicts = string.Join(" ", item.Verdicts.Select(v => v switch { true => "G", false => "U", null => "?" }));
+        Console.WriteLine($"  {item.QueryId,-40} {verdicts}  modal {item.ModalShare:P0}{(item.Unanimous ? "" : "  <- disagrees")}");
+    }
+
+    Console.WriteLine(
+        $"Unanimous on {agreement.Items.Count(i => i.Unanimous)}/{agreement.Items.Count} pairs "
+        + $"({agreement.UnanimousRate:P1}); mean modal share {agreement.MeanModalShare:P1}.");
+
+    var path = outputPath
+        ?? Path.Combine("eval", "judge", $"self-agreement-{judge.Deployment}-{judge.Effort}.json");
+    var directory = Path.GetDirectoryName(Path.GetFullPath(path));
+
+    if (!string.IsNullOrEmpty(directory))
+    {
+        Directory.CreateDirectory(directory);
+    }
+
+    // The resolved models travel with the result: N runs straddling an
+    // in-place model upgrade would measure two judges, not one.
+    await File.WriteAllTextAsync(path, JsonSerializer.Serialize(
+        new
+        {
+            judge.Deployment,
+            Effort = judge.Effort.ToString(),
+            RubricVersion = GroundednessPrompt.Version,
+            RubricSha256 = GroundednessPrompt.Sha256,
+            RunAt = DateTimeOffset.UtcNow,
+            ResolvedModels = results.SelectMany(r => r).Select(c => c.ResolvedModel).Distinct().ToList(),
+            agreement.Runs,
+            agreement.UnanimousRate,
+            agreement.MeanModalShare,
+            agreement.Items,
+        },
+        new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }));
+
+    Console.WriteLine($"Wrote {Path.GetFullPath(path)}.");
+    return 0;
+}
 
 static GroundednessJudge? BuildJudge(AiCallRecorder recorder, JudgeReasoningEffort effort)
 {

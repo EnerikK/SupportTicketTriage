@@ -51,6 +51,13 @@ public sealed record JudgeComparisonReport(
     /// line in a commit that a reviewer can date against the verdicts.
     public const int FalseFlagCeilingPercent = 25;
 
+    /// From `DECISION-RULE-V3.md`. Reported against, never applied here: the
+    /// floor is defined only on v3's own held-out set, and this report cannot
+    /// tell which set its labels came from.
+    public const int V3RecallFloorPercent = 80;
+
+    public const int V3MinimumUngroundedPairs = 100;
+
     public string ToMarkdown()
     {
         var md = new StringBuilder();
@@ -84,8 +91,8 @@ public sealed record JudgeComparisonReport(
             + "false-flag, then cheapest. If none is eligible, none is adopted and no groundedness "
             + "score is published.");
         md.AppendLine();
-        md.AppendLine("| configuration | missed-ungrounded | false-flag | eligible |");
-        md.AppendLine("|---|---|---|---|");
+        md.AppendLine("| configuration | missed-ungrounded | ungrounded recall | false-flag | eligible |");
+        md.AppendLine("|---|---|---|---|---|");
 
         foreach (var c in Configurations)
         {
@@ -93,6 +100,7 @@ public sealed record JudgeComparisonReport(
 
             md.AppendLine(
                 $"| `{c.Model}` / {c.Effort} | {Rate(c.Agreement.MissedUngrounded)} | "
+                + $"{Rate(c.Agreement.UngroundedRecall)} | "
                 + $"{Rate(c.Agreement.FalseFlag)} | "
                 + (eligible
                     ? "yes |"
@@ -106,6 +114,31 @@ public sealed record JudgeComparisonReport(
             + "rates answer questions about two different sets of drafts - averaging them is what "
             + "the v1 rule did, and it named as winner the configuration most likely to certify the "
             + "failure the measurement exists to catch.");
+        md.AppendLine();
+        md.AppendLine(
+            "**ungrounded recall** is `1 − missed-ungrounded` over the same pairs. The eligible "
+            + "column applies `DECISION-RULE-V2.md` only. `DECISION-RULE-V3.md` adds an eligibility "
+            + "floor of " + V3RecallFloorPercent.ToString(CultureInfo.InvariantCulture) + "% on it, "
+            + "assessed **only** on its own held-out set of at least "
+            + V3MinimumUngroundedPairs.ToString(CultureInfo.InvariantCulture)
+            + " ungrounded pairs. Whether these labels are that set is not something this table "
+            + "can tell, so it does not apply the floor.");
+
+        var ungroundedPairs = Configurations
+            .Select(c => c.Agreement.UngroundedRecall.Denominator)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        if (ungroundedPairs < V3MinimumUngroundedPairs)
+        {
+            md.AppendLine();
+            md.AppendLine(
+                $"**Below the v3 minimum:** at most {ungroundedPairs.ToString(CultureInfo.InvariantCulture)} "
+                + "ungrounded-labelled pairs were compared, under the "
+                + V3MinimumUngroundedPairs.ToString(CultureInfo.InvariantCulture)
+                + " `DECISION-RULE-V3.md` requires. No v3 eligibility can be read from this table.");
+        }
+
         md.AppendLine();
         md.AppendLine(
             "Intervals are Wilson at 95%. The ceiling is applied to the **point estimate**, as the "

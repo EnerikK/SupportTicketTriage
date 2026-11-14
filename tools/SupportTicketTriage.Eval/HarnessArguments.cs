@@ -38,6 +38,7 @@ public sealed class HarnessArguments
             "judge-effort",
             "judge-pairs-from",
             "judge-limit",
+            "judge-repeat",
             "compare-judges",
             "dev-check",
             "holdout-queries",

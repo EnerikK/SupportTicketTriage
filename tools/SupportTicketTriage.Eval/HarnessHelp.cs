@@ -43,6 +43,11 @@ public static class HarnessHelp
                                   nondeterministic, so re-running the pipeline
                                   per configuration judges different drafts
           --judge-limit <n>       Judge only the first n pairs. For smoke checks
+          --judge-repeat [n]      With --judge-pairs-from: judge the same pairs
+                                  n times (default 5) with the same judge and
+                                  report self-agreement per pair and overall.
+                                  Writes no verdict file; --judge-verdicts names
+                                  the self-agreement file instead
           --judge-verdicts <path> Write what the judge said, with the tokens it
                                   spent saying it. One file per configuration;
                                   kept out of the labelling file so a verdict
