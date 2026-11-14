@@ -11,7 +11,9 @@ namespace SupportTicketTriage.Infrastructure.Ai;
 /// deployment name onto every row they write. Retrieval only ever compares
 /// vectors carrying the same stamp, so if the two built the client differently
 /// the harness would measure against vectors the application would never
-/// return - a defect that reads as poor relevance rather than as a bug.
+/// return - a defect that reads as poor relevance rather than as a bug. The
+/// same reasoning is why the limits are not a parameter here: there is no
+/// caller that should embed under different ones.
 public static class AzureOpenAiEmbeddingFactory
 {
     public static IEmbeddingGenerator<string, Embedding<float>>? Create(AzureOpenAiOptions options)
@@ -21,10 +23,17 @@ public static class AzureOpenAiEmbeddingFactory
             return null;
         }
 
-        return new AzureOpenAIClient(
+        var limits = AiCallLimits.Embedding;
+
+        var generator = new AzureOpenAIClient(
                 new Uri(options.Endpoint!),
-                new ApiKeyCredential(options.ApiKey!))
+                new ApiKeyCredential(options.ApiKey!),
+                AzureOpenAiClientOptions.From(limits))
             .GetEmbeddingClient(options.EmbeddingDeployment!)
             .AsIEmbeddingGenerator();
+
+        return limits.Deadline is { } deadline
+            ? new DeadlineEmbeddingGenerator(generator, deadline)
+            : generator;
     }
 }
