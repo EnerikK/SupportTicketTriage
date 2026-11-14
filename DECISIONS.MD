@@ -1475,6 +1475,38 @@ The rest of the abstention paragraph governs *when* to answer it, not *what coun
 
 ---
 
+## ADR-040 — Judge selection moves to rule v3: a retirement trigger, a recall floor, and a new held-out set
+
+**Status:** Accepted — 2026-11-14. Supersedes `DECISION-RULE-V2.md` for future selections only. Does not change [[ADR-037]]'s 2026-11-13 outcome. Full rule: `eval/judge/DECISION-RULE-V3.md`.
+
+**The problem.** Two gaps showed up while planning the `gpt-5` migration (retirement 2027-02-09):
+
+- **The candidate set could not be extended in time.** v2's triggers fire when a configuration "becomes undeployable", which for `gpt-5` means 2027-02-09. A same-judge comparison across a migration needs the outgoing and incoming judges to exist at the same time.
+- **Nothing stopped a judge that under-flags.** v2's eligibility test bounds false flags only. `gpt-5-mini` missed 44% of ungrounded drafts and was eligible; it lost only because a better configuration was also eligible, at exactly the 25% ceiling.
+
+**Decision.**
+
+- A new rule file, v3, adds a third trigger: a **scheduled retirement date**, which fires once the date is published.
+- It adds an eligibility floor of **at least 80% ungrounded recall**, assessed per configuration (model, version and effort).
+- It measures eligibility only on a **new held-out set of at least 100 ungrounded pairs**, disjoint from all pairs used so far.
+- The ceiling, the ordering and the "adopt nothing" outcome are unchanged.
+
+**Why a new version rather than an amendment.** v2 declares its criteria "not revisable by this addendum or by any later one" (`DECISION-RULE-V2.md:135-138`). Amending it would contradict it. Superseding it follows the v1→v2 precedent and [[ADR-037]]'s own reversal clause, and leaves v2 and its result intact as a record.
+
+**Why 80%.** Every draft is reviewed by a human, so the judge's job is to measure how often that review is actually needed. A judge that misses more than one ungrounded draft in five makes review the real filter, and the score flatters the system by whatever the judge misses.
+
+**The cost, stated plainly.**
+
+- **The floor was chosen after seeing the results.** Recall was 84% for `gpt-5` at Low and 56% for `gpt-5-mini`, on n = 25. The argument above is independent of those numbers, but nobody can verify that, so v3 records it. This is the reason v2's results count as neither evidence for nor against any candidate under v3.
+- **Labelling.** About 100 ungrounded pairs is roughly 370 drafts at the v2 set's ratio (25 ungrounded in 93), all hand-labelled. That is the main cost of this decision.
+- **Weaker integrity.** A rule revised after its results is weaker than one that never was. The mitigation is the one v2 used for additions: everything is dated, and the change is disclosed in the rule itself.
+
+**Alternatives.** *Amend v2* — rejected; it contradicts its own text. *A recall floor measured on the existing 25 pairs* — rejected, because the interval is about 30 points wide and the pairs have already been read alongside verdicts. *No floor, relying on the ordering* — rejected, because the ordering only acts when two configurations are eligible, and the dangerous case is when only one is.
+
+**What would reverse it.** A new held-out set whose recall intervals show 80% cannot separate configurations even at n ≥ 100. Or a change to the review workflow that removes the human backstop the 80% argument rests on.
+
+---
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.
