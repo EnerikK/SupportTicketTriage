@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "1.2",
   "currency": "USD",
   "source": "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/",
   "verified": true,
@@ -23,6 +23,27 @@
       "inputPerMillionTokens": 0.25,
       "outputPerMillionTokens": 2.0,
       "retrievedOn": "2026-10-30",
+      "deploymentType": "GlobalStandard"
+    },
+    {
+      "model": "gpt-5.4-mini",
+      "inputPerMillionTokens": 0.75,
+      "outputPerMillionTokens": 4.5,
+      "retrievedOn": "2026-11-15",
+      "deploymentType": "GlobalStandard"
+    },
+    {
+      "model": "gpt-5.6-luna",
+      "inputPerMillionTokens": 0.2,
+      "outputPerMillionTokens": 1.2,
+      "retrievedOn": "2026-11-15",
+      "deploymentType": "GlobalStandard"
+    },
+    {
+      "model": "gpt-6-luna",
+      "inputPerMillionTokens": 0.1,
+      "outputPerMillionTokens": 0.5,
+      "retrievedOn": "2026-11-15",
       "deploymentType": "GlobalStandard"
     },
     {
