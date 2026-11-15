@@ -199,6 +199,12 @@ Each verdict file records a **SHA-256 of the exact prompt text** that produced i
 
 **The labels were then checked against themselves.** Twenty of the 93 were re-labelled five days later under a procedure committed beforehand, with the first-pass answers stripped from the page and their absence asserted at build time: 95.0% self-agreement on `grounded`, 75.0% on `abstained`. The second figure is why [ADR-038](DECISIONS.MD) publishes abstention as six described cases and no rate. Working notes are in [`eval/judge/`](eval/judge/).
 
+### Replacing the drafter
+
+`gpt-4.1-mini` retires 2027-04-14, and it does both classification and drafting. Its successor was chosen under a rule committed before any candidate ran ([ADR-043](DECISIONS.MD)): floors on macro-F1, citation validity and groundedness, no failures beyond content-filter rejections, then the lowest cost per drafted ticket. **`gpt-6-luna` was selected** at USD 0.43 per 1,000 drafted tickets, against 1.05 for the incumbent. `gpt-5.6-luna` was ruled out by a single invalid citation, 0.1 pp under the floor. [`eval/drafter/RESULT.md`](eval/drafter/RESULT.md) has the working, the three calls made after the numbers existed, and why one candidate was re-run.
+
+The candidates' groundedness, 80–93% on the same held-out queries and judge, is not a replacement for the 60.9% above. It was a floor, not a ranking, because one run per model cannot separate figures inside an interval about ten points wide. The published score stays the incumbent's until the drafter is actually switched. The routing floors were re-checked against the new model's scores and carry over unchanged.
+
 ### The regression gate
 
 CI compares each run against a committed baseline and fails on regression beyond tolerance. There are **two baselines, guarding different things.**
@@ -411,6 +417,7 @@ Named here rather than left for a reader to discover:
 - **The six hard negatives that cleared Gate B.** [ADR-038](DECISIONS.MD) fixes how they are reported — individually and descriptively, with no rate, because the abstention label is only 75% self-consistent and the denominator is six. That write-up is owed.
 - **Observability and resilience in the running application.** The evaluation harness now records per-call latency and tokens, but it does so by wrapping the model clients in its own code — the API itself still has no tracing and no per-request token recording. Timeouts and bounded retry are in place ([ADR-039](DECISIONS.MD)), with values set as multiples of the measured p95 because no tail latency has been recorded yet.
 - **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval backfills, which closes this for reviewed tickets and leaves it open for the rest.
+- **The drafter switch.** `gpt-6-luna` is selected, and [ADR-019](DECISIONS.MD)'s routing floors hold for it, but it is not yet deployed as the drafter. Switching regenerates the baseline under pricing 1.2.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.
 - **No authentication.** See the OpenAPI note above.
 
