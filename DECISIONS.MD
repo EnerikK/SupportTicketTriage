@@ -1628,6 +1628,14 @@ Both stages build their options through one function, `JsonChatOptions.For`, so 
 
 **Also settled by this test.** [[ADR-042]]'s unverified claim that reasoning models reject `temperature=0` holds for two of these three and not for `gpt-5.4-mini`. That is the case for configuration over model-name detection that [[ADR-042]] argued.
 
+### Outcome — 2026-11-15: `gpt-6-luna` is selected
+
+Applied as written; the working is in `eval/drafter/RESULT.md`. `gpt-5.6-luna` is ineligible on citation validity, 97.9% against a 98.0% floor. `gpt-5.4-mini` and `gpt-6-luna` clear every floor, and `gpt-6-luna` is cheapest at USD 0.000425 per drafted ticket against 0.002321 under pricing 1.2, so the retirement tiebreak is not reached.
+
+**Two readings settled after the numbers existed,** both recorded in the result with their effect, which is none on the outcome. A verdict with no `ResolvedModel` because the draft cited nothing, and so never reached the judge, does not void a run. "Grounded ÷ judged" uses the published figure's population, excluding the engineered hard negatives; the literal all-drafts reading is reported beside it.
+
+**The rule is not closed.** Cutover is still blocked on re-checking [[ADR-019]]'s floors against `gpt-6-luna`, as the entry requires.
+
 ---
 
 ## Entries expected from the audit
