@@ -224,6 +224,9 @@ jobs:
           AzureOpenAi__Endpoint: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
           AzureOpenAi__ApiKey: ${{ secrets.AZURE_OPENAI_API_KEY }}
           AzureOpenAi__ChatDeployment: ${{ secrets.AZURE_OPENAI_CHAT_DEPLOYMENT }}
+          # In the workflow rather than a secret: it belongs to the model the
+          # baseline was written from, and changing the model changes both.
+          AzureOpenAi__ChatTemperature: omit
           AzureOpenAi__EmbeddingDeployment: ${{ secrets.AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}
         run: >-
           dotnet run --project tools/SupportTicketTriage.Eval --configuration Release --

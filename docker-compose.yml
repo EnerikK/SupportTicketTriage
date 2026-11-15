@@ -29,6 +29,7 @@ services:
       AzureOpenAi__Endpoint: ${AZURE_OPENAI_ENDPOINT}
       AzureOpenAi__ApiKey: ${AZURE_OPENAI_API_KEY}
       AzureOpenAi__ChatDeployment: ${AZURE_OPENAI_CHAT_DEPLOYMENT}
+      AzureOpenAi__ChatTemperature: ${AZURE_OPENAI_CHAT_TEMPERATURE:-0}
       AzureOpenAi__EmbeddingDeployment: ${AZURE_OPENAI_EMBEDDING_DEPLOYMENT}
     ports:
       - "8080:8080"
