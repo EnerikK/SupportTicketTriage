@@ -1551,6 +1551,65 @@ Both stages build their options through one function, `JsonChatOptions.For`, so 
 
 ---
 
+## ADR-043 — The drafter is replaced under a rule written before any candidate runs
+
+**Status:** Accepted — 2026-11-15. A pre-registration: committed before any candidate has drafted, classified or been judged. Settles the drafter half of the brief in `docs/PROJECT-STATE.md`; the judge half is [[ADR-040]].
+
+**The problem.** `gpt-4.1-mini` retires on 2027-04-14. One chat deployment does both classification and drafting, so replacing the drafter replaces the classifier too. Nothing said how a successor would be chosen, and a choice made after seeing the numbers can be fitted to them.
+
+**Candidates.** Lifecycle read from this resource's `GET /openai/models` on 2026-11-15:
+
+| model | version | status | retires |
+|---|---|---|---|
+| `gpt-4.1-mini` (incumbent) | 2025-04-14 | — | 2027-04-14 |
+| `gpt-5.4-mini` | 2026-03-17 | generally available | 2027-09-21 |
+| `gpt-5.6-luna` | 2026-07-09 | generally available | 2028-01-11 |
+| `gpt-6-luna` | 2026-09-22 | generally available | 2028-03-11 |
+
+`gpt-6-luna` was added at review, before this entry was committed, because its retirement date, which the brief had left unconfirmed, is listed on this resource.
+
+**`gpt-5-mini` is excluded from drafting.** It retires 2027-07-13, three months after the model it would replace, so it would need replacing again almost at once. Under [[ADR-037]]'s role exclusivity it therefore stays in the judge set. That costs nothing there, because [[ADR-040]]'s 80% ungrounded-recall floor already blocks it at its measured 56%.
+
+**How each candidate runs.** Each gets its own Global Standard deployment, named distinctly from the judge's ([[ADR-018]]), with `ChatTemperature=omit` ([[ADR-042]]).
+
+**Reasoning effort is whatever the API defaults to,** because production cannot set it: only the evaluation judge sends an effort (`JudgeChatOptions`). The candidate is evaluated exactly as it would run. The cost of this choice: defaults differ by model, and a provider changing a default changes the drafter. `ResolvedModel` ([[ADR-041]]) records the model version but not the effort, so a default change would not show up in the data. If production ever gains an effort setting, the candidate is re-run at the value it will use.
+
+**Two populations, three runs per candidate.**
+1. The full 300-ticket dataset: classification, citation validity, latency, cost and routing.
+2. The 111 held-out queries (`--holdout-queries`, `--export-judge-pairs`): drafts for judging.
+3. `gpt-5` at Low judges those drafts (`--judge-pairs-from`). This is the judge behind the published 60.9%, on the same queries, so the comparison is same-judge. Every verdict must carry `ResolvedModel = gpt-5-2025-08-07`; any other value voids the run. The judge deployment is set to `NoAutoUpgrade`, owner-reported 2026-11-15. This run has to happen before 2027-02-09.
+
+**Eligibility: every condition must hold.**
+
+| criterion | threshold | compared against |
+|---|---|---|
+| Classification macro-F1 | no more than 5.0 pp below | committed `evaluation-baseline.json` |
+| Citation validity | no more than 2.0 pp below | committed `evaluation-baseline.json` |
+| Groundedness (`gpt-5` Low), as grounded ÷ judged | no more than 10.0 pp below | the published 60.9% (53 of 87) |
+| Call failures | none other than `content_filter` rejections, and no `TimeoutException` under [[ADR-039]]'s 15 s / 40 s | — |
+
+**Selection among eligible candidates:** the lowest measured cost per drafted ticket. If two are within 10% of each other on cost, the later retirement date wins.
+
+**Why groundedness is a floor and not a ranking.** This deviates from the order first proposed, which was F1 and citations, then groundedness, then cost. The published figure is 53 of 87, with a 95% Wilson interval of [50.4, 70.5], roughly ±10 pp. At that sample size, two candidates can differ by more than 10 pp by chance alone. Ranking on that difference would pick a winner the data cannot distinguish. A floor asks the question the data *can* answer: is this candidate clearly worse? Cost is measured exactly. The 10 pp band is a practical tolerance, not a significance test, and it is stated as one.
+
+**Why the F1 and citation thresholds are the gate's.** They are [[ADR-021]]'s regression-gate tolerances, already set against the measured run-to-run spread. A candidate the CI gate would reject cannot be adopted.
+
+**Cost is a ranking, not a gate.** `gpt-5.4-mini` is priced above the incumbent, so [[ADR-021]]'s 10% cost tolerance would fail it. That tolerance guards against *unintended* increases on an unchanged model. A deliberate model change regenerates the baseline at cutover, and the README states the cost difference.
+
+**Reported, not criteria.** The manual-triage rate and the Gate A and Gate B pass counts. A new classifier's self-reported scores need not match `gpt-4.1-mini`'s distribution, which is what [[ADR-019]]'s floors were selected from. **Cutover is blocked** until those floors have been re-checked against the winner's scores by [[ADR-019]]'s method. Also reported: the content-filter count and p50/p95 latency.
+
+**What must be disclosed beside any figure.**
+- **Same family.** Every candidate is an OpenAI GPT model judged by `gpt-5`, so every pairing shares a training lineage, as [[ADR-037]] requires to be named.
+- **Order.** The incumbent's figures were public before this rule was written. No candidate has run.
+
+**If nothing is eligible.** `gpt-4.1-mini` stays until it retires. Candidates may be added only one commit at a time, each before it runs, under the criteria above, which do not move. If no candidate is eligible by 2027-04-14, that is reported as the outcome, and the drafter deployment fails loudly at retirement instead of being silently upgraded.
+
+**Estimated cost:** under $1 per drafting run, extrapolated from the 2026-11-07 full run at $0.087. About $0.67 per judging run (`eval/judge/holdout/RESULT.md`). Roughly $4–6 for all three candidates. Extrapolated, not measured: reasoning tokens per model are unknown.
+
+**What would reverse it.** A candidate failing on technical grounds, such as an SDK incompatibility, before producing any numbers, which is not a judgement under the rule. Or `gpt-5` disappearing before the judging run, which removes the same-judge comparison; the groundedness criterion would then need a new pre-registration, not an improvised substitute.
+
+---
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.
