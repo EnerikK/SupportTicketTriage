@@ -1608,6 +1608,26 @@ Both stages build their options through one function, `JsonChatOptions.For`, so 
 
 **What would reverse it.** A candidate failing on technical grounds, such as an SDK incompatibility, before producing any numbers, which is not a judgement under the rule. Or `gpt-5` disappearing before the judging run, which removes the same-judge comparison; the groundedness criterion would then need a new pre-registration, not an improvised substitute.
 
+### Amendment — 2026-11-15: `gpt-5.4-mini` runs at temperature 0
+
+**Committed before any candidate run,** like the entry it amends. The smoke test is the only thing that ran, and it measured nothing the rule scores.
+
+**What the smoke test found.** One call per candidate with no temperature, and one with `temperature=0`, on api-version `2025-04-01-preview`:
+
+| candidate | answered as | `temperature=0` |
+|---|---|---|
+| `gpt-5.4-mini` | `gpt-5.4-mini-2026-03-17` | accepted (200) |
+| `gpt-5.6-luna` | `gpt-5.6-luna-2026-07-09` | rejected: 400 `unsupported_value`, "Only the default (1) value is supported" |
+| `gpt-6-luna` | `gpt-6-luna-2026-09-22` | rejected, same error |
+
+**The change.** `gpt-5.4-mini` runs with `ChatTemperature=0`. The other two keep `omit`, which is the only setting they accept.
+
+**Why.** The entry's own principle is that a candidate is evaluated exactly as it would run. [[ADR-042]] made temperature per-deployment so that each deployment sends what its model supports. A `gpt-5.4-mini` drafter in production would therefore run at 0, like `gpt-4.1-mini`: classification is a fixed choice from a closed list, and sampling adds nothing there except variance between identical inputs. Evaluating it at the default of 1 would judge a configuration nobody would deploy.
+
+**The cost, stated.** The candidates no longer run under identical settings. That is the honest consequence of models that accept different parameters, and comparing them at the settings each would actually use is the comparison that answers the question. The two luna models are nondeterministic at their only permitted setting, so a single run of each carries more run-to-run variance than `gpt-5.4-mini`'s or the incumbent's. The rule's floors were set against the incumbent's measured spread at temperature 0, and that spread may understate theirs.
+
+**Also settled by this test.** [[ADR-042]]'s unverified claim that reasoning models reject `temperature=0` holds for two of these three and not for `gpt-5.4-mini`. That is the case for configuration over model-name detection that [[ADR-042]] argued.
+
 ---
 
 ## Entries expected from the audit
