@@ -1636,6 +1636,14 @@ Applied as written; the working is in `eval/drafter/RESULT.md`. `gpt-5.6-luna` i
 
 **The floors were re-checked and do not move,** from the calibration tables in `gpt-6-luna`'s full-run report rather than a new run. Gate A at 0.50 gates 1 of 295 scored tickets, so it still acts as [[ADR-019]]'s tripwire. Gate B scores retrieval, which does not involve the chat model, and refused the same 13 of 60 for every candidate. Cutover is unblocked; it remains to be done.
 
+### Cutover — 2026-11-15
+
+`gpt-6-luna` is the chat deployment, at `ChatTemperature=omit`, the only value it accepts. The temperature is now passed through by `docker-compose.yml` (`AZURE_OPENAI_CHAT_TEMPERATURE`, default 0) and set in the CI gate job beside the deployment it belongs to. Before this, neither passed one, so every call would have sent 0 and been rejected.
+
+**The baseline was regenerated after measuring spread, not before.** The amendment above warned that a nondeterministic model's run-to-run spread may exceed the incumbent's, which [[ADR-021]]'s tolerances were set against. Two extra full runs came first. Across four runs macro-F1 spans 91.7–92.8%, inside the 5 pp tolerance, and citation validity was 47/47 every time. The 2 pp citation tolerance still allows no invalid citation in 47 drafts; four clean runs make that workable, not safe, and a red gate from one stray citation would be the first evidence against it, not a reason to loosen the tolerance on sight. The fourth run is the baseline: macro-F1 92.1%, USD 0.000427 per drafted ticket, pricing 1.2.
+
+**Groundedness is not republished.** [[ADR-018]] requires judge agreement with hand labels before a score is quoted. The published 60.9% stays, attributed to `gpt-4.1-mini`, until `gpt-6-luna`'s held-out drafts are labelled.
+
 ---
 
 ## Entries expected from the audit
