@@ -70,7 +70,7 @@ counts in that candidate's full-run report, at the pricing 1.2 rates. The next l
 
 Gate B's refusals are identical because retrieval does not involve the chat model. Gate A's
 separation is the number [[ADR-019]]'s floors were chosen from, measured on a different
-model, which is why cutover waits on re-checking them.
+model, which is why they are re-checked [below](#the-routing-floors-re-checked).
 
 `gpt-6-luna` writes about 2.8 times the incumbent's output tokens (37,401 against 13,270) and
 is still the cheapest, because its rates are a quarter to a third of `gpt-4.1-mini`'s. It is also the slowest: a p95 generation
@@ -148,8 +148,40 @@ like the headline, but it is one held-out run per model, judged by a judge that 
 inside its interval, and the same caution applies to comparing the winner with the
 incumbent. The published figure stays the incumbent's until a cutover run replaces it.
 
+## The routing floors, re-checked
+
+[[ADR-043]] blocks cutover until [[ADR-019]]'s floors are re-checked against the new model,
+because they were chosen from `gpt-4.1-mini`'s scores. The check needs no new run: the
+calibration tables are in `gpt-6-luna`'s full-run report, produced at the committed floors
+(`MinimumClassificationScore` 0.5, `MinimumSimilarity` 0.6).
+
+**Gate A stays at 0.50.** [[ADR-019]] made it a tripwire for scores that carry no
+information, not a quality filter, and on `gpt-6-luna` it still behaves as one:
+
+| floor | passes | correct among passed | gated | gated that were correct |
+|---|---|---|---|---|
+| 0.00 | 295 | 93.2% | 0 | 0 |
+| **0.50** | **294** | **93.2%** | **1** | **1** |
+| 0.80 | 286 | 93.4% | 9 | 8 |
+| 0.90 | 247 | 97.2% | 48 | 35 |
+| 0.95 | 205 | 98.5% | 90 | 73 |
+
+At 0.50 it gates one ticket of 295, which would have been classified correctly; any floor
+from 0.40 to 0.55 gives the same row. The five tickets with no score are the `content_filter`
+rejections, which go to manual triage at any floor. The distribution does differ from the
+incumbent's above 0.80, where `gpt-6-luna`'s scores spread out (0.90 gates 16% against
+`gpt-5.4-mini`'s 4%), but the floor sits well below that region. Separation is 0.066, as
+uninformative as [[ADR-019]] found the incumbent's, which is the reason Gate A is a tripwire
+in the first place.
+
+**Gate B stays at 0.60.** It scores retrieval, which uses the embedding model and not the
+chat model. All three candidates refused the same 13 of 60 queries, including all six with no
+correct answer.
+
+Neither floor moves, so cutover is unblocked.
+
 ## What this does not do
 
-It does not switch the drafter. [[ADR-043]] blocks cutover until [[ADR-019]]'s routing floors
-are re-checked against `gpt-6-luna`'s score distribution. Cutover then regenerates
-`evaluation-baseline.json` under pricing 1.2 and states the cost change in the README.
+It does not switch the drafter. Cutover points the chat deployment at `gpt-6-luna` with
+`ChatTemperature=omit`, regenerates `evaluation-baseline.json` under pricing 1.2, and states
+the cost change in the README.

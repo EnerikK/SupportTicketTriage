@@ -1634,7 +1634,7 @@ Applied as written; the working is in `eval/drafter/RESULT.md`. `gpt-5.6-luna` i
 
 **Two readings settled after the numbers existed,** both recorded in the result with their effect, which is none on the outcome. A verdict with no `ResolvedModel` because the draft cited nothing, and so never reached the judge, does not void a run. "Grounded ÷ judged" uses the published figure's population, excluding the engineered hard negatives; the literal all-drafts reading is reported beside it.
 
-**The rule is not closed.** Cutover is still blocked on re-checking [[ADR-019]]'s floors against `gpt-6-luna`, as the entry requires.
+**The floors were re-checked and do not move,** from the calibration tables in `gpt-6-luna`'s full-run report rather than a new run. Gate A at 0.50 gates 1 of 295 scored tickets, so it still acts as [[ADR-019]]'s tripwire. Gate B scores retrieval, which does not involve the chat model, and refused the same 13 of 60 for every candidate. Cutover is unblocked; it remains to be done.
 
 ---
 
