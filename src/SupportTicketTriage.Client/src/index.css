@@ -711,6 +711,12 @@ body {
   font-size: var(--text-md);
 }
 
+.evidence__provenance {
+  margin: 0 0 var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
 /* Review actions */
 
 .review__label {

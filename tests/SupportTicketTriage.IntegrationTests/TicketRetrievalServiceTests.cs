@@ -33,7 +33,7 @@ public class TicketRetrievalServiceTests(TicketApiFactory factory)
         var ticket = Ticket.Create(subject, $"body of {subject}");
         if (resolution is not null)
         {
-            ticket.Resolve(resolution);
+            ticket.Resolve(resolution, ResolutionSource.Imported);
         }
 
         db.Tickets.Add(ticket);
@@ -265,6 +265,7 @@ public class TicketRetrievalServiceTests(TicketApiFactory factory)
         var single = Assert.Single(results!);
         Assert.Equal("endpoint-match", single.Subject);
         Assert.Equal("endpoint resolution", single.Resolution);
+        Assert.Equal("Imported", single.ResolutionSource);
 
         var missing = await client.GetAsync($"/tickets/{Guid.NewGuid()}/similar");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);

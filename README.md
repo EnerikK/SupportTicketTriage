@@ -2,7 +2,7 @@
 
 Drafts replies to support tickets, grounded in tickets a human already resolved — and never sends one.
 
-An incoming ticket is classified, matched against resolved tickets by vector similarity, and used to generate a draft reply that may only cite the tickets it was actually shown. A human approves, edits and approves, or rejects. Approved replies become the precedent future drafts are grounded on.
+An incoming ticket is classified, matched against resolved tickets by vector similarity, and used to generate a draft reply that may only cite the tickets it was actually shown. A human approves, edits and approves, or rejects it, and writes the reply themselves when there is no draft they can judge. Accepted and hand-written replies become the precedent future drafts are grounded on.
 
 It is built to demonstrate the parts of an LLM-backed system that are usually skipped: measured retrieval quality, guardrails that hold against a hostile model, and a documented account of what has and has not been proven. Features were cut before any of that was.
 
@@ -42,6 +42,10 @@ flowchart TD
     REVIEW --> APPROVE["Approve or edit and approve"]
     APPROVE --> RESOLVE["Resolution set"]
     RESOLVE -.->|ticket joins the corpus| VEC
+
+    MANUAL --> HAND["Reviewer writes the reply<br/>marked as written by hand"]
+    WITHHELD --> HAND
+    HAND --> RESOLVE
 ```
 
 Three model calls, one per stage, no autonomous loop and no tool selection anywhere.
@@ -58,7 +62,7 @@ Three model calls, one per stage, no autonomous loop and no tool selection anywh
 
 **Validation.** Every cited id is checked against that generation's retrieval set, server-side, with no model involved. A draft citing anything outside it is stored — it is the only record that the model cited evidence it was never shown — and the API serves neither its text nor its citations.
 
-**Review.** A reviewer approves, edits and approves, or rejects. The reviewer's final text becomes the ticket's resolution, and the corpus is defined as tickets whose resolution is not null, so approval is what admits a ticket to the corpus. The decision and the resolution commit in a single transaction.
+**Review.** A reviewer approves, edits and approves, or rejects a draft, or resolves the ticket by hand when there is no draft they can judge. The reviewer's final text becomes the ticket's resolution, and the corpus is defined as tickets whose resolution is not null, so a reviewer's decision is what admits a ticket to the corpus. The decision and the resolution commit in a single transaction.
 
 ---
 
@@ -305,7 +309,7 @@ Both required injection tests drive a fake model that **obeys** the injection �
 
 ## The review UI
 
-Deliberately minimal: a queue, a ticket page, three actions, one stylesheet, no design system. It exists to demonstrate the workflow and nothing else.
+A queue, a ticket page and four review actions, on one stylesheet with a design-token layer and dark mode ([ADR-024](DECISIONS.MD)). There is no admin console, settings page or dashboard: the screens are the review workflow and nothing else.
 
 **The queue is one request.** Category, priority, the routing outcome and the draft's state all come from a single projection rather than four requests per row.
 
@@ -315,7 +319,9 @@ Deliberately minimal: a queue, a ticket page, three actions, one stylesheet, no 
 
 **TypeScript types are generated from the API's own OpenAPI document**, so a renamed field on the server is a compile error in the client rather than `undefined` in a browser. That caught a real looseness during development: the generator types every `double` as number-or-numeric-string, because `System.Text.Json` will read a number out of a string. Hand-written types would have asserted `number` and been wrong about what the contract actually promises.
 
-**A withheld draft is explained, not hidden.** When citation validation fails the API returns no text and no citations, and the UI says the draft cited evidence it was never shown and that the ticket needs manual triage. No action approves around it.
+**A withheld draft is explained, not hidden, and never approved around.** When citation validation fails the API returns no text and no citations, and the UI says the draft cited evidence it was never shown. The one action on offer is writing the reply by hand beneath that explanation; the withheld text is never offered as a starting point.
+
+**A ticket with no reviewable draft can be resolved by hand.** A ticket that failed a routing gate, a withheld draft, and an eligible ticket whose generation failed all offer a reply form; an untriaged ticket is offered triage instead. The reply resolves the ticket, and when that ticket is later retrieved as evidence it carries a "Written by hand" label, because nothing the system can trace supports it.
 
 **There is no send button, because there is no send endpoint.** One test scans every rendered action for send-shaped wording and asserts there are none — the guarantee is an absence, and absences are easy to lose to a well-meaning addition.
 
@@ -342,6 +348,8 @@ Nothing in the UI shows a score as a percentage. A gated ticket names the gate t
 **Approval does not re-embed anything.** The vector is over the ticket's subject and body — the *problem* — not over the resolution. Retrieval matches an incoming problem against past problems and then hands those tickets' resolutions to the model as grounding, so the approved reply is payload, not key. A ticket joins the corpus the instant its resolution is set, reusing the vector written at ingest. The only embedding call on approval is a backfill for a ticket that has no usable vector at all, and it runs *after* the decision commits — an approved ticket temporarily outside the corpus is recoverable, a lost human decision is not.
 
 **The reviewer's final text is stored even when they changed nothing.** The alternative — only edited text becoming corpus — was rejected because most approvals are "this is fine", so the corpus would barely grow and the feedback loop would be decorative. The cost is real: model-authored text then enters the corpus as precedent. Provenance is the mitigation rather than exclusion — review to draft to retrieved sources is a join, so "was this precedent written by a person or accepted from a model, and what was *that* grounded on" is answerable.
+
+**A ticket the system could not draft for can still become precedent.** Only resolved tickets join the corpus, and until [ADR-045](DECISIONS.MD) only an approved draft resolved one, so the tickets Gate B refused for having nothing similar could never become the precedent the next similar ticket needs. A reviewer can now resolve such a ticket with their own reply. Every resolution records its source (imported, approved draft or manual reply), because the line worth drawing is not "a human wrote it", which edit-and-approve already allows, but "written from cited precedents" against "written from nothing the system can trace". The source is shown to the reviewer and kept out of the generation prompt and ranking: in the prompt it would be a new prompt version, and nothing yet says ranking should use it.
 
 **Vectors are stamped with the deployment that produced them, and retrieval filters on it.** Vectors from different embedding models occupy different coordinate systems; comparing them produces *plausible nonsense* — results that look like mediocre relevance rather than a bug. Re-embedding under a new deployment inserts a row rather than overwriting one, and the query filters by model, so mixing them is impossible by construction.
 
@@ -403,20 +411,20 @@ GET  /tickets/{id}/routing            most recent routing decision, with inputs 
 POST /tickets/{id}/draft              generate a grounded draft (idempotent per ticket)
 GET  /tickets/{id}/draft              the draft, if its citations validated
 POST /tickets/{id}/triage             re-run classification and routing on demand
-POST /tickets/{id}/review             approve, edit and approve, or reject
+POST /tickets/{id}/review             approve, edit and approve, reject, or resolve manually
 GET  /tickets/{id}/review             the recorded decision
 ```
 
 ### Tests
 
 ```bash
-dotnet test                                   # 302 unit, 107 integration
-npm --prefix src/SupportTicketTriage.Client test   # 90 component
+dotnet test                                   # 399 unit, 125 integration
+npm --prefix src/SupportTicketTriage.Client test   # 96 component
 ```
 
-**Backend: 302 unit tests and 107 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
+**Backend: 399 unit tests and 125 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
 
-**Frontend: 90 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, and what each review action actually sends. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
+**Frontend: 96 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, and what each review action actually sends. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
 
 ### Evaluation harness
 
@@ -439,7 +447,7 @@ Named here rather than left for a reader to discover:
 - **A second held-out set.** The three judge configurations were compared using the labels on the same 93 pairs the score is computed over, so the selected judge is the one that fitted that sample best among three. With three candidates and a rule fixed in advance the bias is small, but the honest fix is more held-out material rather than a disclaimer.
 - **The six hard negatives that cleared Gate B.** [ADR-038](DECISIONS.MD) fixes how they are reported — individually and descriptively, with no rate, because the abstention label is only 75% self-consistent and the denominator is six. That write-up is owed.
 - **Observability and resilience in the running application.** The evaluation harness now records per-call latency and tokens, but it does so by wrapping the model clients in its own code — the API itself still has no tracing and no per-request token recording. Timeouts and bounded retry are in place ([ADR-039](DECISIONS.MD)), with values set as multiples of the measured p95 because no tail latency has been recorded yet.
-- **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval backfills, which closes this for reviewed tickets and leaves it open for the rest.
+- **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval and manual resolution both backfill, which closes this for resolved tickets and leaves it open for the rest.
 - **Groundedness for the current drafter.** The published 60.9% is `gpt-4.1-mini`'s. Republishing it for `gpt-6-luna` needs its 88 held-out drafts labelled by hand, so the judge's agreement can be measured on them as [ADR-018](DECISIONS.MD) requires.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.
 - **No authentication.** See the OpenAPI note above.

@@ -1687,6 +1687,53 @@ Four specific failures were possible:
 
 ---
 
+## ADR-045 — A ticket with no reviewable draft can be resolved by hand, and the precedent says so
+
+**Status:** Accepted — 2026-11-17. Commits `692b941`, `6c470ba`, `0693820`, `7d60641`. Extends [[ADR-011]]. **Reopens [[ADR-016]]:** the review actions are four, not three, and a gated or withheld ticket now renders exactly one button instead of none.
+
+**The problem.**
+- A ticket that fails a routing gate gets no draft. A ticket whose draft cited evidence it was never shown has that draft withheld ([[ADR-010]]). The review endpoint refused both, and the UI said "Nothing to review" and offered nothing. [[ADR-011]] called that dead end correct.
+- It was correct about the draft and wrong about the ticket. Only a resolved ticket joins the corpus, and only an approved review resolved one. So the tickets Gate B refused for having nothing similar could never become the precedent the next similar ticket needs. The feedback loop broke exactly where the system is weakest.
+- The specification said gated tickets "route to manual triage and receive no draft" and was silent on what manual triage then does. This closes a gap rather than reversing a requirement; the specification now names the fourth action.
+
+**Decision.**
+- **A fourth decision, `ResolvedManually`, on the same `POST /tickets/{id}/review`.** The reviewer's own reply becomes the resolution. It is allowed only when no reviewable draft exists: refused while a citation-valid draft exists, which is the reviewer's to judge, and refused on a ticket that is already resolved.
+- **Every resolution records where it came from.** `ResolutionSource { Imported, ApprovedDraft, ManualReply }` lives on `Ticket` and `Ticket.Resolve` requires it. There are three values because the evaluation harness resolves its 240 corpus tickets directly, with no review.
+  - The line worth drawing is not "a human wrote it": edit-and-approve already puts human text into the corpus, and the citation check only verifies that a draft cited its own retrieval set, never the resolution. It is "written from cited precedents and accepted" against "written from nothing the system can trace".
+  - **The backfill** labels a resolved ticket `ApprovedDraft` when it has an approved review and `Imported` otherwise. That is sound because only approval and corpus import ever called `Resolve`, and approval adds the review and calls `Resolve` in one `SaveChanges`, which `Resolve` aborts on an already-resolved ticket. An imported ticket therefore cannot carry an approved review. A test seeds a database at the previous migration and checks each case, including an imported ticket with a *rejected* review.
+  - **A check constraint** requires the source exactly when a resolution exists. It is added after the backfill, so a row the backfill missed fails the migration. It cannot catch a wrong label; the test does.
+- **`TicketDraftId` becomes nullable under a one-directional check.** Approve and reject must name a draft; a manual resolution may. "No reviewable draft exists" is enforced in the service, because it depends on the latest draft's `CitationsValid`, which a row constraint on `TicketReviews` cannot see.
+- **A withheld draft stays linked, and its text never becomes the resolution.** The link keeps the record of what the model produced. The manual-resolution factory has no draft-text parameter, so there is no route for that text to travel.
+- **The embedding backfill runs for a manual resolution as it does for approval.** A ticket with no usable vector retrieves nothing, so it can never be drafted and a hand-written reply is its only way to resolve. Resolving it without a vector would add a precedent nobody can retrieve.
+- **After any review, neither triage nor generation runs on that ticket.** Triage already refused reviewed tickets. Generation now does too, checked after the existing-draft return: asking again for a reviewed ticket's draft still returns it, and only the paid call is closed.
+- **The source is shown, not used.** The evidence panel labels a manual reply "Written by hand". The source is not passed into the generation prompt, which builds its evidence from named fields; adding it would be a new prompt version and would invalidate the baseline and the groundedness record. It is not used in ranking, for lack of evidence that it should be.
+- **Where the UI offers the form.** A gated ticket and a withheld draft, beneath the explanation of why there is nothing to review, which stays. An eligible ticket only after generation fails. Never an untriaged ticket.
+
+**Alternatives rejected.**
+- **Refusing manual resolution while a ticket is draft-eligible.** When generation fails, for example because Azure is down, that recreates the dead end. The UI follows the same reasoning by offering the form under a failed generation.
+- **A two-way constraint, or reviewability enforced in the database.** A check constraint sees one row; the rule depends on the latest row of another table.
+- **A separate endpoint.** [[ADR-016]]'s reasoning holds: the actions differ by payload, not by verb.
+- **Starting the reply from the withheld draft's text.** That text cited evidence it was never shown. Offering it as a starting point walks it into the corpus through an edit.
+- **Labelling every source.** Two hundred and forty "Imported" labels would be noise; the exception is what a reviewer needs to see.
+- **A new queue tone and icon.** It would reopen [[ADR-025]]'s four circles and one triangle. A person decided and the ticket is resolved, which is what the reviewed tone means; the word carries the difference.
+- **The form on an untriaged ticket.** Triage is offered there, and resolving it first would make triage refuse the ticket for good, leaving it unclassified.
+
+**The cost, stated.**
+- **`WasEdited` is false on a manual resolution,** because there was no draft to edit. "Accepted as written" is `Approved` and not `WasEdited`, never not-`WasEdited` alone.
+- **A hand-written reply enters the corpus with no grounding check of any kind.** It is redacted when it enters a prompt, like every resolution ([[ADR-010]]), and untrusted on retrieval like all ticket content. The label is the reviewer's only signal.
+- **Rolling back `AllowManualResolution` refuses while a manual resolution without a draft exists.** The old schema cannot hold one, and the alternatives were deleting human decisions or pointing them at a draft that does not exist. EF's generated `Guid.Empty` default was removed from `Down`. A mutation test showed the foreign key would have refused that fake id anyway, so what the removal buys is an exact restore and an error that names the real cause.
+- **A race between generation and manual resolution.** Generation checks for a review, calls the model, then saves. A manual resolution that lands in that window leaves one unreviewable draft and one paid call. Nothing is corrupted, so it is accepted rather than locked against.
+
+**Not done.**
+- **Category override** on a manual resolution. Retrieval does not filter by category, so a precedent is found without one.
+- **Closing a ticket without a reply,** for spam. It would never call `Resolve`, so spam stays out of the corpus by construction.
+- **The source in ranking,** until there is evidence it should be there.
+- **Approving a resolved corpus ticket that has a validated draft returns a 500,** because `Resolve` throws. This predates the decision and is recorded as a known gap; the manual path refuses the same case with a 409.
+
+**What would reverse it.** Evidence that hand-written precedents lower groundedness when they are retrieved, which would argue for down-ranking or excluding them. Or a corpus curated separately from review, which would make resolving a ticket and admitting it as precedent two decisions instead of one.
+
+---
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.

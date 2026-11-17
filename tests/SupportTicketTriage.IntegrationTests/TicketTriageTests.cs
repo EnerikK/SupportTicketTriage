@@ -106,7 +106,7 @@ public class TicketTriageTests(ClassificationApiFactory factory)
             // to Tickets, so an invented source id is rejected by the database
             // rather than quietly stored.
             var source = Ticket.Create("triage-reviewed-source", "Body of the source.");
-            source.Resolve("A resolution.");
+            source.Resolve("A resolution.", ResolutionSource.Imported);
             db.Tickets.Add(source);
             await db.SaveChangesAsync();
 

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pgvector;
 using SupportTicketTriage.Api.Contracts;
+using SupportTicketTriage.Application.Review;
 using SupportTicketTriage.Application.Routing;
 using SupportTicketTriage.Domain;
 using SupportTicketTriage.Infrastructure.Ai;
@@ -53,14 +54,14 @@ public class TicketDraftServiceTests(ClassificationApiFactory factory)
         var sourceIds = new List<Guid>();
 
         var first = Ticket.Create("Duplicate charge", "Body of the duplicate charge ticket.");
-        first.Resolve(firstResolution);
+        first.Resolve(firstResolution, ResolutionSource.Imported);
         db.Tickets.Add(first);
         db.TicketEmbeddings.Add(TicketEmbedding.Create(
             first.Id, "redacted duplicate charge body", "v1", model, VectorOf((0, 1f), (1, 0.05f))));
         sourceIds.Add(first.Id);
 
         var second = Ticket.Create("Pending authorisation", "Body of the pending authorisation ticket.");
-        second.Resolve("The pending entry drops off within three working days.");
+        second.Resolve("The pending entry drops off within three working days.", ResolutionSource.Imported);
         db.Tickets.Add(second);
         db.TicketEmbeddings.Add(TicketEmbedding.Create(
             second.Id, "redacted pending authorisation body", "v1", model, VectorOf((0, 1f), (1, 0.2f))));
@@ -169,6 +170,31 @@ public class TicketDraftServiceTests(ClassificationApiFactory factory)
         var result = await drafts.GenerateAsync(seeded.Query);
 
         Assert.Equal(DraftOutcome.NotEligible, result.Outcome);
+        Assert.False(await db.TicketDrafts.AnyAsync(d => d.TicketId == seeded.Query.Id));
+    }
+
+    /// A draft-eligible ticket resolved by hand before anyone asked for its
+    /// draft. Generating one now would pay for text nobody can ever review.
+    [Fact]
+    public async Task AReviewedTicket_GetsNoDraft_AndTheModelIsNotCalled()
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+        var drafts = scope.ServiceProvider.GetRequiredService<TicketDraftService>();
+
+        var seeded = SeedEligible(db);
+
+        Assert.True(ReviewSubmission.TryCreateManualResolution("Resolved by hand.", null, out var manual, out _));
+        db.TicketReviews.Add(TicketReview.Create(seeded.Query.Id, draftId: null, manual!));
+        seeded.Query.Resolve("Resolved by hand.", ResolutionSource.ManualReply);
+        await db.SaveChangesAsync();
+
+        factory.ChatClient.Reset();
+
+        var result = await drafts.GenerateAsync(seeded.Query);
+
+        Assert.Equal(DraftOutcome.AlreadyReviewed, result.Outcome);
+        Assert.Empty(factory.ChatClient.Received);
         Assert.False(await db.TicketDrafts.AnyAsync(d => d.TicketId == seeded.Query.Id));
     }
 

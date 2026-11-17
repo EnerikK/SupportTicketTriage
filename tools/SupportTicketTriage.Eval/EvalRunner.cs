@@ -189,7 +189,7 @@ public sealed class EvalRunner(
 
             if (entry.Role == TicketRole.Corpus)
             {
-                ticket.Resolve(entry.Resolution!);
+                ticket.Resolve(entry.Resolution!, ResolutionSource.Imported);
             }
 
             db.Tickets.Add(ticket);

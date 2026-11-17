@@ -235,6 +235,43 @@ describe('TicketDetail', () => {
     ).toBeInTheDocument()
   })
 
+  /// A hand-written precedent has nothing traceable behind it, and the
+  /// reviewer is told so; the ordinary sources carry no label.
+  it('labels a precedent written by hand, and only that one', async () => {
+    routeResponses({
+      [`/tickets/${TICKET_ID}`]: { status: 200, body: ticketBody },
+      '/similar': {
+        status: 200,
+        body: [
+          {
+            ticketId: 'source-1',
+            subject: 'Duplicate charge',
+            redactedText: 'redacted',
+            resolution: 'Refunded the duplicate charge.',
+            similarity: 0.91,
+            resolutionSource: 'ManualReply',
+          },
+          {
+            ticketId: 'source-2',
+            subject: 'Pending authorisation',
+            redactedText: 'redacted',
+            resolution: 'The pending entry drops off.',
+            similarity: 0.88,
+            resolutionSource: 'Imported',
+          },
+        ],
+      },
+    })
+
+    renderDetail()
+
+    expect(await screen.findByText('Pending authorisation')).toBeInTheDocument()
+    expect(screen.getAllByText('Written by hand.')).toHaveLength(1)
+    expect(
+      screen.getByText('Written by hand.').closest('li'),
+    ).toHaveTextContent('Duplicate charge')
+  })
+
   /// The API types doubles as number-or-numeric-string, so the client has to
   /// cope with the string form the contract permits.
   it('formats a similarity that arrives as a string', async () => {

@@ -19,6 +19,12 @@ export function describeState(item: TicketQueueItem): TicketState {
     return { label: 'Approved', tone: 'reviewed' }
   }
 
+  // Reuses the reviewed tone and its icon: a person decided and the ticket is
+  // resolved, which is what that tone means. The word carries the difference.
+  if (item.reviewDecision === 'ResolvedManually') {
+    return { label: 'Resolved manually', tone: 'reviewed' }
+  }
+
   if (item.reviewDecision === 'Rejected') {
     return { label: 'Rejected', tone: 'rejected' }
   }

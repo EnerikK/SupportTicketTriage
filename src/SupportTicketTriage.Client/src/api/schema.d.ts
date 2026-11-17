@@ -522,6 +522,7 @@ export interface components {
             resolution: string;
             /** Format: double */
             similarity: number | string;
+            resolutionSource: string;
         };
         SubmitReviewRequest: {
             decision: string;
@@ -586,7 +587,7 @@ export interface components {
             wasEdited: boolean;
             rejectionReason: null | string;
             /** Format: uuid */
-            draftId: string;
+            draftId: null | string;
             /** Format: date-time */
             createdAt: string;
         };

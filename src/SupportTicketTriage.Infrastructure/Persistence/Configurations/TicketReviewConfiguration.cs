@@ -31,6 +31,16 @@ public sealed class TicketReviewConfiguration : IEntityTypeConfiguration<TicketR
         // second would try to resolve an already-resolved ticket.
         builder.HasIndex(r => r.TicketId).IsUnique();
 
+        // One-directional on purpose. An approval or rejection must name the
+        // draft it judged. A manual resolution may or may not have one, so the
+        // constraint says nothing about it. "No reviewable draft exists" is
+        // enforced by the service instead, because reviewability depends on
+        // the latest draft's CitationsValid, which a row constraint on this
+        // table cannot see.
+        builder.ToTable(t => t.HasCheckConstraint(
+            "CK_TicketReviews_DraftRequiredUnlessResolvedManually",
+            "\"Decision\" = 'ResolvedManually' OR \"TicketDraftId\" IS NOT NULL"));
+
         builder.HasOne<Ticket>()
             .WithMany()
             .HasForeignKey(r => r.TicketId)

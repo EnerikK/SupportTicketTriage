@@ -25,6 +25,7 @@ const evidence: SimilarTicket[] = [
     redactedText: 'redacted',
     resolution: 'The second charge was an authorisation hold.',
     similarity: 0.91,
+    resolutionSource: 'Imported',
   },
 ]
 
