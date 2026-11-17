@@ -522,6 +522,7 @@ export interface components {
             resolution: string;
             /** Format: double */
             similarity: number | string;
+            resolutionSource: string;
         };
         SubmitReviewRequest: {
             decision: string;

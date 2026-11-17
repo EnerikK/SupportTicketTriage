@@ -362,6 +362,7 @@ public class TicketReviewServiceTests(EmbeddingApiFactory factory)
 
         var found = Assert.Single(similar, s => s.TicketId == approvedId);
         Assert.Equal(DraftText, found.Resolution);
+        Assert.Equal(ResolutionSource.ApprovedDraft, found.ResolutionSource);
     }
 
     [Fact]
@@ -583,6 +584,7 @@ public class TicketReviewServiceTests(EmbeddingApiFactory factory)
 
         var found = Assert.Single(similar, s => s.TicketId == resolvedId);
         Assert.Equal(ManualReply, found.Resolution);
+        Assert.Equal(ResolutionSource.ManualReply, found.ResolutionSource);
     }
 
     /// The check constraint, not only the service: an approval or rejection

@@ -203,6 +203,16 @@ export function TicketDetail() {
                   <span className="citations__rank">#{index + 1}</span> {source.subject}{' '}
                   <span className="muted">{similarityLabel(source.similarity)}</span>
                 </p>
+                {/* Only manual replies are labelled. Imported and approved
+                    precedents are the norm, and a label on every one would be
+                    noise. It sits before the text so the reviewer knows where
+                    the reply came from before reading it. */}
+                {source.resolutionSource === 'ManualReply' && (
+                  <p className="evidence__provenance">
+                    <strong>Written by hand.</strong> A reviewer wrote this reply without a draft.
+                    Nothing the system can trace supports it.
+                  </p>
+                )}
                 <p className="evidence__resolution">{source.resolution}</p>
               </li>
             ))}

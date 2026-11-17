@@ -265,6 +265,7 @@ public class TicketRetrievalServiceTests(TicketApiFactory factory)
         var single = Assert.Single(results!);
         Assert.Equal("endpoint-match", single.Subject);
         Assert.Equal("endpoint resolution", single.Resolution);
+        Assert.Equal("Imported", single.ResolutionSource);
 
         var missing = await client.GetAsync($"/tickets/{Guid.NewGuid()}/similar");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);

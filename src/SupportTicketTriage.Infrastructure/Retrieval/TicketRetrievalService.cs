@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pgvector.EntityFrameworkCore;
+using SupportTicketTriage.Domain;
 using SupportTicketTriage.Infrastructure.Persistence;
 
 namespace SupportTicketTriage.Infrastructure.Retrieval;
@@ -9,7 +10,10 @@ public sealed record SimilarTicket(
     string Subject,
     string RedactedText,
     string Resolution,
-    double Similarity);
+    double Similarity,
+    // Shown to the reviewer; deliberately absent from the generation prompt,
+    // which builds its evidence from named fields and never sees this one.
+    ResolutionSource ResolutionSource);
 
 public sealed class TicketRetrievalService(SupportTicketTriageDbContext db)
 {
@@ -54,6 +58,7 @@ public sealed class TicketRetrievalService(SupportTicketTriageDbContext db)
                     t.Subject,
                     e.RedactedText,
                     t.Resolution,
+                    t.ResolutionSource,
                     Distance = e.Embedding.CosineDistance(query.Embedding),
                 })
             .OrderBy(r => r.Distance)
@@ -78,9 +83,12 @@ public sealed class TicketRetrievalService(SupportTicketTriageDbContext db)
             .Take(k)
             .ToListAsync(ct);
 
-        // pgvector cosine distance is 1 - cosine similarity.
+        // pgvector cosine distance is 1 - cosine similarity. Both nullables are
+        // set on every row here: the query keeps only resolved tickets, and a
+        // check constraint requires a source on every resolved one.
         return rows
-            .Select(r => new SimilarTicket(r.Id, r.Subject, r.RedactedText, r.Resolution!, 1 - r.Distance))
+            .Select(r => new SimilarTicket(
+                r.Id, r.Subject, r.RedactedText, r.Resolution!, 1 - r.Distance, r.ResolutionSource!.Value))
             .ToList();
     }
 }
