@@ -53,14 +53,14 @@ public class TicketDraftServiceTests(ClassificationApiFactory factory)
         var sourceIds = new List<Guid>();
 
         var first = Ticket.Create("Duplicate charge", "Body of the duplicate charge ticket.");
-        first.Resolve(firstResolution);
+        first.Resolve(firstResolution, ResolutionSource.Imported);
         db.Tickets.Add(first);
         db.TicketEmbeddings.Add(TicketEmbedding.Create(
             first.Id, "redacted duplicate charge body", "v1", model, VectorOf((0, 1f), (1, 0.05f))));
         sourceIds.Add(first.Id);
 
         var second = Ticket.Create("Pending authorisation", "Body of the pending authorisation ticket.");
-        second.Resolve("The pending entry drops off within three working days.");
+        second.Resolve("The pending entry drops off within three working days.", ResolutionSource.Imported);
         db.Tickets.Add(second);
         db.TicketEmbeddings.Add(TicketEmbedding.Create(
             second.Id, "redacted pending authorisation body", "v1", model, VectorOf((0, 1f), (1, 0.2f))));

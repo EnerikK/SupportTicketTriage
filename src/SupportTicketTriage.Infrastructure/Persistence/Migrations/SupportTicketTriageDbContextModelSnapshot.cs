@@ -40,6 +40,10 @@ namespace SupportTicketTriage.Infrastructure.Persistence.Migrations
                     b.Property<string>("Resolution")
                         .HasColumnType("text");
 
+                    b.Property<string>("ResolutionSource")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<DateTimeOffset?>("ResolvedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -50,7 +54,10 @@ namespace SupportTicketTriage.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tickets", (string)null);
+                    b.ToTable("Tickets", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Tickets_ResolutionSource_SetWithResolution", "(\"Resolution\" IS NULL) = (\"ResolutionSource\" IS NULL)");
+                        });
                 });
 
             modelBuilder.Entity("SupportTicketTriage.Infrastructure.Persistence.TicketClassification", b =>

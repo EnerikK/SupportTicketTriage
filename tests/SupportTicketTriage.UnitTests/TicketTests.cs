@@ -37,19 +37,23 @@ public class TicketTests
         Assert.False(ticket.IsResolved);
         Assert.Null(ticket.Resolution);
         Assert.Null(ticket.ResolvedAt);
+        Assert.Null(ticket.ResolutionSource);
     }
 
-    [Fact]
-    public void Resolve_RecordsTheApprovedResolution()
+    [Theory]
+    [InlineData(ResolutionSource.Imported)]
+    [InlineData(ResolutionSource.ApprovedDraft)]
+    public void Resolve_RecordsTheResolutionAndWhereItCameFrom(ResolutionSource source)
     {
         var ticket = Ticket.Create("some subject", "some body");
         var before = DateTimeOffset.UtcNow;
 
-        ticket.Resolve("Reset the password from the account page.");
+        ticket.Resolve("Reset the password from the account page.", source);
 
         Assert.True(ticket.IsResolved);
         Assert.Equal("Reset the password from the account page.", ticket.Resolution);
         Assert.InRange(ticket.ResolvedAt!.Value, before.AddTicks(-10), DateTimeOffset.UtcNow);
+        Assert.Equal(source, ticket.ResolutionSource);
     }
 
     [Theory]
@@ -60,16 +64,33 @@ public class TicketTests
     {
         var ticket = Ticket.Create("some subject", "some body");
 
-        Assert.Throws<ArgumentException>(() => ticket.Resolve(resolution!));
+        Assert.Throws<ArgumentException>(() => ticket.Resolve(resolution!, ResolutionSource.Imported));
+        Assert.Null(ticket.ResolutionSource);
+    }
+
+    // Zero is the default of an unset field, which is why the enum starts at 1.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(99)]
+    public void Resolve_WithUndefinedSource_Throws(int source)
+    {
+        var ticket = Ticket.Create("some subject", "some body");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => ticket.Resolve("some resolution", (ResolutionSource)source));
+        Assert.False(ticket.IsResolved);
     }
 
     [Fact]
     public void Resolve_WhenAlreadyResolved_Throws()
     {
         var ticket = Ticket.Create("some subject", "some body");
-        ticket.Resolve("first");
+        ticket.Resolve("first", ResolutionSource.Imported);
 
-        Assert.Throws<InvalidOperationException>(() => ticket.Resolve("second"));
+        // The migration backfill relies on this: an imported ticket can never
+        // later be relabelled as an approved draft.
+        Assert.Throws<InvalidOperationException>(() => ticket.Resolve("second", ResolutionSource.ApprovedDraft));
+        Assert.Equal("first", ticket.Resolution);
+        Assert.Equal(ResolutionSource.Imported, ticket.ResolutionSource);
     }
 
     [Theory]

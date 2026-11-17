@@ -25,6 +25,20 @@ public sealed class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         builder.Property(t => t.Resolution);
         builder.Property(t => t.ResolvedAt);
 
+        // Stored as its name, like TicketReview.Decision, so reordering the
+        // enum can never reinterpret history.
+        builder.Property(t => t.ResolutionSource)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
         builder.Ignore(t => t.IsResolved);
+
+        // A resolution always says where it came from. The domain enforces
+        // this through Resolve; the constraint covers the migration backfill,
+        // which writes the column without going through the domain, so a row
+        // it misses fails the migration instead of persisting unlabelled.
+        builder.ToTable(t => t.HasCheckConstraint(
+            "CK_Tickets_ResolutionSource_SetWithResolution",
+            "(\"Resolution\" IS NULL) = (\"ResolutionSource\" IS NULL)"));
     }
 }

@@ -78,7 +78,7 @@ public sealed class TicketReviewService(
 
         if (accepted.Decision == ReviewDecision.Approved)
         {
-            ticket.Resolve(accepted.FinalText!);
+            ticket.Resolve(accepted.FinalText!, Domain.ResolutionSource.ApprovedDraft);
         }
 
         // One SaveChanges, so the review and the resolution commit together in

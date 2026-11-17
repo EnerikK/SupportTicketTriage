@@ -13,6 +13,10 @@ public sealed class Ticket
     public string? Resolution { get; private set; }
     public DateTimeOffset? ResolvedAt { get; private set; }
 
+    // Set together with Resolution and null while it is. A check constraint
+    // holds the database to the same rule.
+    public ResolutionSource? ResolutionSource { get; private set; }
+
     public bool IsResolved => Resolution is not null;
 
     private Ticket(Guid id, string subject, string body, DateTimeOffset createdAt)
@@ -38,11 +42,16 @@ public sealed class Ticket
         return new Ticket(Guid.CreateVersion7(), subject, body, UtcNowToMicrosecondPrecision());
     }
 
-    public void Resolve(string resolution)
+    public void Resolve(string resolution, ResolutionSource source)
     {
         if (string.IsNullOrWhiteSpace(resolution))
         {
             throw new ArgumentException("Resolution is required.", nameof(resolution));
+        }
+
+        if (!Enum.IsDefined(source))
+        {
+            throw new ArgumentOutOfRangeException(nameof(source), source, "Resolution source is not a defined value.");
         }
 
         if (IsResolved)
@@ -52,6 +61,7 @@ public sealed class Ticket
 
         Resolution = resolution;
         ResolvedAt = UtcNowToMicrosecondPrecision();
+        ResolutionSource = source;
     }
 
     private static DateTimeOffset UtcNowToMicrosecondPrecision()

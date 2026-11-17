@@ -50,7 +50,7 @@ public class TicketReviewServiceTests(EmbeddingApiFactory factory)
         model ??= $"model-{Guid.NewGuid():N}";
 
         var source = Ticket.Create("Duplicate charge", "Body of the duplicate charge ticket.");
-        source.Resolve("The second charge was an authorisation hold and released itself.");
+        source.Resolve("The second charge was an authorisation hold and released itself.", ResolutionSource.Imported);
         db.Tickets.Add(source);
         db.TicketEmbeddings.Add(TicketEmbedding.Create(
             source.Id, "redacted duplicate charge body", "v1", model, VectorOf((0, 1f), (1, 0.05f))));

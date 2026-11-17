@@ -103,7 +103,7 @@ public class TicketQueueTests(TicketApiFactory factory)
             var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
 
             var source = AddTicket(db, "queue-source");
-            source.Resolve("A resolution.");
+            source.Resolve("A resolution.", ResolutionSource.Imported);
 
             var ticket = AddTicket(db, "queue-triaged");
             ticketId = ticket.Id;
@@ -167,7 +167,7 @@ public class TicketQueueTests(TicketApiFactory factory)
             var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
 
             var source = AddTicket(db, "queue-failed-source");
-            source.Resolve("A resolution.");
+            source.Resolve("A resolution.", ResolutionSource.Imported);
 
             ticketId = AddTicket(db, "queue-failed-draft").Id;
             await db.SaveChangesAsync();
@@ -216,7 +216,7 @@ public class TicketQueueTests(TicketApiFactory factory)
             var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
 
             var source = AddTicket(db, "queue-text-source");
-            source.Resolve("A resolution.");
+            source.Resolve("A resolution.", ResolutionSource.Imported);
 
             ticketId = AddTicket(db, "queue-text").Id;
             await db.SaveChangesAsync();
@@ -249,7 +249,7 @@ public class TicketQueueTests(TicketApiFactory factory)
             var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
 
             var source = AddTicket(db, "queue-trip-source");
-            source.Resolve("A resolution.");
+            source.Resolve("A resolution.", ResolutionSource.Imported);
 
             var first = AddTicket(db, "queue-trip-one").Id;
             var second = AddTicket(db, "queue-trip-two").Id;

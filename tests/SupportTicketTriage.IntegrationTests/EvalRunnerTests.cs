@@ -145,7 +145,7 @@ public sealed class EvalRunnerTests : IAsyncLifetime
     public async Task Reset_ClearsEverythingEvenWhenADraftAndReviewExist()
     {
         var source = Ticket.Create("Duplicate charge", "Body of the duplicate charge ticket.");
-        source.Resolve("The second charge was an authorisation hold.");
+        source.Resolve("The second charge was an authorisation hold.", ResolutionSource.Imported);
         _db.Tickets.Add(source);
 
         var ticket = Ticket.Create("Charged twice", "My card was charged twice.");

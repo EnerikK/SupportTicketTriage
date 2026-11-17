@@ -33,7 +33,7 @@ public class TicketRetrievalServiceTests(TicketApiFactory factory)
         var ticket = Ticket.Create(subject, $"body of {subject}");
         if (resolution is not null)
         {
-            ticket.Resolve(resolution);
+            ticket.Resolve(resolution, ResolutionSource.Imported);
         }
 
         db.Tickets.Add(ticket);
