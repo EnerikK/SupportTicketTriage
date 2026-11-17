@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
 using SupportTicketTriage.Api.Endpoints;
+using SupportTicketTriage.Api.Health;
 using SupportTicketTriage.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks().AddCheck<AzureOpenAiHealthCheck>("azure-openai");
+builder.Services.AddHostedService<AzureOpenAiStartupProbe>();
 builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure(
     builder.Configuration.GetConnectionString("Default")!,
@@ -14,7 +17,7 @@ var app = builder.Build();
 
 app.Services.ApplyMigrations();
 
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponse.WriteAsync });
 app.MapTicketEndpoints();
 
 // Deliberately not gated behind IsDevelopment(), which is what the templates

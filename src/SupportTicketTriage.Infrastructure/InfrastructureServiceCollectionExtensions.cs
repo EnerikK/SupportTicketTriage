@@ -48,6 +48,10 @@ public static class InfrastructureServiceCollectionExtensions
                 + string.Concat(problems.Select(problem => $"{Environment.NewLine} - {problem}")));
         }
 
+        // The startup probe and the health check read both (ADR-044).
+        services.AddSingleton(azureOpenAi);
+        services.AddSingleton(new AzureOpenAiStatus(azureOpenAi));
+
 
         // The stack must still start when Azure OpenAI is unavailable, so each
         // client is only registered when its own deployment is configured. The

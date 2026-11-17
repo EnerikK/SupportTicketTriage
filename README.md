@@ -373,6 +373,14 @@ docker compose up
 
 Blank Azure values are a supported configuration, not a broken one: tickets ingest, persist and list, every ticket routes to manual triage, and no drafts are generated. The embedding and chat deployments are read independently, so configuring one without the other also works.
 
+**Contradictory values are not supported.** These stop the API at startup, with every problem listed at once and the key never printed:
+- an endpoint without a key, or a key without an endpoint;
+- an endpoint that is not `https://`;
+- a key that is actually a URL;
+- a routing floor that is not a number from 0 to 1.
+
+Validation cannot tell whether a deployment name exists, so each configured deployment is called once at startup, in the background. `/health` reports what that found. It says `Degraded`, still with HTTP 200, and names the deployment and the provider's reason when one did not answer ([ADR-044](DECISIONS.MD)).
+
 | | |
 |---|---|
 | Review UI | http://localhost:3000 |

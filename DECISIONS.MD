@@ -1644,6 +1644,47 @@ Applied as written; the working is in `eval/drafter/RESULT.md`. `gpt-5.6-luna` i
 
 **Groundedness is not republished.** [[ADR-018]] requires judge agreement with hand labels before a score is quoted. The published 60.9% stays, attributed to `gpt-4.1-mini`, until `gpt-6-luna`'s held-out drafts are labelled.
 
+## ADR-044 — Contradictory configuration stops startup; a startup probe reports what validation cannot
+
+**Status:** Accepted — 2026-11-17.
+
+**The problem.** Configuration was read with no validation, and it bit twice.
+- On 2026-10-08 a misspelt chat deployment started cleanly, and the only symptom was drafts failing at request time.
+- On 2026-10-22 an unusable key took three rounds of diagnosis (PROJECT-STATE §9b).
+
+Four specific failures were possible:
+1. Half the credentials, an endpoint without a key or the reverse, silently turned AI off. That looked exactly like a deliberate no-AI deployment.
+2. The endpoint's form was never checked.
+3. A routing floor that could not be parsed fell back to its default without a word, and one outside [0, 1] was accepted. That is the same class of failure [[ADR-042]] closed for temperature.
+4. No check of the settings alone can tell that a deployment name exists.
+
+**Decision.**
+- **Contradictions stop startup, all reported at once.** The API refuses to start when:
+  - only one of endpoint and key is set;
+  - the endpoint is not an absolute `https://` URL;
+  - the key is a URL (the endpoint pasted into the key field);
+  - credentials are set but neither deployment is;
+  - a routing floor is present but unreadable or outside [0, 1].
+
+  Values are described, never echoed, because the most likely wrong value sits in the key's field. Every problem goes into one exception, so fixing them takes one restart, not one per mistake.
+- **Blank stays valid.** No AI settings at all is the specification's degraded mode. So is a deployment named with no credentials, which is the integration tests' seam for injecting a faked model. `/health` reports both.
+- **A startup probe covers point 4.** A `BackgroundService` calls each configured deployment once, through the same clients the pipeline uses. The chat probe sends a real call's options: the configured temperature and a JSON response format. So a setting the model rejects fails at startup. A temperature of 0 sent to `gpt-6-luna` would have been caught there.
+- **`/health` reports `Degraded`, never `Unhealthy`.** The response is HTTP 200 with JSON naming each deployment's state, and the provider's reason when it did not answer.
+
+**Alternatives rejected.**
+- **`IOptions<T>` with `ValidateOnStart`.** This is the idiomatic answer, and an interviewer will ask about it. The options object here is already built eagerly inside `AddInfrastructure`, and `ParseTemperature` already throws there. A `Validate()` method in the same place stops startup at the same moment, without bringing in a binder, a validator type or an `IOptions` indirection for one consumer. If the options ever gain several consumers or reload at runtime, that changes.
+- **Probing before `app.Run()`, failing startup on a bad deployment.** The specification requires the API to start, ingest and list with Azure unreachable. A blocking probe would turn an Azure outage into an API outage. The background probe costs a few seconds after startup, during which `/health` says "not yet checked".
+- **Probing on every `/health` request.** That makes a paid call per poll, and an orchestrator polls every few seconds. This decision makes one call per deployment per start.
+- **`Unhealthy` when a deployment is down.** That gives HTTP 503, and a container orchestrator restarts the container, which cannot fix a deployment in Azure. It would also contradict "the API stays healthy".
+
+**The cost, stated.**
+- **One paid call per deployment per start.** A fraction of a cent at current rates. Over a reasoning model it includes some reasoning tokens.
+- **The probe is a snapshot.** A deployment that stops answering after startup still reads "answered at startup" until restart. Recording per-call outcomes belongs to Phase 6's observability slice.
+- **`/health` changed shape**, from the bare word `Healthy` to JSON. Nothing in the repository read it.
+- **A deployment named without credentials only warns.** In production that is a forgotten endpoint and key, and it would be caught louder by rejecting it. Rejecting it would break the test seam, so the probe logs a warning and `/health` names it instead.
+
+**What would reverse it.** If startup must succeed with no configuration *and* no network, as in an air-gapped install, the probe's error log at every start becomes noise. It would then need a switch. It has none today, because there is no such deployment.
+
 ---
 
 ## Entries expected from the audit
