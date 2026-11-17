@@ -35,6 +35,20 @@ public static class InfrastructureServiceCollectionExtensions
             ChatTemperature = AzureOpenAiOptions.ParseTemperature(section["ChatTemperature"]),
         };
 
+        // Every contradiction is collected before any is reported, so a
+        // misconfigured deployment takes one restart to fix rather than one
+        // per mistake.
+        var problems = azureOpenAi.Validate().ToList();
+        var routingThresholds = ReadRoutingThresholds(configuration, problems);
+
+        if (problems.Count > 0)
+        {
+            throw new InvalidOperationException(
+                "The configuration is invalid, so the API will not start:"
+                + string.Concat(problems.Select(problem => $"{Environment.NewLine} - {problem}")));
+        }
+
+
         // The stack must still start when Azure OpenAI is unavailable, so each
         // client is only registered when its own deployment is configured. The
         // two are independent: retrieval works with embeddings alone.
@@ -50,7 +64,7 @@ public static class InfrastructureServiceCollectionExtensions
             services.AddSingleton(chatClient);
         }
 
-        services.AddSingleton(ReadRoutingThresholds(configuration));
+        services.AddSingleton(routingThresholds);
 
         services.AddScoped<TicketRetrievalService>();
         services.AddScoped<TicketRoutingService>();
@@ -91,7 +105,12 @@ public static class InfrastructureServiceCollectionExtensions
     /// Parsed with the invariant culture on purpose. Configuration values are
     /// text, and a machine whose locale uses a comma as the decimal separator
     /// would otherwise read "0.70" as 70 and gate away every ticket.
-    private static RoutingThresholds ReadRoutingThresholds(IConfiguration configuration)
+    ///
+    /// An absent floor keeps its default. A floor that is present but unreadable
+    /// or outside [0, 1] is a problem, not a fallback: falling back used to turn
+    /// "0,7" into the default without a word, and a value like 70 was accepted
+    /// and refused every ticket (ADR-044).
+    private static RoutingThresholds ReadRoutingThresholds(IConfiguration configuration, List<string> problems)
     {
         var section = configuration.GetSection("Routing");
 
@@ -99,14 +118,27 @@ public static class InfrastructureServiceCollectionExtensions
             Read("MinimumClassificationScore", RoutingThresholds.DefaultMinimumClassificationScore),
             Read("MinimumSimilarity", RoutingThresholds.DefaultMinimumSimilarity));
 
-        double Read(string key, double fallback) =>
-            double.TryParse(
-                section[key],
-                System.Globalization.NumberStyles.Float,
-                System.Globalization.CultureInfo.InvariantCulture,
-                out var value)
-                ? value
-                : fallback;
+        double Read(string key, double fallback)
+        {
+            var configured = section[key];
+            if (string.IsNullOrWhiteSpace(configured))
+            {
+                return fallback;
+            }
+
+            if (double.TryParse(
+                    configured,
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out var value)
+                && value is >= 0 and <= 1)
+            {
+                return value;
+            }
+
+            problems.Add($"Routing:{key} must be a number from 0 to 1, written with a '.' decimal point. Got '{configured}'.");
+            return fallback;
+        }
     }
 
     public static void ApplyMigrations(this IServiceProvider serviceProvider)

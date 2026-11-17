@@ -57,6 +57,60 @@ public sealed class AzureOpenAiOptions
             $"AzureOpenAi:ChatTemperature must be a number from 0 to 2, or '{OmitTemperature}' to send none. Got '{configured}'.");
     }
 
+    /// Settings that contradict each other, which would otherwise start the API
+    /// in a state nobody chose: AI quietly off because half the credentials
+    /// are missing, or a client built against an endpoint that cannot work.
+    /// Values are described, never echoed, because the field most likely to
+    /// hold the wrong thing is the one holding the key (ADR-044).
+    ///
+    /// A deployment named with no endpoint and no key is deliberately absent.
+    /// It is how the integration tests run the real services against a faked
+    /// model, and in a real deployment it is reported by `/health` instead of
+    /// stopping startup.
+    public IReadOnlyList<string> Validate()
+    {
+        var problems = new List<string>();
+        var hasEndpoint = !string.IsNullOrWhiteSpace(Endpoint);
+        var hasKey = !string.IsNullOrWhiteSpace(ApiKey);
+
+        if (hasEndpoint && !hasKey)
+        {
+            problems.Add($"{SectionName}:Endpoint is set but {SectionName}:ApiKey is not.");
+        }
+
+        if (hasKey && !hasEndpoint)
+        {
+            problems.Add($"{SectionName}:ApiKey is set but {SectionName}:Endpoint is not.");
+        }
+
+        if (hasEndpoint
+            && !(Uri.TryCreate(Endpoint, UriKind.Absolute, out var endpoint) && endpoint.Scheme == Uri.UriSchemeHttps))
+        {
+            problems.Add($"{SectionName}:Endpoint is not an absolute https:// URL.");
+        }
+
+        // The portal shows the key and the endpoint side by side, and the
+        // endpoint has been pasted into the key field before (CI guards the
+        // same mistake in its secrets).
+        if (hasKey
+            && (ApiKey!.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                || ApiKey.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+        {
+            problems.Add($"{SectionName}:ApiKey is a URL. The endpoint has probably been pasted into the key field.");
+        }
+
+        if (HasCredentials
+            && string.IsNullOrWhiteSpace(EmbeddingDeployment)
+            && string.IsNullOrWhiteSpace(ChatDeployment))
+        {
+            problems.Add(
+                $"{SectionName}:Endpoint and {SectionName}:ApiKey are set, but neither "
+                + $"{SectionName}:EmbeddingDeployment nor {SectionName}:ChatDeployment is, so nothing would use them.");
+        }
+
+        return problems;
+    }
+
     private bool HasCredentials =>
         !string.IsNullOrWhiteSpace(Endpoint) && !string.IsNullOrWhiteSpace(ApiKey);
 
