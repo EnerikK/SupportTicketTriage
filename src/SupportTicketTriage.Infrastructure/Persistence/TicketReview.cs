@@ -2,7 +2,8 @@ using SupportTicketTriage.Application.Review;
 
 namespace SupportTicketTriage.Infrastructure.Persistence;
 
-/// One human decision about one draft, and the text that decision produced.
+/// One human decision about a ticket, usually about its draft, and the text
+/// that decision produced.
 ///
 /// This is the row that makes the feedback loop traceable: it names the draft
 /// it judged, so the chain from ticket through retrieval set, draft and
@@ -17,14 +18,18 @@ public sealed class TicketReview
     public Guid Id { get; private init; }
     public Guid TicketId { get; private init; }
 
-    /// The draft that was reviewed. Required: there is nothing to approve or
-    /// reject without one.
-    public Guid TicketDraftId { get; private init; }
+    /// The draft that was reviewed. Always set for an approval or rejection,
+    /// which have nothing to judge without one; a check constraint enforces
+    /// that. A manual resolution links the ticket's withheld draft when there
+    /// is one, so the record of what the model produced is kept beside the
+    /// decision that replaced it, and is null when no draft was ever made.
+    public Guid? TicketDraftId { get; private init; }
 
     public ReviewDecision Decision { get; private init; }
 
-    /// The reviewer's final text, which becomes the ticket's resolution.
-    /// Null on a rejection, because a rejected draft resolves nothing.
+    /// The reviewer's final text, which becomes the ticket's resolution: the
+    /// approved draft's text, their edit of it, or the reply they wrote by
+    /// hand. Null on a rejection, because a rejected draft resolves nothing.
     public string? FinalText { get; private init; }
 
     /// Whether the reviewer changed the draft before approving. Decided once,
@@ -40,7 +45,7 @@ public sealed class TicketReview
     {
     }
 
-    public static TicketReview Create(Guid ticketId, Guid draftId, ReviewSubmission submission) =>
+    public static TicketReview Create(Guid ticketId, Guid? draftId, ReviewSubmission submission) =>
         new()
         {
             Id = Guid.CreateVersion7(),

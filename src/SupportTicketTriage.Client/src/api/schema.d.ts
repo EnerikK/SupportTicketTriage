@@ -586,7 +586,7 @@ export interface components {
             wasEdited: boolean;
             rejectionReason: null | string;
             /** Format: uuid */
-            draftId: string;
+            draftId: null | string;
             /** Format: date-time */
             createdAt: string;
         };

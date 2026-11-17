@@ -251,7 +251,7 @@ namespace SupportTicketTriage.Infrastructure.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<Guid>("TicketDraftId")
+                    b.Property<Guid?>("TicketDraftId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("TicketId")
@@ -267,7 +267,10 @@ namespace SupportTicketTriage.Infrastructure.Persistence.Migrations
                     b.HasIndex("TicketId")
                         .IsUnique();
 
-                    b.ToTable("TicketReviews", (string)null);
+                    b.ToTable("TicketReviews", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TicketReviews_DraftRequiredUnlessResolvedManually", "\"Decision\" = 'ResolvedManually' OR \"TicketDraftId\" IS NOT NULL");
+                        });
                 });
 
             modelBuilder.Entity("SupportTicketTriage.Infrastructure.Persistence.TicketRoutingDecision", b =>
@@ -357,8 +360,7 @@ namespace SupportTicketTriage.Infrastructure.Persistence.Migrations
                     b.HasOne("SupportTicketTriage.Infrastructure.Persistence.TicketDraft", null)
                         .WithMany()
                         .HasForeignKey("TicketDraftId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("SupportTicketTriage.Domain.Ticket", null)
                         .WithMany()

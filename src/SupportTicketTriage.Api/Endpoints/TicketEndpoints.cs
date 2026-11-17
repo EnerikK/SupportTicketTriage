@@ -62,6 +62,9 @@ public static class TicketEndpoints
                 TypedResults.Conflict(
                     "This ticket was routed for manual triage, so no draft is generated."),
 
+            DraftOutcome.AlreadyReviewed =>
+                TypedResults.Conflict("This ticket has already been reviewed, so no draft is generated."),
+
             DraftOutcome.NotConfigured =>
                 TypedResults.Problem(
                     "No Azure OpenAI chat deployment is configured.", statusCode: 503),
@@ -88,10 +91,11 @@ public static class TicketEndpoints
 
     /// Records a reviewer's decision.
     ///
-    /// All three review actions are this one endpoint. Approve, edit and
-    /// approve, and reject differ by what the reviewer submits, not by which
-    /// verb they reach for — and there is no fourth action, because approving
-    /// is the end of the line. Nothing sends anything.
+    /// All four review actions are this one endpoint. Approve, edit and
+    /// approve, and reject judge a draft; resolve manually is for a ticket
+    /// with no draft that can be judged, and carries the reviewer's own reply
+    /// in FinalText. They differ by what the reviewer submits, not by which
+    /// verb they reach for. Nothing sends anything.
     private static async Task<Results<Created<TicketReviewResponse>, NotFound, Conflict<string>, ValidationProblem>> SubmitReview(
         Guid id,
         SubmitReviewRequest request,
@@ -108,6 +112,8 @@ public static class TicketEndpoints
                 => ReviewDecision.Approved,
             var value when string.Equals(value, nameof(ReviewDecision.Rejected), StringComparison.OrdinalIgnoreCase)
                 => ReviewDecision.Rejected,
+            var value when string.Equals(value, nameof(ReviewDecision.ResolvedManually), StringComparison.OrdinalIgnoreCase)
+                => ReviewDecision.ResolvedManually,
             _ => null,
         };
 
@@ -115,7 +121,7 @@ public static class TicketEndpoints
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
-                ["decision"] = ["Decision must be either Approved or Rejected."],
+                ["decision"] = ["Decision must be one of Approved, Rejected or ResolvedManually."],
             });
         }
 
@@ -136,6 +142,12 @@ public static class TicketEndpoints
             // citation validation is withheld, not approved around.
             ReviewOutcome.NoReviewableDraft =>
                 TypedResults.Conflict("This ticket has no draft whose citations were validated."),
+
+            ReviewOutcome.ReviewableDraftExists =>
+                TypedResults.Conflict("This ticket has a validated draft; approve, edit or reject it instead."),
+
+            ReviewOutcome.AlreadyResolved =>
+                TypedResults.Conflict("This ticket is already resolved."),
 
             _ => TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {

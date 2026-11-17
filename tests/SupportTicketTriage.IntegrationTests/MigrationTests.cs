@@ -8,22 +8,25 @@ using SupportTicketTriage.Infrastructure.Persistence;
 
 namespace SupportTicketTriage.IntegrationTests;
 
-/// The AddResolutionSource backfill runs once, against real data. The check
-/// constraint proves every resolved ticket got a source, but not that it got
-/// the right one; a wrong label would persist silently. This test covers that.
+/// Migrations that move or constrain existing data, tested against rows that
+/// exist before the migration runs.
 ///
-/// It needs rows that exist before the migration runs, so it cannot use the
-/// shared database, which the API migrates to the latest version at startup.
-/// It creates its own database in the same container, migrates to the
-/// migration before the backfill, seeds with raw SQL (the current EF model
-/// already has the column the old schema lacks), then migrates to exactly
-/// AddResolutionSource. Pinning both ends means a later migration cannot break
-/// this test for a reason unrelated to the backfill.
+/// That rules out the shared database, which the API migrates to the latest
+/// version at startup. Each test creates its own database in the same
+/// container, migrates to a named migration, seeds with raw SQL (the current
+/// EF model can be ahead of the schema at that point), then migrates to
+/// another named one. Pinning both ends means a later migration cannot break
+/// these tests for a reason unrelated to the migration under test.
+///
+/// The AddResolutionSource backfill runs once, against real data. Its check
+/// constraint proves every resolved ticket got a source, but not that it got
+/// the right one; a wrong label would persist silently.
 [Collection(nameof(TicketApiCollection))]
-public class ResolutionSourceBackfillTests(TicketApiFactory factory)
+public class MigrationTests(TicketApiFactory factory)
 {
     private const string MigrationBeforeBackfill = "AddDraftResolvedModel";
     private const string BackfillMigration = "AddResolutionSource";
+    private const string ManualResolutionMigration = "AllowManualResolution";
 
     private sealed class SourceRow
     {
@@ -117,6 +120,54 @@ public class ResolutionSourceBackfillTests(TicketApiFactory factory)
                 .SingleAsync();
             Assert.Equal("Imported", source);
         });
+
+    /// The old schema cannot represent a manual resolution with no draft, so
+    /// rolling back must refuse while one exists rather than delete it or
+    /// point it at a draft that does not exist. The refusal must also leave
+    /// the schema as it was, which holds because PostgreSQL runs the migration's
+    /// DDL inside a transaction.
+    [Fact]
+    public Task AllowManualResolutionDown_RefusesWhileADraftlessManualResolutionExists() =>
+        InThrowawayDatabaseAsync(async (db, migrator) =>
+        {
+            await migrator.MigrateAsync(ManualResolutionMigration);
+
+            var ticket = Guid.NewGuid();
+            var review = Guid.NewGuid();
+
+            await db.Database.ExecuteSqlAsync($"""
+                INSERT INTO "Tickets" ("Id", "Subject", "Body", "CreatedAt", "Resolution", "ResolvedAt", "ResolutionSource")
+                VALUES ({ticket}, 'subject', 'body', now(), 'Written by hand.', now(), 'ManualReply')
+                """);
+            await db.Database.ExecuteSqlAsync($"""
+                INSERT INTO "TicketReviews" ("Id", "TicketId", "TicketDraftId", "Decision", "FinalText",
+                                             "WasEdited", "RejectionReason", "CreatedAt")
+                VALUES ({review}, {ticket}, NULL, 'ResolvedManually', 'Written by hand.', false, NULL, now())
+                """);
+
+            var refused = await Assert.ThrowsAsync<PostgresException>(() => migrator.MigrateAsync(BackfillMigration));
+            Assert.Equal(PostgresErrorCodes.NotNullViolation, refused.SqlState);
+
+            Assert.Equal(1, await CountAsync(db, $"""
+                SELECT COUNT(*)::int AS "Value" FROM "TicketReviews" WHERE "Id" = {review}
+                """));
+            Assert.Equal("YES", await ColumnNullabilityAsync(db));
+
+            await db.Database.ExecuteSqlAsync($"""DELETE FROM "TicketReviews" WHERE "Id" = {review}""");
+            await migrator.MigrateAsync(BackfillMigration);
+
+            Assert.Equal("NO", await ColumnNullabilityAsync(db));
+            Assert.Equal(0, await CountAsync(db, $"""
+                SELECT COUNT(*)::int AS "Value" FROM pg_constraint
+                WHERE conname = 'CK_TicketReviews_DraftRequiredUnlessResolvedManually'
+                """));
+        });
+
+    private static Task<string> ColumnNullabilityAsync(SupportTicketTriageDbContext db) =>
+        db.Database.SqlQuery<string>($"""
+            SELECT is_nullable::text AS "Value" FROM information_schema.columns
+            WHERE table_name = 'TicketReviews' AND column_name = 'TicketDraftId'
+            """).SingleAsync();
 
     private static Task<int> CountAsync(SupportTicketTriageDbContext db, FormattableString sql) =>
         db.Database.SqlQuery<int>(sql).SingleAsync();

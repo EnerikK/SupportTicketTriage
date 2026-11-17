@@ -135,4 +135,51 @@ public class ReviewSubmissionTests
         Assert.Null(submission);
         Assert.Contains("not one of Approved or Rejected", failure);
     }
+
+    /// ResolvedManually is a defined value, so a defined-value check alone
+    /// would let it through, and the draft path would treat it as a rejection.
+    [Fact]
+    public void ADraftReview_RefusesTheManualResolutionDecision()
+    {
+        Assert.False(TryCreate(ReviewDecision.ResolvedManually, out var submission, out var failure, editedText: "A reply."));
+
+        Assert.Null(submission);
+        Assert.Contains("not one of Approved or Rejected", failure);
+    }
+
+    [Fact]
+    public void ResolvingManually_KeepsTheTrimmedReplyAndRecordsNoEdit()
+    {
+        Assert.True(ReviewSubmission.TryCreateManualResolution(
+            "  Refunded the duplicate charge.\n", null, out var submission, out _));
+
+        Assert.Equal(ReviewDecision.ResolvedManually, submission!.Decision);
+        Assert.Equal("Refunded the duplicate charge.", submission.FinalText);
+        Assert.False(submission.WasEdited);
+        Assert.Null(submission.RejectionReason);
+    }
+
+    /// The reply becomes the resolution and a retrievable precedent; without
+    /// one there is nothing to resolve the ticket with.
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void ResolvingManually_WithoutAReply_IsRejected(string? replyText)
+    {
+        Assert.False(ReviewSubmission.TryCreateManualResolution(replyText, null, out var submission, out var failure));
+
+        Assert.Null(submission);
+        Assert.Contains("must include the reply", failure);
+    }
+
+    [Fact]
+    public void ResolvingManually_WithARejectionReason_IsRejected()
+    {
+        Assert.False(ReviewSubmission.TryCreateManualResolution(
+            "Refunded the duplicate charge.", "Not needed.", out var submission, out var failure));
+
+        Assert.Null(submission);
+        Assert.Contains("cannot accompany a manual resolution", failure);
+    }
 }

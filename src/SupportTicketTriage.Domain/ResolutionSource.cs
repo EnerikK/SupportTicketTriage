@@ -13,4 +13,8 @@ public enum ResolutionSource
     /// A reviewer approved a draft, as written or edited. The text was
     /// written from precedents the draft cited and a human accepted it.
     ApprovedDraft = 2,
+
+    /// A reviewer wrote the reply because no draft could be reviewed. Nothing
+    /// the system can trace grounded it.
+    ManualReply = 3,
 }

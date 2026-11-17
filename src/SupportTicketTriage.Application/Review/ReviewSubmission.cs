@@ -9,6 +9,11 @@ public enum ReviewDecision
 {
     Approved = 1,
     Rejected = 2,
+
+    /// The reviewer wrote the reply themselves because no draft could be
+    /// reviewed: the ticket failed a routing gate, or its draft was withheld
+    /// for invalid citations.
+    ResolvedManually = 3,
 }
 
 /// A review the application is willing to record.
@@ -24,6 +29,7 @@ public sealed record ReviewSubmission(
     bool WasEdited,
     string? RejectionReason)
 {
+    /// A decision about a draft: approve, edit and approve, or reject.
     public static bool TryCreate(
         ReviewDecision decision,
         string draftText,
@@ -34,7 +40,9 @@ public sealed record ReviewSubmission(
     {
         submission = null;
 
-        if (!Enum.IsDefined(decision))
+        // ResolvedManually is defined but is not a decision about a draft, and
+        // the dispatch below would otherwise treat it as a rejection.
+        if (decision is not (ReviewDecision.Approved or ReviewDecision.Rejected))
         {
             failure = "The review decision is not one of Approved or Rejected.";
             return false;
@@ -43,6 +51,42 @@ public sealed record ReviewSubmission(
         return decision == ReviewDecision.Approved
             ? TryApprove(draftText, editedText, rejectionReason, out submission, out failure)
             : TryReject(editedText, rejectionReason, out submission, out failure);
+    }
+
+    /// A reply the reviewer wrote because no draft could be reviewed.
+    ///
+    /// Takes no draft text on purpose. When the ticket has a withheld draft,
+    /// that draft cited evidence it was never shown, and its text must not
+    /// become the resolution by any route; with no parameter for it, there is
+    /// no route.
+    public static bool TryCreateManualResolution(
+        string? replyText,
+        string? rejectionReason,
+        out ReviewSubmission? submission,
+        out string failure)
+    {
+        submission = null;
+
+        if (!string.IsNullOrWhiteSpace(rejectionReason))
+        {
+            failure = "A rejection reason cannot accompany a manual resolution.";
+            return false;
+        }
+
+        // The reply becomes the ticket's resolution and a retrievable
+        // precedent, so a manual resolution without one is not a resolution.
+        if (string.IsNullOrWhiteSpace(replyText))
+        {
+            failure = "A manual resolution must include the reply.";
+            return false;
+        }
+
+        // WasEdited is false because there was no draft text to edit. Read
+        // "accepted as written" as Approved and not WasEdited, never as
+        // not WasEdited alone.
+        submission = new ReviewSubmission(ReviewDecision.ResolvedManually, replyText.Trim(), WasEdited: false, null);
+        failure = string.Empty;
+        return true;
     }
 
     private static bool TryApprove(

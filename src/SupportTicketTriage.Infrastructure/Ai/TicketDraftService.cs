@@ -22,6 +22,9 @@ public enum DraftOutcome
     /// retrievable to ground a draft on.
     NotEligible,
 
+    /// The ticket has a review, so a new draft could never be reviewed.
+    AlreadyReviewed,
+
     NotConfigured,
     Failed,
 }
@@ -58,6 +61,17 @@ public sealed class TicketDraftService(
         if (existing is not null)
         {
             return new DraftGenerationResult(DraftOutcome.AlreadyExists, existing);
+        }
+
+        // After any review, neither triage nor generation runs on a ticket.
+        // A manual resolution can land on a draft-eligible ticket before
+        // anyone asked for its draft; generating one then would pay for text
+        // nobody can ever review. Checked after the existing-draft return, so
+        // asking again for a reviewed ticket's draft still returns it rather
+        // than refusing; only the paid path is closed.
+        if (await db.TicketReviews.AnyAsync(r => r.TicketId == ticket.Id, ct))
+        {
+            return new DraftGenerationResult(DraftOutcome.AlreadyReviewed, null);
         }
 
         // The gate is load-bearing rather than decorative: a ticket routed to

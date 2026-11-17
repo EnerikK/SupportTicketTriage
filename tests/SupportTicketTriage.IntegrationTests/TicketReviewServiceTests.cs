@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using Pgvector;
 using SupportTicketTriage.Api.Contracts;
 using SupportTicketTriage.Application.Generation;
@@ -121,6 +122,7 @@ public class TicketReviewServiceTests(EmbeddingApiFactory factory)
         var ticket = await ReloadAsync(seed.Ticket.Id);
         Assert.True(ticket.IsResolved);
         Assert.Equal(DraftText, ticket.Resolution);
+        Assert.Equal(ResolutionSource.ApprovedDraft, ticket.ResolutionSource);
     }
 
     /// The reviewer's text is what survives, and the draft it replaced is
@@ -424,5 +426,201 @@ public class TicketReviewServiceTests(EmbeddingApiFactory factory)
         var response = await factory.CreateClient().GetAsync($"/tickets/{Guid.CreateVersion7()}/review");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    private const string ManualReply = "Refunded the duplicate charge; it will show within five days.";
+
+    /// A ticket a routing gate refused: no draft was ever generated for it.
+    private static Ticket SeedUndrafted(
+        SupportTicketTriageDbContext db,
+        bool withEmbedding = true,
+        string? model = null)
+    {
+        model ??= $"model-{Guid.NewGuid():N}";
+
+        var ticket = Ticket.Create("Unrecognised charge", "There is a charge on my card I do not recognise.");
+        db.Tickets.Add(ticket);
+
+        if (withEmbedding)
+        {
+            db.TicketEmbeddings.Add(TicketEmbedding.Create(
+                ticket.Id, "redacted unrecognised charge body", "v1", model, VectorOf((0, 1f))));
+        }
+
+        return ticket;
+    }
+
+    private async Task<T> SeedAsync<T>(Func<SupportTicketTriageDbContext, T> seed)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+
+        var seeded = seed(db);
+        await db.SaveChangesAsync();
+        return seeded;
+    }
+
+    private async Task<ReviewResult> ResolveManuallyAsync(Guid ticketId, string? reply = ManualReply)
+    {
+        using var scope = factory.Services.CreateScope();
+        var reviews = scope.ServiceProvider.GetRequiredService<TicketReviewService>();
+
+        factory.Generator.Reset();
+
+        return await reviews.SubmitAsync(ticketId, ReviewDecision.ResolvedManually, reply, null);
+    }
+
+    [Fact]
+    public async Task ResolvingManually_ATicketWithNoDraft_ResolvesItWithTheReply()
+    {
+        var ticket = await SeedAsync(db => SeedUndrafted(db));
+
+        var result = await ResolveManuallyAsync(ticket.Id, $"  {ManualReply}\n");
+
+        Assert.Equal(ReviewOutcome.Recorded, result.Outcome);
+        Assert.Equal(ReviewDecision.ResolvedManually, result.Review!.Decision);
+        Assert.Null(result.Review.TicketDraftId);
+        Assert.Equal(ManualReply, result.Review.FinalText);
+
+        var reloaded = await ReloadAsync(ticket.Id);
+        Assert.Equal(ManualReply, reloaded.Resolution);
+        Assert.Equal(ResolutionSource.ManualReply, reloaded.ResolutionSource);
+    }
+
+    /// The withheld draft stays linked as the record of what the model got
+    /// wrong, and its text never becomes the resolution.
+    [Fact]
+    public async Task ResolvingManually_ATicketWithAWithheldDraft_LinksTheDraftButNotItsText()
+    {
+        var seed = await SeedAsync(db => SeedReviewable(db, citationsValid: false));
+
+        var result = await ResolveManuallyAsync(seed.Ticket.Id);
+
+        Assert.Equal(ReviewOutcome.Recorded, result.Outcome);
+        Assert.Equal(seed.Draft.Id, result.Review!.TicketDraftId);
+
+        var reloaded = await ReloadAsync(seed.Ticket.Id);
+        Assert.Equal(ManualReply, reloaded.Resolution);
+        Assert.NotEqual(DraftText, reloaded.Resolution);
+    }
+
+    [Fact]
+    public async Task ResolvingManually_IsRefusedWhileAReviewableDraftExists()
+    {
+        var seed = await SeedAsync(db => SeedReviewable(db));
+
+        var result = await ResolveManuallyAsync(seed.Ticket.Id);
+
+        Assert.Equal(ReviewOutcome.ReviewableDraftExists, result.Outcome);
+        Assert.False((await ReloadAsync(seed.Ticket.Id)).IsResolved);
+    }
+
+    /// An imported corpus ticket has no draft, so it reaches the manual path;
+    /// without this refusal Ticket.Resolve would throw and the API would 500.
+    [Fact]
+    public async Task ResolvingManually_IsRefusedForAnAlreadyResolvedTicket()
+    {
+        var ticket = await SeedAsync(db =>
+        {
+            var imported = SeedUndrafted(db);
+            imported.Resolve("The imported resolution.", ResolutionSource.Imported);
+            return imported;
+        });
+
+        var result = await ResolveManuallyAsync(ticket.Id);
+
+        Assert.Equal(ReviewOutcome.AlreadyResolved, result.Outcome);
+
+        var reloaded = await ReloadAsync(ticket.Id);
+        Assert.Equal("The imported resolution.", reloaded.Resolution);
+        Assert.Equal(ResolutionSource.Imported, reloaded.ResolutionSource);
+    }
+
+    [Fact]
+    public async Task ResolvingManually_ATicketWithNoEmbedding_BackfillsOne()
+    {
+        var ticket = await SeedAsync(db => SeedUndrafted(db, withEmbedding: false));
+
+        var result = await ResolveManuallyAsync(ticket.Id);
+
+        Assert.Equal(ReviewOutcome.Recorded, result.Outcome);
+        Assert.Single(factory.Generator.Received);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+        Assert.True(await db.TicketEmbeddings.AnyAsync(e => e.TicketId == ticket.Id));
+    }
+
+    /// The gap this decision closes: a ticket the system could not draft for
+    /// becomes the precedent the next similar ticket needs.
+    [Fact]
+    public async Task AManuallyResolvedTicket_BecomesRetrievableAsASource()
+    {
+        var model = $"model-{Guid.NewGuid():N}";
+
+        var (resolvedId, askerId) = await SeedAsync(db =>
+        {
+            var gated = SeedUndrafted(db, model: model);
+
+            var asker = Ticket.Create("Charge I do not know", "A charge appeared that I cannot place.");
+            db.Tickets.Add(asker);
+            db.TicketEmbeddings.Add(TicketEmbedding.Create(
+                asker.Id, "redacted charge i do not know", "v1", model, VectorOf((0, 1f))));
+
+            return (gated.Id, asker.Id);
+        });
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var before = await scope.ServiceProvider.GetRequiredService<TicketRetrievalService>().FindSimilarAsync(askerId);
+            Assert.DoesNotContain(before, s => s.TicketId == resolvedId);
+        }
+
+        Assert.Equal(ReviewOutcome.Recorded, (await ResolveManuallyAsync(resolvedId)).Outcome);
+
+        using var after = factory.Services.CreateScope();
+        var similar = await after.ServiceProvider.GetRequiredService<TicketRetrievalService>().FindSimilarAsync(askerId);
+
+        var found = Assert.Single(similar, s => s.TicketId == resolvedId);
+        Assert.Equal(ManualReply, found.Resolution);
+    }
+
+    /// The check constraint, not only the service: an approval or rejection
+    /// that names no draft cannot be stored by any code path.
+    [Fact]
+    public async Task TheDatabase_RefusesAnApprovalThatNamesNoDraft()
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+
+        var ticket = SeedUndrafted(db);
+        await db.SaveChangesAsync();
+
+        Assert.True(ReviewSubmission.TryCreate(ReviewDecision.Approved, "Text.", null, null, out var approval, out _));
+        db.TicketReviews.Add(TicketReview.Create(ticket.Id, draftId: null, approval!));
+
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() => db.SaveChangesAsync());
+        var postgres = Assert.IsType<PostgresException>(error.InnerException);
+        Assert.Equal("CK_TicketReviews_DraftRequiredUnlessResolvedManually", postgres.ConstraintName);
+    }
+
+    [Fact]
+    public async Task PostReview_ResolvedManually_IsRecordedWithNoDraft()
+    {
+        var ticket = await SeedAsync(db => SeedUndrafted(db));
+
+        var client = factory.CreateClient();
+
+        var posted = await client.PostAsJsonAsync(
+            $"/tickets/{ticket.Id}/review",
+            new SubmitReviewRequest("resolvedmanually", ManualReply, null));
+
+        Assert.Equal(HttpStatusCode.Created, posted.StatusCode);
+
+        var fetched = await client.GetFromJsonAsync<TicketReviewResponse>($"/tickets/{ticket.Id}/review");
+
+        Assert.Equal("ResolvedManually", fetched!.Decision);
+        Assert.Equal(ManualReply, fetched.FinalText);
+        Assert.Null(fetched.DraftId);
     }
 }

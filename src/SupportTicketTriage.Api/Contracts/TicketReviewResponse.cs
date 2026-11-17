@@ -6,13 +6,14 @@ namespace SupportTicketTriage.Api.Contracts;
 ///
 /// `DraftId` is served because it is the link a reviewer — or an auditor —
 /// follows back to the evidence: which draft this judged, what it was
-/// grounded on, and which of those sources it cited.
+/// grounded on, and which of those sources it cited. It is null only for a
+/// manual resolution of a ticket that never had a draft.
 public sealed record TicketReviewResponse(
     string Decision,
     string? FinalText,
     bool WasEdited,
     string? RejectionReason,
-    Guid DraftId,
+    Guid? DraftId,
     DateTimeOffset CreatedAt)
 {
     public static TicketReviewResponse FromEntity(TicketReview review) =>
