@@ -209,19 +209,104 @@ describe('ReviewActions', () => {
   })
 
   /// ADR-010's guarantee reaching the actions: a draft whose citations did
-  /// not validate cannot be approved around.
-  it('offers no actions for a withheld draft', () => {
+  /// not validate cannot be approved around. The reviewer may write past it,
+  /// and that is the only action on offer; the withheld text never appears.
+  it('offers only a manual resolution for a withheld draft', () => {
     renderActions({ draft: draft({ citationsValid: false, draftText: null }) })
 
     expect(screen.getByText(/citations did not validate/)).toBeInTheDocument()
-    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'Resolve with this reply',
+    ])
+    expect(screen.getByLabelText('Your reply')).toHaveValue('')
   })
 
-  it('offers no actions for a ticket routed to manual triage', () => {
+  /// The failed gate stays named above the form rather than being replaced
+  /// by it.
+  it('offers only a manual resolution for a ticket routed to manual triage', () => {
     renderActions({ draft: null, draftEligible: false })
 
     expect(screen.getByText(/routed for manual triage/)).toBeInTheDocument()
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'Resolve with this reply',
+    ])
+  })
+
+  it('will not resolve manually without a reply', async () => {
+    const user = userEvent.setup()
+    renderActions({ draft: null, draftEligible: false })
+
+    const resolve = screen.getByRole('button', { name: 'Resolve with this reply' })
+    expect(resolve).toBeDisabled()
+
+    await user.type(screen.getByLabelText('Your reply'), '   ')
+    expect(resolve).toBeDisabled()
+
+    await user.type(screen.getByLabelText('Your reply'), 'Refunded.')
+    expect(resolve).toBeEnabled()
+  })
+
+  it('sends the trimmed reply as a manual resolution', async () => {
+    const calls = capturePost()
+    const user = userEvent.setup()
+
+    renderActions({ draft: null, draftEligible: false })
+    await user.type(screen.getByLabelText('Your reply'), '  Refunded the duplicate charge.  ')
+    await user.click(screen.getByRole('button', { name: 'Resolve with this reply' }))
+
+    await waitFor(() => expect(calls).toHaveLength(1))
+    expect(calls[0].url).toContain(`/tickets/${TICKET_ID}/review`)
+    expect(calls[0].body).toEqual({
+      decision: 'ResolvedManually',
+      finalText: 'Refunded the duplicate charge.',
+      rejectionReason: null,
+    })
+  })
+
+  it('shows a recorded manual resolution with its reply, not as a rejection', () => {
+    renderActions({
+      draft: null,
+      draftEligible: false,
+      review: {
+        decision: 'ResolvedManually',
+        finalText: 'Refunded the duplicate charge.',
+        wasEdited: false,
+        rejectionReason: null,
+        draftId: null,
+        createdAt: '2026-11-17T10:55:48Z',
+      },
+    })
+
+    expect(screen.getByText('Resolved manually')).toHaveClass('state--ready')
+    expect(screen.getByText(/written by hand/)).toBeInTheDocument()
+    expect(screen.getByText('Refunded the duplicate charge.')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  /// The server allows manual resolution on a draft-eligible ticket so that
+  /// an outage does not recreate the dead end. This is where the UI honours
+  /// that: the form appears only once generation has failed.
+  it('offers a manual reply once draft generation fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+        statusText: 'Service Unavailable',
+        text: async () => 'No Azure OpenAI chat deployment is configured.',
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderActions({ draft: null, draftEligible: true })
+
+    expect(screen.queryByLabelText('Your reply')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Generate a draft' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No Azure OpenAI chat deployment')
+    expect(screen.getByLabelText('Your reply')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Generate a draft' })).toBeEnabled()
   })
 
   /// `null` is a third state: no routing decision exists at all. Reporting
@@ -267,11 +352,24 @@ describe('ReviewActions', () => {
   })
 
   /// The absence that matters. Nothing in this component sends anything to a
-  /// customer, because no such path exists anywhere in the system.
+  /// customer, because no such path exists anywhere in the system. Scanned
+  /// in every state that renders a button, so a new form cannot slip one in.
   it('offers no action that sends the reply anywhere', () => {
-    renderActions()
+    const states: Partial<Parameters<typeof ReviewActions>[0]>[] = [
+      {},
+      { draft: null, draftEligible: false },
+      { draft: draft({ citationsValid: false, draftText: null }) },
+      { draft: null, draftEligible: true },
+    ]
 
-    const labels = screen.getAllByRole('button').map((button) => button.textContent ?? '')
+    const labels = states.flatMap((state) => {
+      const view = renderActions(state)
+      const found = screen.getAllByRole('button').map((button) => button.textContent ?? '')
+      view.unmount()
+      return found
+    })
+
+    expect(labels).toContain('Resolve with this reply')
     expect(labels.some((label) => /send|deliver|email|reply to customer/i.test(label))).toBe(
       false,
     )

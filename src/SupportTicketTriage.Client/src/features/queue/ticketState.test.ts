@@ -66,6 +66,26 @@ describe('describeState', () => {
       describeState(item({ draftState: 'Ready', reviewDecision: 'Rejected' })).label,
     ).toBe('Rejected')
   })
+
+  /// The states a manual resolution happens in are exactly the ones that
+  /// would otherwise keep saying a human is still needed.
+  it('reports a manual resolution over the gate or withheld draft behind it', () => {
+    const resolved = { label: 'Resolved manually', tone: 'reviewed' }
+
+    expect(
+      describeState(
+        item({
+          isDraftEligible: false,
+          failedGates: ['RetrievalSimilarity'],
+          reviewDecision: 'ResolvedManually',
+        }),
+      ),
+    ).toEqual(resolved)
+
+    expect(
+      describeState(item({ draftState: 'Failed', reviewDecision: 'ResolvedManually' })),
+    ).toEqual(resolved)
+  })
 })
 
 describe('describeGate', () => {

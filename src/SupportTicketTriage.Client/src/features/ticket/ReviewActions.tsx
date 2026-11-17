@@ -24,13 +24,15 @@ export function ReviewActions({ ticketId, draft, review, draftEligible }: Props)
   // already-reviewed ticket, which is the louder bug of the two.
   const [justSubmitted, setJustSubmitted] = useState(false)
 
+  const onSubmitted = () => setJustSubmitted(true)
+
   if (review) {
     return <RecordedDecision review={review} takeFocus={justSubmitted} />
   }
 
   if (!draft) {
     if (draftEligible === true) {
-      return <GenerateDraft ticketId={ticketId} />
+      return <GenerateDraft ticketId={ticketId} onSubmitted={onSubmitted} />
     }
 
     // Three states, not two. `null` means no routing decision exists at all,
@@ -38,34 +40,50 @@ export function ReviewActions({ ticketId, draft, review, draftEligible }: Props)
     // decision that was never made - worse than saying nothing, and exactly
     // the kind of smoothing-over ADR-023 forbids. DraftPanel already drew
     // this distinction; this branch tested truthiness and did not.
+    //
+    // Only the gated ticket gets the manual form. An untriaged one is offered
+    // triage elsewhere on the page, and resolving it by hand first would make
+    // triage refuse it for good, leaving it unclassified.
+    if (draftEligible === false) {
+      return (
+        <>
+          <p className="status">
+            Nothing to review. This ticket was routed for manual triage, so no draft is generated.
+          </p>
+          <ManualResolutionForm ticketId={ticketId} onSubmitted={onSubmitted} />
+        </>
+      )
+    }
+
     return (
       <p className="status">
-        {draftEligible === false
-          ? 'Nothing to review. This ticket was routed for manual triage, so no draft is generated.'
-          : 'Nothing to review. This ticket has not been triaged, so nothing has decided whether it can be drafted.'}
+        Nothing to review. This ticket has not been triaged, so nothing has decided whether it can be
+        drafted.
       </p>
     )
   }
 
+  // The explanation stays above the form: a withheld draft is named, not
+  // smoothed over, and the form is for writing past it, never for approving it.
   if (!draft.citationsValid) {
     return (
-      <p className="status">
-        Nothing to review. The draft was withheld because its citations did not validate.
-      </p>
+      <>
+        <p className="status">
+          Nothing to review. The draft was withheld because its citations did not validate.
+        </p>
+        <ManualResolutionForm ticketId={ticketId} onSubmitted={onSubmitted} />
+      </>
     )
   }
 
-  return (
-    <ReviewForm
-      ticketId={ticketId}
-      draft={draft}
-      onSubmitted={() => setJustSubmitted(true)}
-    />
-  )
+  return <ReviewForm ticketId={ticketId} draft={draft} onSubmitted={onSubmitted} />
 }
 
 function RecordedDecision({ review, takeFocus }: { review: TicketReview; takeFocus: boolean }) {
-  const approved = review.decision === 'Approved'
+  const manual = review.decision === 'ResolvedManually'
+  // Approval and manual resolution both resolve the ticket with the
+  // reviewer's final text; only a rejection resolves nothing.
+  const resolved = review.decision === 'Approved' || manual
   const panel = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -81,14 +99,17 @@ function RecordedDecision({ review, takeFocus }: { review: TicketReview; takeFoc
   return (
     <div className="panel" ref={panel} tabIndex={-1}>
       <p>
-        <strong className={approved ? 'state--ready' : 'state--rejected'}>
-          {review.decision}
+        <strong className={resolved ? 'state--ready' : 'state--rejected'}>
+          {manual ? 'Resolved manually' : review.decision}
         </strong>
-        {approved && review.wasEdited && <span className="muted"> · edited before approval</span>}
+        {manual && <span className="muted"> · written by hand</span>}
+        {review.decision === 'Approved' && review.wasEdited && (
+          <span className="muted"> · edited before approval</span>
+        )}
       </p>
 
-      {approved && review.finalText && <p className="draft__text">{review.finalText}</p>}
-      {!approved && review.rejectionReason && (
+      {resolved && review.finalText && <p className="draft__text">{review.finalText}</p>}
+      {!resolved && review.rejectionReason && (
         <p className="evidence__resolution">{review.rejectionReason}</p>
       )}
 
@@ -97,15 +118,83 @@ function RecordedDecision({ review, takeFocus }: { review: TicketReview; takeFoc
   )
 }
 
-function GenerateDraft({ ticketId }: { ticketId: string }) {
+function GenerateDraft({ ticketId, onSubmitted }: { ticketId: string; onSubmitted: () => void }) {
   const generate = useGenerateDraft(ticketId)
 
+  // When generation fails - Azure unreachable, or the corpus moved on so
+  // nothing is retrievable - the reviewer can still write the reply. Without
+  // this, an outage recreates exactly the dead end manual resolution exists
+  // to remove. Retrying stays available above it.
   return (
-    <div className="panel">
-      <button type="button" onClick={() => generate.mutate()} disabled={generate.isPending}>
-        {generate.isPending ? 'Generating…' : 'Generate a draft'}
-      </button>
-      {generate.error && <Alert>{generate.error.message}</Alert>}
+    <>
+      <div className="panel">
+        <button type="button" onClick={() => generate.mutate()} disabled={generate.isPending}>
+          {generate.isPending ? 'Generating…' : 'Generate a draft'}
+        </button>
+        {generate.error && <Alert>{generate.error.message}</Alert>}
+      </div>
+      {generate.error && <ManualResolutionForm ticketId={ticketId} onSubmitted={onSubmitted} />}
+    </>
+  )
+}
+
+/// For a ticket with no draft a reviewer can judge. The reviewer's reply
+/// resolves the ticket and joins the corpus as a precedent marked as written
+/// by hand. Like every other action here, it records a decision; nothing is
+/// sent to anyone.
+///
+/// The textarea always starts empty. When a withheld draft exists the API
+/// does not serve its text, and the server would not accept it as a manual
+/// resolution's text even if it did.
+function ManualResolutionForm({
+  ticketId,
+  onSubmitted,
+}: {
+  ticketId: string
+  onSubmitted: () => void
+}) {
+  const [text, setText] = useState('')
+  const submit = useSubmitReview(ticketId)
+  const canResolve = text.trim().length > 0
+
+  function resolve() {
+    submit.mutate(
+      { decision: 'ResolvedManually', finalText: text.trim(), rejectionReason: null },
+      { onSuccess: onSubmitted },
+    )
+  }
+
+  return (
+    <div className="panel review">
+      <label className="review__label" htmlFor="manual-reply">
+        Your reply
+      </label>
+      <p className="muted" id="manual-reply-help">
+        Write the reply yourself. It resolves the ticket and becomes a precedent marked as written
+        by hand.
+      </p>
+      <textarea
+        id="manual-reply"
+        className="review__text"
+        rows={8}
+        value={text}
+        aria-describedby="manual-reply-help"
+        onChange={(event) => setText(event.target.value)}
+        disabled={submit.isPending}
+      />
+
+      <div className="review__actions">
+        <button
+          type="button"
+          className="button button--approve"
+          onClick={resolve}
+          disabled={submit.isPending || !canResolve}
+        >
+          Resolve with this reply
+        </button>
+      </div>
+
+      {submit.error && <Alert>{submit.error.message}</Alert>}
     </div>
   )
 }
