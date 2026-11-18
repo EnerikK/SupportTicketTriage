@@ -819,6 +819,12 @@ The two were outline-only and identical in weight, so the screen asked a reviewe
 
 Forty-five passing tests did not catch a raw float rendered to sixteen decimal places, three hundred underlined table rows, or a hover state invisible on a dark ground. All three were found by opening the page. **Frontend work gets looked at, not only tested** - and the dark hover specifically was found by measuring the computed value rather than by squinting at a screenshot.
 
+### Amendment — 2026-11-18: a wider shell, and a reading width for text
+
+- **The app's maximum width, `--measure`, is now 1280px, up from 1060px.** Seen on a 1920px screen, the dashboard's grids sat in the middle third with about 430px of empty space on each side. No reason for 1060px had been recorded; it suited the queue and the ticket page, and nothing wider existed then.
+- **Paragraphs are capped at 75 characters.** Widening the shell would otherwise stretch running text, above all a draft, past the length a reader can follow back to the start of the next line.
+- **Rejected alternative: widening the dashboard alone.** The header sits in the same container, so its title and nav would jump sideways on every switch between the queue and the dashboard.
+
 ---
 
 ## ADR-025 — Slice F3: `lucide-react`, four circles and one triangle, and a skeleton rather than a spinner

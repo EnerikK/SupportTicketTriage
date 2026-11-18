@@ -54,7 +54,7 @@
   --duration: 180ms;
 
   /* Layout */
-  --measure: 1060px;
+  --measure: 1280px;
 
   color-scheme: light;
 
@@ -223,6 +223,15 @@ body {
      breakpoint: 16px of padding either side of a 320px phone is 10% of the
      screen spent on nothing. */
   padding: var(--space-6) clamp(var(--space-3), 4vw, var(--space-6)) var(--space-7);
+}
+
+/* The shell is wide enough for the dashboard's grids, so running text gets
+   its own limit: past about 75 characters a line is hard to follow back to
+   its start, which matters most for a draft a reviewer has to read closely.
+   A paragraph that is itself a card keeps the full width, so cards in one
+   column line up; only the text inside them is limited. */
+.app p:not(.panel) {
+  max-width: 75ch;
 }
 
 .app__header {
@@ -1128,10 +1137,18 @@ button:disabled {
   text-align: left;
 }
 
+/* Two panels a row where they fit, one where they do not, and never three:
+   each column is at least half the row, so four panels always land as two
+   even rows rather than three and an orphan. No media query needed. */
 .dashboard__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(max(18rem, calc(50% - var(--space-4) / 2)), 1fr));
   gap: var(--space-4);
+}
+
+/* A date and time reads as one value, so it does not break across lines. */
+.queue__date {
+  white-space: nowrap;
 }
 
 .dashboard__panel p {
@@ -1222,9 +1239,10 @@ button:disabled {
   background: var(--border-strong);
 }
 
+/* Two figures a row at most, for the same reason as the panel grid. */
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(max(9rem, calc(50% - var(--space-4) / 2)), 1fr));
   gap: var(--space-4);
   margin: 0;
 }

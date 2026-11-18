@@ -80,7 +80,7 @@ export function NeedsAttention({ items }: { items: Dashboard['needsAttention'] }
                         {reason.text}
                       </span>
                     </td>
-                    <td>{formatDate(item.receivedAt)}</td>
+                    <td className="queue__date">{formatDate(item.receivedAt)}</td>
                   </tr>
                 )
               })}
