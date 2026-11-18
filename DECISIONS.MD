@@ -1775,6 +1775,14 @@ Four specific failures were possible:
 
 **What would reverse it.** Evidence that the dashboard is not used. Or integration with a real ticketing system that sends replies (the specification's stated direction), which would make send-based metrics true rather than invented, and would add them under a new decision.
 
+### Amendment — 2026-11-18: whole UTC days, and one point per day
+
+This changes two things decided above, while building the endpoint. The original text is left standing.
+- **A period is N whole UTC days ending at the start of tomorrow,** not N × 24 hours ending now. Today is included as far as it has got. Ending at "now" would make each daily bucket run from one time of day to the same time the next, which cannot be labelled as a day. The previous period is still the same length, immediately before.
+- **The volume series has one point per UTC day for all three ranges.** The design reference used weekly points for 90 days, but 90 days is not a whole number of weeks, so either the range becomes 91 days or one week is short. Ninety points read well enough as a line.
+- **The cost:** the last point is today so far, so it is always low until midnight UTC. The page has to say so.
+- **How the day is found:** the UTC calendar day, explicitly. Npgsql translates `UtcDateTime` into `AT TIME ZONE 'UTC'`, so grouping does not depend on the database session's time zone. An integration test runs with the session in UTC+05:45 to show it.
+
 ---
 
 ## Entries expected from the audit

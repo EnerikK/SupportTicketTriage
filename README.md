@@ -309,7 +309,7 @@ Both required injection tests drive a fake model that **obeys** the injection �
 
 ## The review UI
 
-A queue, a ticket page and four review actions, on one stylesheet with a design-token layer and dark mode ([ADR-024](DECISIONS.MD)). There is no admin console, settings page or dashboard: the screens are the review workflow and nothing else.
+A queue, a ticket page with four review actions, and a read-only dashboard, on one stylesheet with a design-token layer and dark mode ([ADR-024](DECISIONS.MD)). There is no admin console or settings page.
 
 **The queue is one request.** Category, priority, the routing outcome and the draft's state all come from a single projection rather than four requests per row.
 
@@ -322,6 +322,17 @@ A queue, a ticket page and four review actions, on one stylesheet with a design-
 **A withheld draft is explained, not hidden, and never approved around.** When citation validation fails the API returns no text and no citations, and the UI says the draft cited evidence it was never shown. The one action on offer is writing the reply by hand beneath that explanation; the withheld text is never offered as a starting point.
 
 **A ticket with no reviewable draft can be resolved by hand.** A ticket that failed a routing gate, a withheld draft, and an eligible ticket whose generation failed all offer a reply form; an untriaged ticket is offered triage instead. The reply resolves the ticket, and when that ticket is later retrieved as evidence it carries a "Written by hand" label, because nothing the system can trace supports it.
+
+**The dashboard reports only what the system records** ([ADR-046](DECISIONS.MD)). For 7, 30 or 90 whole UTC days, it shows:
+- **headline figures, compared with the period before:** tickets received, the share routed to manual triage, the share of drafts approved as written, and the median time to a reviewer's resolution;
+- **a daily chart of tickets received and resolved;**
+- **routing outcomes,** each failed gate named;
+- **all four review decisions;**
+- **drafts withheld or citing nothing,** beside the rest;
+- **categories;**
+- **the newest tickets that have no draft a reviewer can approve.**
+
+Nothing is sent, so there are no send times. Categories are never overridden, so it claims no accuracy. The classifier's score is never drawn against a threshold, because that gate's measured separation is 0.006. A change with nothing to compare against shows "—" rather than an invented percentage. In the seeded database every ticket arrived in one run, so the chart is a single spike, and the page says so.
 
 **There is no send button, because there is no send endpoint.** One test scans every rendered action for send-shaped wording and asserts there are none — the guarantee is an absence, and absences are easy to lose to a well-meaning addition.
 
@@ -350,6 +361,13 @@ Nothing in the UI shows a score as a percentage. A gated ticket names the gate t
 **The reviewer's final text is stored even when they changed nothing.** The alternative — only edited text becoming corpus — was rejected because most approvals are "this is fine", so the corpus would barely grow and the feedback loop would be decorative. The cost is real: model-authored text then enters the corpus as precedent. Provenance is the mitigation rather than exclusion — review to draft to retrieved sources is a join, so "was this precedent written by a person or accepted from a model, and what was *that* grounded on" is answerable.
 
 **A ticket the system could not draft for can still become precedent.** Only resolved tickets join the corpus, and until [ADR-045](DECISIONS.MD) only an approved draft resolved one, so the tickets Gate B refused for having nothing similar could never become the precedent the next similar ticket needs. A reviewer can now resolve such a ticket with their own reply. Every resolution records its source (imported, approved draft or manual reply), because the line worth drawing is not "a human wrote it", which edit-and-approve already allows, but "written from cited precedents" against "written from nothing the system can trace". The source is shown to the reviewer and kept out of the generation prompt and ranking: in the prompt it would be a new prompt version, and nothing yet says ranking should use it.
+
+**The dashboard counts each figure by its own event, in UTC.**
+- **What each figure counts by:** received by when a ticket arrived, routing by when the decision that stands was made, reviews by the review, and resolution by the resolution.
+- **The alternative rejected:** counting everything by when the ticket arrived. Last week's numbers would keep changing as old tickets were processed.
+- **Counts, not percentages:** the API returns counts, and one client module computes every share and delta.
+- **A fixed number of statements:** each figure is one aggregate statement covering both periods, ten in all however many tickets there are. The median is the one raw SQL statement, because Npgsql does not translate `percentile_cont`.
+- **The exception worth naming:** the needs-attention list filters on each ticket's latest signals, so EF writes correlated subqueries, and its cost grows with the unresolved backlog.
 
 **Vectors are stamped with the deployment that produced them, and retrieval filters on it.** Vectors from different embedding models occupy different coordinate systems; comparing them produces *plausible nonsense* — results that look like mediocre relevance rather than a bug. Re-embedding under a new deployment inserts a row rather than overwriting one, and the query filters by model, so mixing them is impossible by construction.
 
@@ -413,18 +431,19 @@ GET  /tickets/{id}/draft              the draft, if its citations validated
 POST /tickets/{id}/triage             re-run classification and routing on demand
 POST /tickets/{id}/review             approve, edit and approve, reject, or resolve manually
 GET  /tickets/{id}/review             the recorded decision
+GET  /dashboard?range=30d             read-only pipeline health over 7d, 30d or 90d
 ```
 
 ### Tests
 
 ```bash
-dotnet test                                   # 399 unit, 125 integration
-npm --prefix src/SupportTicketTriage.Client test   # 96 component
+dotnet test                                   # 411 unit, 140 integration
+npm --prefix src/SupportTicketTriage.Client test   # 123 component
 ```
 
-**Backend: 399 unit tests and 125 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
+**Backend: 411 unit tests and 140 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
 
-**Frontend: 96 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, and what each review action actually sends. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
+**Frontend: 123 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, what each review action actually sends, and how the dashboard turns counts into shares and changes, including when there is nothing to compare against. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
 
 ### Evaluation harness
 
@@ -447,6 +466,7 @@ Named here rather than left for a reader to discover:
 - **A second held-out set.** The three judge configurations were compared using the labels on the same 93 pairs the score is computed over, so the selected judge is the one that fitted that sample best among three. With three candidates and a rule fixed in advance the bias is small, but the honest fix is more held-out material rather than a disclaimer.
 - **The six hard negatives that cleared Gate B.** [ADR-038](DECISIONS.MD) fixes how they are reported — individually and descriptively, with no rate, because the abstention label is only 75% self-consistent and the denominator is six. That write-up is owed.
 - **Observability and resilience in the running application.** The evaluation harness now records per-call latency and tokens, but it does so by wrapping the model clients in its own code — the API itself still has no tracing and no per-request token recording. Timeouts and bounded retry are in place ([ADR-039](DECISIONS.MD)), with values set as multiples of the measured p95 because no tail latency has been recorded yet.
+- **Resolving a ticket whose draft was rejected.** A rejection is a ticket's one review, so manual resolution and triage both refuse it, and the ticket can never resolve. The dashboard lists such tickets as having no action available yet, rather than hiding them. A fix has to reopen [ADR-011](DECISIONS.MD)'s one-review-per-ticket rule, and is not designed yet.
 - **Re-driving failed embeddings at ingest.** A ticket whose embedding call fails has no record saying it still needs one, so the corpus can develop holes. Approval and manual resolution both backfill, which closes this for resolved tickets and leaves it open for the rest.
 - **Groundedness for the current drafter.** The published 60.9% is `gpt-4.1-mini`'s. Republishing it for `gpt-6-luna` needs its 88 held-out drafts labelled by hand, so the judge's agreement can be measured on them as [ADR-018](DECISIONS.MD) requires.
 - **CI does not build the Docker image.** It restores, builds and tests. `docker compose up` is verified by hand.

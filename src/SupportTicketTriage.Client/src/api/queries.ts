@@ -3,6 +3,7 @@ import {
   get,
   getOrNull,
   post,
+  type Dashboard,
   type SimilarTicket,
   type SubmitReview,
   type Ticket,
@@ -34,6 +35,20 @@ export const keys = {
   similar: (id: string) => ['tickets', id, 'similar'] as const,
   draft: (id: string) => ['tickets', id, 'draft'] as const,
   review: (id: string) => ['tickets', id, 'review'] as const,
+  // Not under 'tickets': a review elsewhere does not need to refetch it while
+  // nobody is looking, and opening the page fetches it fresh anyway.
+  dashboard: (range: string) => ['dashboard', range] as const,
+}
+
+/// Read-only pipeline health for one range (ADR-046). The previous range's
+/// figures stay on screen while the next loads, as the queue does between
+/// pages, rather than the whole page collapsing to a skeleton on each click.
+export function useDashboard(range: string) {
+  return useQuery({
+    queryKey: keys.dashboard(range),
+    queryFn: () => get<Dashboard>(`/dashboard?range=${range}`),
+    placeholderData: keepPreviousData,
+  })
 }
 
 export function useQueue(page: number, pageSize: number) {
