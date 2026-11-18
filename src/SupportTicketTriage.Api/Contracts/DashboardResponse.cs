@@ -44,6 +44,17 @@ public sealed record DashboardDraftsResponse(
 
 public sealed record DashboardCategoryResponse(string Category, int Count);
 
+/// `Reason` is one of DraftRejected, DraftWithheld, GateFailed or NotTriaged.
+/// `FailedGates` names the gates, as the queue does, and is empty unless the
+/// reason is GateFailed.
+public sealed record DashboardAttentionResponse(
+    Guid TicketId,
+    string Subject,
+    DateTimeOffset ReceivedAt,
+    string? Category,
+    string Reason,
+    IReadOnlyList<string> FailedGates);
+
 /// Pipeline health over one period, with the period before it for comparison
 /// (ADR-046).
 ///
@@ -53,7 +64,8 @@ public sealed record DashboardCategoryResponse(string Category, int Count);
 ///
 /// The breakdowns cover the current period only. `Categories` always lists
 /// all six; tickets with no classification are counted in `Unclassified`
-/// rather than under a null category.
+/// rather than under a null category. `NeedsAttention` is current state, not
+/// filtered by period: at most ten tickets, newest first.
 public sealed record DashboardResponse(
     string Range,
     DateTimeOffset From,
@@ -66,7 +78,8 @@ public sealed record DashboardResponse(
     DashboardReviewsResponse Reviews,
     DashboardDraftsResponse Drafts,
     IReadOnlyList<DashboardCategoryResponse> Categories,
-    int Unclassified)
+    int Unclassified,
+    IReadOnlyList<DashboardAttentionResponse> NeedsAttention)
 {
     public static DashboardResponse Create(DashboardPeriod period, DashboardSnapshot snapshot) =>
         new(
@@ -98,5 +111,14 @@ public sealed record DashboardResponse(
             snapshot.Categories
                 .Select(c => new DashboardCategoryResponse(c.Category.ToString(), c.Count))
                 .ToArray(),
-            snapshot.Unclassified);
+            snapshot.Unclassified,
+            snapshot.NeedsAttention
+                .Select(a => new DashboardAttentionResponse(
+                    a.TicketId,
+                    a.Subject,
+                    a.ReceivedAt,
+                    a.Category?.ToString(),
+                    a.Reason.ToString(),
+                    RoutingGates.Describe(a.FailedGates)))
+                .ToArray());
 }

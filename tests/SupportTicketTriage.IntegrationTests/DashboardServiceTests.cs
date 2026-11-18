@@ -331,6 +331,107 @@ public class DashboardServiceTests(TicketApiFactory factory)
         Assert.Equal(1, snapshot.Unclassified);
     }
 
+    /// One ticket for each reason, newest first, and the cases that must stay
+    /// out: an eligible ticket not yet drafted, a valid draft awaiting review,
+    /// and tickets already resolved, by approval or by hand.
+    [Fact]
+    public async Task NeedsAttention_ListsEachReason_AndLeavesOutWhatCanStillBeActedOn()
+    {
+        await using var database = ThrowawayDatabase.Create(factory);
+        var (db, seed) = await MigrateAsync(database);
+        await using var _ = db;
+
+        var t = Week.From;
+
+        var untriaged = await seed.TicketAsync(t.AddHours(1));
+
+        var gated = await seed.TicketAsync(t.AddHours(2));
+        await seed.ClassifyAsync(gated, TicketCategory.Billing, t.AddHours(2));
+        await seed.RouteAsync(gated, t.AddHours(2), RoutingGate.RetrievalSimilarity);
+
+        var withheld = await seed.TicketAsync(t.AddHours(3));
+        await seed.RouteAsync(withheld, t.AddHours(3));
+        await seed.DraftAsync(withheld, t.AddHours(3), withheld: true);
+
+        var rejected = await seed.TicketAsync(t.AddHours(4));
+        await seed.RouteAsync(rejected, t.AddHours(4));
+        await seed.ReviewDraftAsync(rejected, ReviewDecision.Rejected, t.AddHours(4));
+
+        var eligible = await seed.TicketAsync(t.AddHours(5));
+        await seed.RouteAsync(eligible, t.AddHours(5));
+
+        var awaitingReview = await seed.TicketAsync(t.AddHours(6));
+        await seed.RouteAsync(awaitingReview, t.AddHours(6));
+        await seed.DraftAsync(awaitingReview, t.AddHours(6));
+
+        var approved = await seed.TicketAsync(t.AddHours(7));
+        await seed.RouteAsync(approved, t.AddHours(7));
+        await seed.ReviewDraftAsync(approved, ReviewDecision.Approved, t.AddHours(7));
+
+        var resolvedByHand = await seed.TicketAsync(t.AddHours(8));
+        await seed.RouteAsync(resolvedByHand, t.AddHours(8), RoutingGate.RetrievalSimilarity);
+        await seed.ResolveManuallyAsync(resolvedByHand, t.AddHours(8));
+
+        var items = (await SnapshotAsync(database, Week)).NeedsAttention;
+
+        Assert.Equal(
+            new[]
+            {
+                (rejected.Id, AttentionReason.DraftRejected),
+                (withheld.Id, AttentionReason.DraftWithheld),
+                (gated.Id, AttentionReason.GateFailed),
+                (untriaged.Id, AttentionReason.NotTriaged),
+            },
+            items.Select(i => (i.TicketId, i.Reason)));
+
+        var gatedItem = items.Single(i => i.TicketId == gated.Id);
+        Assert.Equal(RoutingGate.RetrievalSimilarity, gatedItem.FailedGates);
+        Assert.Equal(TicketCategory.Billing, gatedItem.Category);
+        Assert.All(items.Where(i => i.TicketId != gated.Id), i => Assert.Equal(RoutingGate.None, i.FailedGates));
+    }
+
+    /// When more than one reason applies, a recorded rejection outranks the
+    /// routing behind it. Triage refuses a reviewed ticket, so this state is
+    /// seeded directly; the precedence still has to be right if it occurs.
+    [Fact]
+    public async Task NeedsAttention_ShowsARejection_OverAFailedGate()
+    {
+        await using var database = ThrowawayDatabase.Create(factory);
+        var (db, seed) = await MigrateAsync(database);
+        await using var _ = db;
+
+        var at = Week.From;
+        var ticket = await seed.TicketAsync(at);
+        await seed.RouteAsync(ticket, at);
+        await seed.ReviewDraftAsync(ticket, ReviewDecision.Rejected, at.AddHours(1));
+        await seed.RouteAsync(ticket, at.AddHours(2), RoutingGate.RetrievalSimilarity);
+
+        var item = Assert.Single((await SnapshotAsync(database, Week)).NeedsAttention);
+
+        Assert.Equal(AttentionReason.DraftRejected, item.Reason);
+        Assert.Equal(RoutingGate.None, item.FailedGates);
+    }
+
+    [Fact]
+    public async Task NeedsAttention_IsTheTenNewest()
+    {
+        await using var database = ThrowawayDatabase.Create(factory);
+        var (db, seed) = await MigrateAsync(database);
+        await using var _ = db;
+
+        var created = new List<Ticket>();
+        for (var i = 0; i < 12; i++)
+        {
+            created.Add(await seed.TicketAsync(Week.From.AddHours(i)));
+        }
+
+        var items = (await SnapshotAsync(database, Week)).NeedsAttention;
+
+        Assert.Equal(
+            created.AsEnumerable().Reverse().Take(DashboardService.NeedsAttentionLimit).Select(t => t.Id),
+            items.Select(i => i.TicketId));
+    }
+
     [Fact]
     public async Task GetDashboard_ServesThirtyDaysByDefault_AndRefusesAnUnknownRange()
     {
@@ -342,6 +443,7 @@ public class DashboardServiceTests(TicketApiFactory factory)
         Assert.Equal(dashboard.To.AddDays(-30), dashboard.From);
         Assert.Equal(30, dashboard.Volume.Count);
         Assert.Equal(Enum.GetNames<TicketCategory>(), dashboard.Categories.Select(c => c.Category));
+        Assert.InRange(dashboard.NeedsAttention.Count, 0, DashboardService.NeedsAttentionLimit);
 
         var refused = await client.GetAsync("/dashboard?range=1d");
         Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);

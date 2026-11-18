@@ -44,6 +44,34 @@ public sealed record DashboardDrafts(
 
 public sealed record DashboardCategory(TicketCategory Category, int Count);
 
+/// Why an unresolved ticket has no draft a reviewer can approve. Numbered
+/// from 1, like the other closed sets here, so an unset value is never a
+/// valid reason.
+public enum AttentionReason
+{
+    /// The reviewer rejected the draft. A rejected ticket cannot yet be
+    /// resolved, because the rejection is its one review (ADR-011).
+    DraftRejected = 1,
+
+    /// The latest draft cited evidence it was never shown, and nobody has
+    /// written past it yet.
+    DraftWithheld = 2,
+
+    /// The routing decision that stands failed at least one gate.
+    GateFailed = 3,
+
+    /// No routing decision exists at all.
+    NotTriaged = 4,
+}
+
+public sealed record DashboardAttentionItem(
+    Guid TicketId,
+    string Subject,
+    DateTimeOffset ReceivedAt,
+    TicketCategory? Category,
+    AttentionReason Reason,
+    RoutingGate FailedGates);
+
 public sealed record DashboardSnapshot(
     DashboardHeadline Current,
     DashboardHeadline Previous,
@@ -52,7 +80,8 @@ public sealed record DashboardSnapshot(
     DashboardReviews Reviews,
     DashboardDrafts Drafts,
     IReadOnlyList<DashboardCategory> Categories,
-    int Unclassified);
+    int Unclassified,
+    IReadOnlyList<DashboardAttentionItem> NeedsAttention);
 
 /// Read-only aggregates for the pipeline dashboard (ADR-046).
 ///
@@ -65,6 +94,8 @@ public sealed record DashboardSnapshot(
 /// resolution.
 public sealed class DashboardService(SupportTicketTriageDbContext db)
 {
+    public const int NeedsAttentionLimit = 10;
+
     public async Task<DashboardSnapshot> GetAsync(DashboardPeriod period, CancellationToken ct = default)
     {
         var (from, to, previousFrom) = (period.From, period.To, period.PreviousFrom);
@@ -204,6 +235,80 @@ public sealed class DashboardService(SupportTicketTriageDbContext db)
                 resolvedByDay.GetValueOrDefault(day)))
             .ToArray();
 
+        // Current state, not filtered by period: unresolved tickets with no
+        // draft a reviewer can approve. Left out on purpose are an eligible
+        // ticket with no draft yet, which can still be drafted, and a valid
+        // draft awaiting review, which can be approved. Id breaks ties so that
+        // the ten rows are always the same ten.
+        //
+        // Each signal is the latest of its kind. Because the filter refers to
+        // them, EF writes these as correlated LIMIT 1 subqueries rather than
+        // the window-function joins the queue gets, and the WHERE repeats some
+        // of them. Each is an index lookup on (TicketId, CreatedAt DESC), over
+        // unresolved tickets only: still one statement, but its work grows
+        // with the unresolved backlog. Fine in the thousands; past that, the
+        // denormalised state columns ADR-012 already names are the fix.
+        var attentionRows = await db.Tickets
+            .Where(t => t.Resolution == null)
+            .Select(t => new
+            {
+                t.Id,
+                t.Subject,
+                t.CreatedAt,
+                Category = db.TicketClassifications
+                    .Where(c => c.TicketId == t.Id)
+                    .OrderByDescending(c => c.CreatedAt)
+                    .Select(c => (TicketCategory?)c.Category)
+                    .FirstOrDefault(),
+                RoutingEligible = db.TicketRoutingDecisions
+                    .Where(r => r.TicketId == t.Id)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Select(r => (bool?)r.IsDraftEligible)
+                    .FirstOrDefault(),
+                FailedGates = db.TicketRoutingDecisions
+                    .Where(r => r.TicketId == t.Id)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Select(r => (RoutingGate?)r.FailedGates)
+                    .FirstOrDefault(),
+                DraftValid = db.TicketDrafts
+                    .Where(d => d.TicketId == t.Id)
+                    .OrderByDescending(d => d.CreatedAt)
+                    .Select(d => (bool?)d.CitationsValid)
+                    .FirstOrDefault(),
+                Decision = db.TicketReviews
+                    .Where(v => v.TicketId == t.Id)
+                    .Select(v => (ReviewDecision?)v.Decision)
+                    .FirstOrDefault(),
+            })
+            .Where(x => x.Decision == ReviewDecision.Rejected
+                || (x.Decision == null && x.DraftValid == false)
+                || (x.Decision == null && x.DraftValid == null && x.RoutingEligible == false)
+                || x.RoutingEligible == null)
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
+            .Take(NeedsAttentionLimit)
+            .ToListAsync(ct);
+
+        // The order of precedence when more than one applies: a recorded
+        // rejection outranks the draft and the routing behind it.
+        var needsAttention = attentionRows
+            .Select(x =>
+            {
+                var reason = x.Decision == ReviewDecision.Rejected ? AttentionReason.DraftRejected
+                    : x.DraftValid == false ? AttentionReason.DraftWithheld
+                    : x.RoutingEligible == false ? AttentionReason.GateFailed
+                    : AttentionReason.NotTriaged;
+
+                return new DashboardAttentionItem(
+                    x.Id,
+                    x.Subject,
+                    x.CreatedAt,
+                    x.Category,
+                    reason,
+                    reason == AttentionReason.GateFailed ? x.FailedGates ?? RoutingGate.None : RoutingGate.None);
+            })
+            .ToArray();
+
         // Every category, with zeros, so the client never has to know the
         // closed set to draw an empty bar.
         var categories = Enum.GetValues<TicketCategory>()
@@ -243,7 +348,8 @@ public sealed class DashboardService(SupportTicketTriageDbContext db)
                 drafts?.ValidCitingNone ?? 0,
                 drafts?.AverageCited),
             categories,
-            untouched?.Unclassified ?? 0);
+            untouched?.Unclassified ?? 0,
+            needsAttention);
     }
 
     private sealed class MedianRow
