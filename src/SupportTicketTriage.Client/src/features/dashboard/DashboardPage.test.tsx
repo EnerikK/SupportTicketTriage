@@ -237,6 +237,137 @@ describe('DashboardPage', () => {
     )
   })
 
+  describe('breakdowns', () => {
+    /// The row a label belongs to, so its count and share can be read from it.
+    function rowOf(label: string) {
+      return within(screen.getByText(label, { selector: '.bars__label' }).closest('li')!)
+    }
+
+    it('names each routing outcome in the queue’s words, with its count and share', async () => {
+      respondWith(
+        200,
+        dashboard({
+          routing: { bothPassed: 6, retrievalSimilarityFailed: 2, classificationScoreFailed: 1, bothFailed: 1, notTriaged: 0 },
+        }),
+      )
+
+      renderDashboard()
+
+      await screen.findByText('Routing outcomes')
+      expect(rowOf('Manual triage: nothing similar resolved').getByText('2')).toBeInTheDocument()
+      expect(rowOf('Manual triage: nothing similar resolved').getByText('20%')).toBeInTheDocument()
+      expect(rowOf('Manual triage: classifier was unsure and nothing similar resolved').getByText('1')).toBeInTheDocument()
+      expect(rowOf('Not triaged: no routing decision').getByText('0%')).toBeInTheDocument()
+    })
+
+    it('counts all four review decisions, resolved by hand among them', async () => {
+      respondWith(
+        200,
+        dashboard({ reviews: { approvedAsWritten: 1, editedThenApproved: 1, rejected: 1, resolvedManually: '2' } }),
+      )
+
+      renderDashboard()
+
+      expect(await screen.findByText(/5 decisions/)).toBeInTheDocument()
+      expect(rowOf('Resolved by hand').getByText('2')).toBeInTheDocument()
+      expect(rowOf('Resolved by hand').getByText('40%')).toBeInTheDocument()
+      expect(rowOf('Rejected').getByText('20%')).toBeInTheDocument()
+    })
+
+    /// The failures are counted beside the rest rather than left out.
+    it('shows withheld drafts and drafts citing nothing beside the rest', async () => {
+      respondWith(
+        200,
+        dashboard({ drafts: { generated: 4, withheld: 1, validCitingNoSource: 1, averageCitedPerValidDraft: 0.5 } }),
+      )
+
+      renderDashboard()
+
+      expect(await screen.findByText('25% of drafts, never shown to a reviewer')).toBeInTheDocument()
+      expect(screen.getByText('Valid drafts citing no source')).toBeInTheDocument()
+      expect(screen.getByText('0.5')).toBeInTheDocument()
+    })
+
+    it('shows no average when no draft passed validation', async () => {
+      respondWith(
+        200,
+        dashboard({ drafts: { generated: 1, withheld: 1, validCitingNoSource: 0, averageCitedPerValidDraft: null } }),
+      )
+
+      renderDashboard()
+
+      const label = await screen.findByText('Sources cited per valid draft')
+      expect(within(label.parentElement!).getAllByRole('definition')[0]).toHaveTextContent('—')
+    })
+
+    it('lists categories as a person reads them, with the unclassified apart', async () => {
+      respondWith(
+        200,
+        dashboard({
+          categories: [
+            { category: 'Billing', count: 1 },
+            { category: 'AccountAndLogin', count: 3 },
+          ],
+          unclassified: 2,
+        }),
+      )
+
+      renderDashboard()
+
+      await screen.findByText('Tickets by category')
+      expect(rowOf('Account and login').getByText('3')).toBeInTheDocument()
+      expect(rowOf('Unclassified').getByText('2')).toBeInTheDocument()
+      expect(screen.queryByText('AccountAndLogin')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('needs attention', () => {
+    const item = (overrides: Partial<Dashboard['needsAttention'][number]>) => ({
+      ticketId: 'ticket-1',
+      subject: 'A subject',
+      receivedAt: '2026-11-18T09:00:00+00:00',
+      category: null,
+      reason: 'NotTriaged',
+      failedGates: [],
+      ...overrides,
+    })
+
+    /// A rejected ticket says outright that nothing can be done with it yet,
+    /// rather than looking like work waiting to be picked up.
+    it('names the reason for each ticket and links to it', async () => {
+      respondWith(
+        200,
+        dashboard({
+          needsAttention: [
+            item({ ticketId: 'rejected', subject: 'Rejected one', reason: 'DraftRejected', category: 'AccountAndLogin' }),
+            item({ ticketId: 'withheld', subject: 'Withheld one', reason: 'DraftWithheld' }),
+            item({ ticketId: 'gated', subject: 'Gated one', reason: 'GateFailed', failedGates: ['RetrievalSimilarity'] }),
+            item({ ticketId: 'untriaged', subject: 'Untriaged one', reason: 'NotTriaged' }),
+          ],
+        }),
+      )
+
+      renderDashboard()
+
+      const table = within(await screen.findByRole('region', { name: 'Tickets that need attention' }))
+      expect(table.getByText('Draft rejected — no action available yet')).toBeInTheDocument()
+      expect(table.getByText('Draft withheld: invalid citations')).toBeInTheDocument()
+      expect(table.getByText('Manual triage: nothing similar resolved')).toBeInTheDocument()
+      expect(table.getByText('Not triaged')).toBeInTheDocument()
+      expect(table.getByText('Account and login')).toBeInTheDocument()
+      expect(table.getByRole('link', { name: 'Gated one' })).toHaveAttribute('href', '/tickets/gated')
+    })
+
+    it('says so when nothing needs attention', async () => {
+      respondWith(200, dashboard({ needsAttention: [] }))
+
+      renderDashboard()
+
+      expect(await screen.findByText(/Nothing needs attention/)).toBeInTheDocument()
+      expect(screen.queryByRole('region', { name: 'Tickets that need attention' })).not.toBeInTheDocument()
+    })
+  })
+
   /// The same absence the review actions pin: nothing here sends anything.
   it('offers no action that sends anything', async () => {
     respondWith(200, dashboard())

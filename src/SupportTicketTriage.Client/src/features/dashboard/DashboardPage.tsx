@@ -3,6 +3,7 @@ import { toNumber, type Dashboard } from '../../api/client'
 import { useDashboard } from '../../api/queries'
 import { Alert } from '../../ui/Alert'
 import { LoadingRegion, Skeleton } from '../../ui/Skeleton'
+import { CategoriesPanel, DraftsPanel, ReviewsPanel, RoutingPanel } from './Breakdowns'
 import {
   countDelta,
   defaultRange,
@@ -18,6 +19,7 @@ import {
   singleArrivalDay,
   type DashboardRange,
 } from './metrics'
+import { NeedsAttention } from './NeedsAttention'
 import { VolumeChart } from './VolumeChart'
 
 /**
@@ -82,6 +84,13 @@ export function DashboardPage() {
         <>
           <Headline data={data} range={range} />
           <Volume data={data} range={range} />
+          <div className="dashboard__grid">
+            <RoutingPanel routing={data.routing} range={range} />
+            <ReviewsPanel reviews={data.reviews} range={range} />
+            <DraftsPanel drafts={data.drafts} range={range} />
+            <CategoriesPanel categories={data.categories} unclassified={data.unclassified} range={range} />
+          </div>
+          <NeedsAttention items={data.needsAttention} />
         </>
       )}
     </section>

@@ -1128,6 +1128,130 @@ button:disabled {
   text-align: left;
 }
 
+.dashboard__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-4);
+}
+
+.dashboard__panel p {
+  margin: 0;
+}
+
+.dashboard__panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* Label and numbers on one line, the bar full width beneath them, at every
+   width, so no breakpoint is needed for a phone. */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bars__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'label count share'
+    'track track track';
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  align-items: baseline;
+  font-size: var(--text-md);
+}
+
+.bars__label {
+  grid-area: label;
+}
+
+.bars__count {
+  grid-area: count;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.bars__share {
+  grid-area: share;
+  min-width: 3ch;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.bars__track {
+  grid-area: track;
+  display: block;
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+}
+
+.bars__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+}
+
+.bars__fill--ready {
+  background: var(--ready);
+}
+
+.bars__fill--blocked {
+  background: var(--blocked);
+}
+
+.bars__fill--rejected {
+  background: var(--rejected);
+}
+
+.bars__fill--accent {
+  background: var(--accent);
+}
+
+.bars__fill--muted {
+  background: var(--border-strong);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.stat dd {
+  margin: 0;
+}
+
+.stat__label,
+.stat__note {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.stat__value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat--warn .stat__value {
+  color: var(--blocked);
+}
+
 /* Motion is opt-out, everywhere, without exception.
  *
  * Declared here rather than beside each transition so there is exactly one

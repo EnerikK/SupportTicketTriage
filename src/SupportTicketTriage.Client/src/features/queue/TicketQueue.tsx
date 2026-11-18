@@ -3,18 +3,12 @@ import { Link, useSearchParams } from 'react-router'
 import { toNumber } from '../../api/client'
 import { useQueue } from '../../api/queries'
 import { Alert } from '../../ui/Alert'
+import { describeCategory, formatDate } from '../../ui/format'
 import { LoadingRegion, Skeleton } from '../../ui/Skeleton'
 import { Pagination } from './Pagination'
 import { readPage, readPageSize } from './paging'
 import { StateIcon } from './StateIcon'
 import { describeGate, describeState } from './ticketState'
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
-}
 
 /// Shared by the table and its skeleton so the two cannot drift apart and
 /// make the layout jump on load, which is the only thing a skeleton is for.
@@ -187,7 +181,13 @@ export function TicketQueue() {
                 <td>
                   <Link to={`/tickets/${ticket.id}`}>{ticket.subject}</Link>
                 </td>
-                <td>{ticket.category ?? <span className="muted">unclassified</span>}</td>
+                <td>
+                  {ticket.category ? (
+                    describeCategory(ticket.category)
+                  ) : (
+                    <span className="muted">unclassified</span>
+                  )}
+                </td>
                 <td>{ticket.priority ?? <span className="muted">—</span>}</td>
                 <td>
                   <span className={`state state--${state.tone}`}>
