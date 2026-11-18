@@ -878,6 +878,256 @@ button:disabled {
   font-size: var(--text-md);
 }
 
+/* --- Navigation -------------------------------------------------------- */
+
+.app__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+
+.app__nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+}
+
+.app__nav a:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.app__nav a[aria-current='page'] {
+  background: var(--surface-sunken);
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+}
+
+/* --- Dashboard ---------------------------------------------------------- */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.dashboard__intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.dashboard__intro p {
+  margin: var(--space-1) 0 0;
+}
+
+.dashboard__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.dashboard__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.range {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.range__option {
+  min-height: 2.25rem;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.range__option[aria-pressed='true'] {
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.kpi dd {
+  margin: 0;
+}
+
+.kpi__label {
+  color: var(--text-muted);
+  font-size: var(--text-md);
+}
+
+.kpi__value {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi__delta {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.kpi__hint {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+/* The two series differ in pattern as well as hue, so they can be told apart
+   without colour. Both colours already have dark-mode values. */
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.chart__key::before {
+  content: '';
+  display: inline-block;
+  width: 1rem;
+  margin-right: var(--space-2);
+  vertical-align: middle;
+  border-top: 2px solid var(--accent);
+}
+
+.chart__key--resolved::before {
+  border-top: 2px dashed var(--ready);
+}
+
+.chart__area {
+  position: relative;
+  height: 15rem;
+  padding: 0 0 1.5rem 2.75rem;
+}
+
+.chart__plot {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chart__grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart__line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart__line--received {
+  stroke: var(--accent);
+}
+
+.chart__line--resolved {
+  stroke: var(--ready);
+  stroke-dasharray: 6 4;
+}
+
+.chart__y {
+  position: absolute;
+  top: 0;
+  bottom: 1.5rem;
+  left: 0;
+  width: 2.25rem;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.chart__y span {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.chart__x {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 2.75rem;
+  height: 1.25rem;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.chart__x span {
+  position: absolute;
+  white-space: nowrap;
+}
+
+.chart__data summary {
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.chart__data table {
+  margin-top: var(--space-2);
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart__data th,
+.chart__data td {
+  padding: var(--space-1) var(--space-3);
+  text-align: right;
+}
+
+.chart__data th[scope='row'] {
+  font-weight: var(--weight-normal);
+  text-align: left;
+}
+
 /* Motion is opt-out, everywhere, without exception.
  *
  * Declared here rather than beside each transition so there is exactly one
