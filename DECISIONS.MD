@@ -1734,6 +1734,49 @@ Four specific failures were possible:
 
 ---
 
+## ADR-046 — A read-only pipeline dashboard that reports only what the system records
+
+**Status:** Accepted — 2026-11-18. Scope and metric definitions. The endpoint and the page follow as later slices of the same phase. Lifts the specification's "no dashboard" rule, which now carries a dated revision; the specification is a working document and is not tracked, so this entry states the decision in full.
+
+**Decision.**
+- **One new screen:** a read-only dashboard of pipeline health. An admin console and a settings page stay out of scope.
+- **It reports only what the system records.** Nothing is ever sent, so there are no send times and no "sent without edits". Categories are never overridden, so there is no override-based accuracy.
+- **Routing is shown as outcomes, each failed gate named.** The classifier score is not drawn as a distribution against a threshold: that gate's measured separation is 0.006 and it is a tripwire ([[ADR-019]]), and a histogram with a line through it claims a calibration that does not exist ([[ADR-003]]).
+- **Failure counts sit beside success counts:** drafts withheld for invalid citations, valid drafts citing no source, and tickets never triaged.
+
+**What it is for.** The rule it lifts kept out screens that add surface without adding to the review workflow. The case for this one is that it shows, on live data, the properties the evaluation harness measures offline: how often each gate fires, how often a draft is withheld, how reviewers decide. The counter-argument stands: it is a new screen with its own endpoint, styles and tests, and the review workflow works without it. The owner accepted that cost on 2026-11-18.
+
+**Definitions.** A period is a half-open `[start, end)` in **UTC**, of 7, 30 or 90 days ending now; the previous period is the same length immediately before it. **Each metric is counted by its own event's timestamp.**
+- **Tickets received:** `Ticket.CreatedAt` in the period.
+- **Resolved by a reviewer:** `ResolvedAt` in the period, with a source other than `Imported`.
+- **Routed to manual triage:** of tickets whose latest routing decision was made in the period, the share not draft-eligible.
+- **Routing outcomes:** the same tickets, split by failed gates: both passed, retrieval similarity only, classifier score only, both failed. Plus **not triaged**: tickets received in the period with no routing decision at all, which have no decision timestamp to count by.
+- **Review decisions:** reviews created in the period, by all four decisions.
+- **Approved as written:** of `Approved` and `Rejected` reviews created in the period, the share `Approved` and not `WasEdited`.
+- **Median time to resolution:** the median of `ResolvedAt − CreatedAt` over the resolutions counted above.
+- **Drafts and citations:** drafts created in the period; those withheld (`CitationsValid = false`); valid drafts with no cited source; the average number of cited sources per valid draft.
+- **Tickets by category:** tickets received in the period, by their latest classification, plus "Unclassified".
+- **Needs attention:** current state, not filtered by period. The ten newest unresolved tickets with no draft a reviewer can approve, each with its reason: a failed gate (named), a withheld draft, a rejected draft, or never triaged.
+
+**Decided with it.**
+- **Imported tickets do not count as resolved.** The 240 corpus tickets were resolved by a seed script, not by anyone using the system. The cost: the dashboard's resolved total will not match the corpus size, so the label says "resolved by a reviewer".
+- **Counting by event, not by the ticket's arrival.** Counting everything by when the ticket arrived makes last week's numbers change as old tickets are processed, and a dashboard whose past moves is hard to trust or test. The cost: a rate can mix tickets of different ages.
+- **UTC, labelled on the page.** There is no user or locale to choose a zone from. UTC days start at 02:00 in Athens, and grouping by a zone later is one `AT TIME ZONE`.
+- **The median is one raw SQL statement** using `percentile_cont(0.5)`, because Npgsql's EF provider (10.0.3) has no translation for it. That keeps the endpoint at a fixed number of statements, as the queue is ([[ADR-012]]). The cost: it is not checked against the model at compile time, so an integration test runs it against PostgreSQL.
+- **No demo seeding.** Every seeded ticket shares one `CreatedAt`, so the volume chart is a single spike until there is real use; the page says so instead of hiding it. Backdating would mean either a domain parameter only tooling uses, or a script rewriting timestamps across five tables. A demo tool, if it is ever wanted, is a separate decision.
+- **The app's system font stack, not Inter.** No new dependency, and the page matches the rest of the app. The built page will differ slightly from the design reference, which was drawn in Inter.
+- **Charts are hand-drawn SVG, with no chart library**, because the platform suffices for two line series and some bars.
+- **Rejected tickets are shown, labelled as having no action available yet.** A rejected ticket can never be resolved, because the rejection is its one review ([[ADR-011]]). Hiding those rows would smooth over a real gap; fixing the gap reopens ADR-011 and is a review-workflow decision of its own.
+
+**Alternatives rejected.**
+- The original design's elements that the system cannot honestly supply: send-based metrics, auto-triage accuracy, the confidence histogram with its threshold line, invented ticket numbers, an Export CSV action, and navigation to a knowledge base and settings.
+- Computing the median in memory, which loads every duration in the period and grows with the data.
+- Inter for this page alone, which would be a new dependency for one screen.
+
+**What would reverse it.** Evidence that the dashboard is not used. Or integration with a real ticketing system that sends replies (the specification's stated direction), which would make send-based metrics true rather than invented, and would add them under a new decision.
+
+---
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.
