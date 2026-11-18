@@ -75,14 +75,14 @@ public class DashboardServiceTests(TicketApiFactory factory)
         await using var _ = db;
 
         var retriaged = await seed.TicketAsync(Week.PreviousFrom.AddDays(1));
-        await seed.RouteAsync(retriaged, eligible: false, Week.PreviousFrom.AddDays(1));
-        await seed.RouteAsync(retriaged, eligible: true, Week.From.AddDays(1));
+        await seed.RouteAsync(retriaged, Week.PreviousFrom.AddDays(1), RoutingGate.RetrievalSimilarity);
+        await seed.RouteAsync(retriaged, Week.From.AddDays(1));
 
         var gated = await seed.TicketAsync(Week.From.AddDays(2));
-        await seed.RouteAsync(gated, eligible: false, Week.From.AddDays(2));
+        await seed.RouteAsync(gated, Week.From.AddDays(2), RoutingGate.RetrievalSimilarity);
 
         var earlier = await seed.TicketAsync(Week.PreviousFrom.AddDays(2));
-        await seed.RouteAsync(earlier, eligible: true, Week.PreviousFrom.AddDays(2));
+        await seed.RouteAsync(earlier, Week.PreviousFrom.AddDays(2));
 
         var snapshot = await SnapshotAsync(database, Week);
 
@@ -186,7 +186,7 @@ public class DashboardServiceTests(TicketApiFactory factory)
             {
                 var at = Week.From.AddHours(i + 1);
                 var ticket = await seed.TicketAsync(at);
-                await seed.RouteAsync(ticket, eligible: true, at);
+                await seed.RouteAsync(ticket, at);
                 await seed.ReviewDraftAsync(ticket, ReviewDecision.Approved, at.AddMinutes(30));
             }
         }
@@ -204,6 +204,133 @@ public class DashboardServiceTests(TicketApiFactory factory)
         Assert.Equal(few, sql.Commands.Count);
     }
 
+    /// Each ticket counted once, by the decision that stands, under the gates
+    /// that failed; a ticket never routed counts as untriaged only when it
+    /// arrived in the period, since it has no decision time to go by.
+    [Fact]
+    public async Task Routing_IsSplitByTheGatesThatFailed_PlusTicketsNeverTriaged()
+    {
+        await using var database = ThrowawayDatabase.Create(factory);
+        var (db, seed) = await MigrateAsync(database);
+        await using var _ = db;
+
+        var at = Week.From.AddDays(1);
+        await seed.RouteAsync(await seed.TicketAsync(at), at);
+        await seed.RouteAsync(await seed.TicketAsync(at), at, RoutingGate.RetrievalSimilarity);
+        await seed.RouteAsync(await seed.TicketAsync(at), at, RoutingGate.ClassificationScore);
+        await seed.RouteAsync(
+            await seed.TicketAsync(at), at, RoutingGate.ClassificationScore | RoutingGate.RetrievalSimilarity);
+
+        var retriaged = await seed.TicketAsync(at);
+        await seed.RouteAsync(retriaged, at, RoutingGate.RetrievalSimilarity);
+        await seed.RouteAsync(retriaged, at.AddHours(1));
+
+        await seed.TicketAsync(at);
+        await seed.TicketAsync(Week.PreviousFrom.AddDays(1));
+
+        var snapshot = await SnapshotAsync(database, Week);
+
+        Assert.Equal(
+            new DashboardRouting(
+                BothPassed: 2,
+                RetrievalSimilarityFailed: 1,
+                ClassificationScoreFailed: 1,
+                BothFailed: 1,
+                NotTriaged: 1),
+            snapshot.Routing);
+    }
+
+    [Fact]
+    public async Task ReviewDecisions_AreCountedForAllFour()
+    {
+        await using var database = ThrowawayDatabase.Create(factory);
+        var (db, seed) = await MigrateAsync(database);
+        await using var _ = db;
+
+        var at = Week.From.AddDays(1);
+        await seed.ReviewDraftAsync(await seed.TicketAsync(at), ReviewDecision.Approved, at);
+        await seed.ReviewDraftAsync(await seed.TicketAsync(at), ReviewDecision.Approved, at, edited: true);
+        await seed.ReviewDraftAsync(await seed.TicketAsync(at), ReviewDecision.Rejected, at);
+        await seed.ResolveManuallyAsync(await seed.TicketAsync(at), at);
+        await seed.ResolveManuallyAsync(await seed.TicketAsync(at), at);
+
+        var before = Week.PreviousFrom.AddDays(1);
+        await seed.ResolveManuallyAsync(await seed.TicketAsync(before), before);
+
+        var snapshot = await SnapshotAsync(database, Week);
+
+        Assert.Equal(
+            new DashboardReviews(ApprovedAsWritten: 1, EditedThenApproved: 1, Rejected: 1, ResolvedManually: 2),
+            snapshot.Reviews);
+    }
+
+    /// The failures sit beside the rest: a withheld draft, and a valid draft
+    /// that cited nothing, which counts as zero in the average.
+    [Fact]
+    public async Task Drafts_CountWithheldAndUnsupportedDrafts_BesideTheRest()
+    {
+        await using var database = ThrowawayDatabase.Create(factory);
+        var (db, seed) = await MigrateAsync(database);
+        await using var _ = db;
+
+        var at = Week.From.AddDays(1);
+        await seed.DraftAsync(await seed.TicketAsync(at), at);
+        await seed.DraftAsync(await seed.TicketAsync(at), at, citesSource: false);
+        await seed.DraftAsync(await seed.TicketAsync(at), at, withheld: true);
+        await seed.DraftAsync(await seed.TicketAsync(at), Week.PreviousFrom.AddDays(1));
+
+        var snapshot = await SnapshotAsync(database, Week);
+
+        Assert.Equal(
+            new DashboardDrafts(Generated: 3, Withheld: 1, ValidCitingNoSource: 1, AverageCitedPerValidDraft: 0.5),
+            snapshot.Drafts);
+    }
+
+    [Fact]
+    public async Task Drafts_HaveNoAverage_WhenNoDraftPassedValidation()
+    {
+        await using var database = ThrowawayDatabase.Create(factory);
+        var (db, seed) = await MigrateAsync(database);
+        await using var _ = db;
+
+        var at = Week.From.AddDays(1);
+        await seed.DraftAsync(await seed.TicketAsync(at), at, withheld: true);
+
+        var snapshot = await SnapshotAsync(database, Week);
+
+        Assert.Equal(1, snapshot.Drafts.Withheld);
+        Assert.Null(snapshot.Drafts.AverageCitedPerValidDraft);
+    }
+
+    /// A reclassified ticket counts once, under its latest category. The
+    /// ticket's arrival decides the period, not the classification's.
+    [Fact]
+    public async Task Categories_UseEachTicketsLatestClassification_AndListAllSix()
+    {
+        await using var database = ThrowawayDatabase.Create(factory);
+        var (db, seed) = await MigrateAsync(database);
+        await using var _ = db;
+
+        var at = Week.From.AddDays(1);
+        var reclassified = await seed.TicketAsync(at);
+        await seed.ClassifyAsync(reclassified, TicketCategory.Billing, at);
+        await seed.ClassifyAsync(reclassified, TicketCategory.TechnicalFault, at.AddHours(1));
+
+        await seed.ClassifyAsync(await seed.TicketAsync(at), TicketCategory.Billing, at);
+        await seed.TicketAsync(at);
+
+        var before = Week.PreviousFrom.AddDays(1);
+        await seed.ClassifyAsync(await seed.TicketAsync(before), TicketCategory.Billing, before);
+
+        var snapshot = await SnapshotAsync(database, Week);
+
+        Assert.Equal(Enum.GetValues<TicketCategory>(), snapshot.Categories.Select(c => c.Category));
+        Assert.Equal(1, snapshot.Categories.Single(c => c.Category == TicketCategory.Billing).Count);
+        Assert.Equal(1, snapshot.Categories.Single(c => c.Category == TicketCategory.TechnicalFault).Count);
+        Assert.Equal(2, snapshot.Categories.Sum(c => c.Count));
+        Assert.Equal(1, snapshot.Unclassified);
+    }
+
     [Fact]
     public async Task GetDashboard_ServesThirtyDaysByDefault_AndRefusesAnUnknownRange()
     {
@@ -214,6 +341,7 @@ public class DashboardServiceTests(TicketApiFactory factory)
         Assert.Equal("30d", dashboard!.Range);
         Assert.Equal(dashboard.To.AddDays(-30), dashboard.From);
         Assert.Equal(30, dashboard.Volume.Count);
+        Assert.Equal(Enum.GetNames<TicketCategory>(), dashboard.Categories.Select(c => c.Category));
 
         var refused = await client.GetAsync("/dashboard?range=1d");
         Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
@@ -233,31 +361,62 @@ public class DashboardServiceTests(TicketApiFactory factory)
             return ticket;
         }
 
-        public async Task RouteAsync(Ticket ticket, bool eligible, DateTimeOffset at)
+        /// A routing decision that fails exactly the gates asked for, by
+        /// putting each input on the failing or passing side of its floor.
+        public async Task RouteAsync(Ticket ticket, DateTimeOffset at, RoutingGate failed = RoutingGate.None)
         {
+            var score = failed.HasFlag(RoutingGate.ClassificationScore) ? 0.10 : 0.95;
+            var similarity = failed.HasFlag(RoutingGate.RetrievalSimilarity) ? 0.10 : 0.98;
+
             var decision = TicketRoutingDecision.Create(
                 ticket.Id,
-                RoutingDecision.Evaluate(0.95, eligible ? 0.98 : 0.10, RoutingThresholds.Default));
+                RoutingDecision.Evaluate(score, similarity, RoutingThresholds.Default));
             db.TicketRoutingDecisions.Add(decision);
             await db.SaveChangesAsync();
             await db.Database.ExecuteSqlAsync($"""UPDATE "TicketRoutingDecisions" SET "CreatedAt" = {at} WHERE "Id" = {decision.Id}""");
         }
 
-        /// A review of a citation-valid draft. An approval also resolves the
-        /// ticket, at the same time.
-        public async Task ReviewDraftAsync(Ticket ticket, ReviewDecision decision, DateTimeOffset at, bool edited = false)
+        public async Task ClassifyAsync(Ticket ticket, TicketCategory category, DateTimeOffset at)
+        {
+            var classification = TicketClassification.Create(
+                ticket.Id, category, TicketPriority.Normal, 0.9, "redacted", "v1", "test-chat-model", "v1");
+            db.TicketClassifications.Add(classification);
+            await db.SaveChangesAsync();
+            await db.Database.ExecuteSqlAsync($"""UPDATE "TicketClassifications" SET "CreatedAt" = {at} WHERE "Id" = {classification.Id}""");
+        }
+
+        /// A draft grounded in the shared source. By default it cites that
+        /// source; it can instead cite nothing, or cite a ticket it was never
+        /// shown, which makes it a withheld draft.
+        public async Task<TicketDraft> DraftAsync(
+            Ticket ticket,
+            DateTimeOffset at,
+            bool citesSource = true,
+            bool withheld = false)
         {
             var source = await SourceAsync();
             var retrieved = new[] { new RetrievedSource(source.Id, 1, 0.9) };
+            Guid[] cited = withheld ? [Guid.CreateVersion7()] : citesSource ? [source.Id] : [];
+
             var draft = TicketDraft.Create(
                 ticket.Id,
                 DraftText,
                 retrieved,
-                CitationValidation.Validate([source.Id], retrieved.Select(s => s.TicketId).ToHashSet()),
+                CitationValidation.Validate(cited, retrieved.Select(s => s.TicketId).ToHashSet()),
                 "test-chat-model",
                 "v1",
                 "v1");
             db.TicketDrafts.Add(draft);
+            await db.SaveChangesAsync();
+            await db.Database.ExecuteSqlAsync($"""UPDATE "TicketDrafts" SET "CreatedAt" = {at} WHERE "Id" = {draft.Id}""");
+            return draft;
+        }
+
+        /// A review of a citation-valid draft made at the same time. An
+        /// approval also resolves the ticket, at that time.
+        public async Task ReviewDraftAsync(Ticket ticket, ReviewDecision decision, DateTimeOffset at, bool edited = false)
+        {
+            var draft = await DraftAsync(ticket, at);
 
             ReviewSubmission.TryCreate(
                 decision,
