@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using SupportTicketTriage.Application.Redaction;
 using SupportTicketTriage.Application.Routing;
 using SupportTicketTriage.Infrastructure.Ai;
+using SupportTicketTriage.Infrastructure.Dashboard;
 using SupportTicketTriage.Infrastructure.Persistence;
 using SupportTicketTriage.Infrastructure.Retrieval;
 using SupportTicketTriage.Infrastructure.Review;
@@ -71,6 +72,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton(routingThresholds);
 
         services.AddScoped<TicketRetrievalService>();
+        services.AddScoped<DashboardService>();
         services.AddScoped<TicketRoutingService>();
 
         services.AddScoped(sp => new TicketEmbeddingService(

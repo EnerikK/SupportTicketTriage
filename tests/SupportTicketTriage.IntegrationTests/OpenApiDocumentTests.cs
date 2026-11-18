@@ -23,7 +23,7 @@ public class OpenApiDocumentTests(TicketApiFactory factory)
 
         foreach (var path in (string[])
                  ["/tickets", "/tickets/{id}", "/tickets/{id}/similar", "/tickets/{id}/classification",
-                  "/tickets/{id}/routing", "/tickets/{id}/draft", "/tickets/{id}/review"])
+                  "/tickets/{id}/routing", "/tickets/{id}/draft", "/tickets/{id}/review", "/dashboard"])
         {
             Assert.True(paths.TryGetProperty(path, out _), $"{path} is missing from the document.");
         }
