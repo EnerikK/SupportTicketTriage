@@ -24,17 +24,27 @@ const skeletonWidths: Record<(typeof columns)[number], string> = {
   Received: '66%',
 }
 
+/// The colgroup gives each column its width from the stylesheet, so the
+/// table and its skeleton share one set of columns and paging cannot
+/// re-measure them from a different page's content.
 function QueueHeader() {
   return (
-    <thead>
-      <tr>
+    <>
+      <colgroup>
         {columns.map((column) => (
-          <th key={column} scope="col">
-            {column}
-          </th>
+          <col key={column} className={`queue__col--${column.toLowerCase()}`} />
         ))}
-      </tr>
-    </thead>
+      </colgroup>
+      <thead>
+        <tr>
+          {columns.map((column) => (
+            <th key={column} scope="col">
+              {column}
+            </th>
+          ))}
+        </tr>
+      </thead>
+    </>
   )
 }
 

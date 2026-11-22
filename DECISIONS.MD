@@ -979,6 +979,15 @@ What is missing, all confirmed by reading the markup:
 
 The focus-management gap is the one worth doing carefully: it is the difference between an interface that is navigable and one that is merely compliant.
 
+### Amendment — 2026-11-22: the queue's columns are fixed
+
+- **The defect.** The queue used the default automatic table layout, which sizes each column from the content of the page on screen. On the seeded data, page 6 has three gate lines that widen State and squeeze Subject and Category; page 7 has none. Every page turn moved the columns.
+- **The decision.** `table-layout: fixed`, with widths from a `<colgroup>` in the header the table shares with its skeleton: Category 11rem, Priority 6.5rem, State 16rem, Received 12rem, Subject the rest. Each fixed width fits the longest value its column shows. The table has a `min-width` of 60rem, and cells break a long unbroken word instead of letting it spill into the next column.
+- **Still intrinsic.** No device-width media query was added. Below the minimum, the scroll region above takes over, as it already did on phones.
+- **The cost.** At tablet width the table now scrolls sideways where automatic layout squeezed it to fit, seen at 768px. Without the minimum, Subject would shrink toward nothing instead.
+- **Rows still differ in height.** A gated row carries its gate line, so the pager moves between pages with different numbers of gated tickets. Equal heights would mean truncating the gate text, which [[ADR-023]] forbids.
+- **Checked by eye** at 1280px in light and dark mode, and at 768px. Phone width was not checked: headless Chrome on Windows will not lay out narrower than about 500px.
+
 ---
 
 ## ADR-027 — The queue is paged in the database, with a total order and a clamped page size

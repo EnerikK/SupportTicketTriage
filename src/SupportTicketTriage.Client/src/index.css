@@ -433,8 +433,14 @@ a {
   margin-block: calc(var(--space-1) * -1);
 }
 
+/* Fixed layout: the columns take the widths below instead of being measured
+   from each page's content. Measured, a page with gate lines widened State
+   and squeezed Subject, and every page turn moved the columns. The minimum
+   keeps Subject readable; below it the scroll region above takes over. */
 .queue {
   width: 100%;
+  min-width: 60rem;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   background: var(--surface);
@@ -457,6 +463,30 @@ a {
   padding: var(--space-3);
   border-bottom: 1px solid var(--border);
   vertical-align: top;
+  /* A fixed column no longer grows for a long unbroken word, such as an
+     order reference in a subject, so the word breaks rather than spilling
+     into the next column. */
+  overflow-wrap: break-word;
+}
+
+/* Subject has no width and takes what is left. Each width fits the longest
+   value its column shows: "Shipping & Delivery"; "Normal" and the header;
+   "Resolved manually" with its icon, the gate line wrapping beneath; and a
+   date in the longer locale forms, which never wraps. */
+.queue__col--category {
+  width: 11rem;
+}
+
+.queue__col--priority {
+  width: 6.5rem;
+}
+
+.queue__col--state {
+  width: 16rem;
+}
+
+.queue__col--received {
+  width: 12rem;
 }
 
 .queue th {
