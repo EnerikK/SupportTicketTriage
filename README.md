@@ -315,6 +315,8 @@ A queue, a ticket page with four review actions, and a read-only dashboard, on o
 
 **It is paged in the database, not in the browser.** `Skip`/`Take` run before the rows are materialised, the page size is clamped server-side, and the ordering carries a tie-break on id as well as `CreatedAt` — without it two tickets sharing a timestamp can swap places between pages, which shows up as a row appearing twice and another never appearing at all. A test reads the emitted SQL to assert the paging really happens in the query.
 
+**It is filtered on the server too** ([ADR-047](DECISIONS.MD)), by category, priority and state, from labelled dropdowns or by clicking a priority or state in a row. A filter in the browser would see only the current page and report the wrong total, so filters apply before the count and the paging, and a test walks every filtered page to check the rows add up to the total. The state ("Draft ready", "Manual triage", …) is derived by the server in one SQL `CASE`, so the column and its filter cannot disagree. An unknown filter value is a 400, not a silently empty queue. Date is not a filter: every seeded ticket arrived within two minutes, so it could not be shown to work.
+
 **A ticket page issues five independent requests** — ticket, classification, routing, retrieved evidence, draft. Four of them answer 404 when the ticket has not reached that stage, which is a state rather than a failure, so each section renders "not yet" instead of an error.
 
 **TypeScript types are generated from the API's own OpenAPI document**, so a renamed field on the server is a compile error in the client rather than `undefined` in a browser. That caught a real looseness during development: the generator types every `double` as number-or-numeric-string, because `System.Text.Json` will read a number out of a string. Hand-written types would have asserted `number` and been wrong about what the contract actually promises.
@@ -373,7 +375,7 @@ Nothing in the UI shows a score as a percentage. A gated ticket names the gate t
 
 **Latency and token cost are measured without a line of production code changing.** `TicketEmbeddingService` calls `GenerateVectorAsync`, which is an extension method: it calls `GenerateAsync` underneath, takes the vector, and discards the response — along with the token usage the provider reported. Both chat services read only `response.Text`. Nothing at or above those services can recover what a call cost, so the options were widening three service signatures for a number only the evaluation harness wants, or sitting underneath the client. A `DelegatingChatClient` / `DelegatingEmbeddingGenerator` in the harness sees the response the extension method is about to throw away. One `IChatClient` serves both classification and generation, so it is wrapped twice — once per stage — rather than reading an `AsyncLocal`, because ambient state written by the caller and read by the decorator is what makes a latency figure impossible to defend when it comes out wrong. Instrumenting the *running application* is a separate job, and it arrives as OpenTelemetry rather than as a second bespoke recorder.
 
-**The ticket queue is one query, and EF Core translates it better than expected.** Each triage signal — classification, routing, draft, review — is append-only with most-recent-wins semantics, written as `.OrderByDescending(x => x.CreatedAt).FirstOrDefault()` inside the projection. The obvious translation is a correlated subquery per signal per row. EF Core 10 emits a single statement with one `LEFT JOIN` per signal over a derived table using `ROW_NUMBER() OVER (PARTITION BY "TicketId" ORDER BY "CreatedAt" DESC)` filtered to the first row. Four signals, four window-function joins, one round trip. An integration test reads the emitted SQL and asserts the one-statement property, because no behavioural test can see the difference between this and an N+1.
+**The ticket queue is one query, and EF Core translates it better than expected.** Each triage signal — classification, routing, draft, review — is append-only with most-recent-wins semantics, written as `.OrderByDescending(x => x.CreatedAt).FirstOrDefault()` inside the projection. The obvious translation is a correlated subquery per signal per row. EF Core 10 emits a single statement with one `LEFT JOIN` per signal over a derived table using `ROW_NUMBER() OVER (PARTITION BY "TicketId" ORDER BY "CreatedAt" DESC)` filtered to the first row. Four signals, four window-function joins, one round trip. The derived state is the exception: EF writes its `CASE` as correlated subqueries, which PostgreSQL evaluates only up to the end of the page, but under a state filter for every ticket. That is fine at this size; denormalised state columns are the fix at scale. An integration test reads the emitted SQL and asserts the one-statement property, because no behavioural test can see the difference between this and an N+1.
 
 **Anything compared across machines is formatted with the invariant culture at the point of use, not by configuring the process.** The evaluation report once rendered recall as `75,9%` locally and `75.9%` in CI, so the same run read differently depending on who executed it. Setting a process-wide default culture would have fixed the symptom in one line and was rejected: ambient state can be changed by any caller, including a test — and the regression test for this deliberately sets `el-GR`, `de-DE` and `fr-FR` to try to break it. Under the global fix that test would have silently defeated the protection it was written to verify. Invariant formatting at the call site is a property of the artifact rather than of the environment, and it is the only version a test can actually prove.
 
@@ -422,6 +424,8 @@ Migrations apply on startup against a clean database. Secrets are never committe
 ```
 POST /tickets                         ingest
 GET  /tickets?page=&pageSize=         review queue, one query, paged in the database
+       &category=&priority=&state=    optional filters, applied before the count and the paging
+GET  /categories                      the category labels the queue's filter offers
 GET  /tickets/{id}                    ticket detail
 GET  /tickets/{id}/similar            retrieved resolved tickets
 GET  /tickets/{id}/classification     most recent classification
@@ -437,13 +441,13 @@ GET  /dashboard?range=30d             read-only pipeline health over 7d, 30d or 
 ### Tests
 
 ```bash
-dotnet test                                   # 411 unit, 140 integration
-npm --prefix src/SupportTicketTriage.Client test   # 123 component
+dotnet test                                   # 411 unit, 171 integration
+npm --prefix src/SupportTicketTriage.Client test   # 145 component
 ```
 
-**Backend: 411 unit tests and 140 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
+**Backend: 411 unit tests and 171 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
 
-**Frontend: 129 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, what each review action actually sends, and how the dashboard turns counts into shares and changes, including when there is nothing to compare against. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
+**Frontend: 145 component tests** covering the parts that branch rather than the markup — how the queue's filters live in the address and fall back to "Any" on a value they do not offer, how a ticket page renders five requests of which four may legitimately 404, what each review action actually sends, and how the dashboard turns counts into shares and changes, including when there is nothing to compare against. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
 
 ### Evaluation harness
 
