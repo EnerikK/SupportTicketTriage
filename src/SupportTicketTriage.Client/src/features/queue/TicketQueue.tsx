@@ -200,7 +200,7 @@ export function TicketQueue() {
                     </span>
                   )}
                 </td>
-                <td>{formatDate(ticket.createdAt)}</td>
+                <td className="queue__date">{formatDate(ticket.createdAt)}</td>
               </tr>
             )
           })}

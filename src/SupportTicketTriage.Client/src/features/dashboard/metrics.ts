@@ -28,8 +28,28 @@ export function share(part: Count, whole: Count): number | null {
   return denominator > 0 ? Math.round((toNumber(part) / denominator) * 100) : null
 }
 
-export function percent(value: number | null): string {
-  return value === null ? '—' : `${value}%`
+/// A share as a reader should see it: a whole percentage, except that a
+/// non-zero part never reads as 0% and a part short of the whole never reads
+/// as 100%, because each would claim something false. Nothing to divide by
+/// reads as "—".
+export function shareLabel(part: Count, whole: Count): string {
+  const denominator = toNumber(whole)
+  if (denominator <= 0) {
+    return '—'
+  }
+
+  const numerator = toNumber(part)
+  const rounded = Math.round((numerator / denominator) * 100)
+
+  if (numerator > 0 && rounded === 0) {
+    return '<1%'
+  }
+
+  if (numerator < denominator && rounded === 100) {
+    return '>99%'
+  }
+
+  return `${rounded}%`
 }
 
 const noComparison = '—'
@@ -109,6 +129,24 @@ export function formatDuration(seconds: number): string {
 export function singleArrivalDay(volume: { day: string; received: Count }[]): string | null {
   const busy = volume.filter((day) => toNumber(day.received) > 0)
   return busy.length === 1 ? busy[0].day : null
+}
+
+/// Which days the chart's axis labels: about five, evenly spaced, counted back
+/// from today, so the last day is always labelled and no label can crowd it.
+/// Counting forward from the first day instead left the last two labels
+/// five-sixths of a step apart at 30 days, which overlapped at phone width.
+export function axisLabelDays(count: number, target = 5): number[] {
+  if (count <= 0) {
+    return []
+  }
+
+  const step = Math.max(1, Math.ceil(count / target))
+  const indices: number[] = []
+  for (let index = count - 1; index >= 0; index -= step) {
+    indices.unshift(index)
+  }
+
+  return indices
 }
 
 /// A UTC calendar day as a short date. Formatted in UTC because that is what

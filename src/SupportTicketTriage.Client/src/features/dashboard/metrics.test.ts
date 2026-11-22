@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+  axisLabelDays,
   countDelta,
   durationDelta,
   formatDuration,
   pointsDelta,
   readRange,
   share,
+  shareLabel,
   singleArrivalDay,
 } from './metrics'
 
@@ -24,6 +26,19 @@ describe('share', () => {
     expect(share(15, 62)).toBe(24)
     expect(share('1', '1')).toBe(100)
     expect(share(0, 0)).toBeNull()
+  })
+})
+
+describe('shareLabel', () => {
+  /// Rounding must not turn a few into none, or nearly all into all.
+  it('rounds to whole percentages without claiming none or all when that is untrue', () => {
+    expect(shareLabel(15, 62)).toBe('24%')
+    expect(shareLabel(1, 300)).toBe('<1%')
+    expect(shareLabel(299, 300)).toBe('>99%')
+    expect(shareLabel(300, 300)).toBe('100%')
+    expect(shareLabel(0, 10)).toBe('0%')
+    expect(shareLabel('1', '4')).toBe('25%')
+    expect(shareLabel(0, 0)).toBe('—')
   })
 })
 
@@ -57,6 +72,22 @@ describe('formatDuration', () => {
     expect(formatDuration(3 * 3600)).toBe('3 h')
     expect(formatDuration(3 * 3600 + 40 * 60)).toBe('3 h 40 min')
     expect(formatDuration(52 * 3600)).toBe('2 d 4 h')
+  })
+})
+
+describe('axisLabelDays', () => {
+  /// Counted back from today, so every gap is the same and nothing can crowd
+  /// the last label. Counting forward put the last two labels at days 24 and
+  /// 29 of 30, five-sixths of a step apart.
+  it('spaces about five labels evenly, always ending on the last day', () => {
+    expect(axisLabelDays(30)).toEqual([5, 11, 17, 23, 29])
+    expect(axisLabelDays(7)).toEqual([0, 2, 4, 6])
+    expect(axisLabelDays(90)).toEqual([17, 35, 53, 71, 89])
+  })
+
+  it('copes with a series too short to space out', () => {
+    expect(axisLabelDays(1)).toEqual([0])
+    expect(axisLabelDays(0)).toEqual([])
   })
 })
 

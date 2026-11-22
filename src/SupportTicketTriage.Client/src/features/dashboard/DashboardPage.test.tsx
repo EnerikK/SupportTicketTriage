@@ -243,11 +243,13 @@ describe('DashboardPage', () => {
       return within(screen.getByText(label, { selector: '.bars__label' }).closest('li')!)
     }
 
-    it('names each routing outcome in the queue’s words, with its count and share', async () => {
+    /// Shares are of routed tickets only, the headline's population, so the
+    /// five untriaged tickets here must not dilute them: 2 of 10, not 2 of 15.
+    it('names each routing outcome in the queue’s words, sharing it among routed tickets only', async () => {
       respondWith(
         200,
         dashboard({
-          routing: { bothPassed: 6, retrievalSimilarityFailed: 2, classificationScoreFailed: 1, bothFailed: 1, notTriaged: 0 },
+          routing: { bothPassed: 6, retrievalSimilarityFailed: 2, classificationScoreFailed: 1, bothFailed: 1, notTriaged: 5 },
         }),
       )
 
@@ -257,10 +259,34 @@ describe('DashboardPage', () => {
       expect(rowOf('Manual triage: nothing similar resolved').getByText('2')).toBeInTheDocument()
       expect(rowOf('Manual triage: nothing similar resolved').getByText('20%')).toBeInTheDocument()
       expect(rowOf('Manual triage: classifier was unsure and nothing similar resolved').getByText('1')).toBeInTheDocument()
-      expect(rowOf('Not triaged: no routing decision').getByText('0%')).toBeInTheDocument()
+
+      // Untriaged tickets are reported beside the shares, not as a row in them.
+      expect(screen.queryByText('Not triaged: no routing decision')).not.toBeInTheDocument()
+      expect(screen.getByText(/with no routing decision, left out of the shares above/)).toHaveTextContent(
+        'Not triaged: 5 tickets',
+      )
     })
 
-    it('counts all four review decisions, resolved by hand among them', async () => {
+    /// 1 of 300 is not 0%, and 299 of 300 is not 100%.
+    it('never rounds a share to a claim it cannot make', async () => {
+      respondWith(
+        200,
+        dashboard({
+          routing: { bothPassed: 299, retrievalSimilarityFailed: 1, classificationScoreFailed: 0, bothFailed: 0, notTriaged: 0 },
+        }),
+      )
+
+      renderDashboard()
+
+      await screen.findByText('Routing outcomes')
+      expect(rowOf('Draft-eligible: both gates passed').getByText('>99%')).toBeInTheDocument()
+      expect(rowOf('Manual triage: nothing similar resolved').getByText('<1%')).toBeInTheDocument()
+      expect(rowOf('Manual triage: classifier was unsure').getByText('0%')).toBeInTheDocument()
+    })
+
+    /// "Approved as written" has one percentage, in its headline card. A
+    /// share here, over all four decisions, would put a second on the label.
+    it('counts all four review decisions without a second share of them', async () => {
       respondWith(
         200,
         dashboard({ reviews: { approvedAsWritten: 1, editedThenApproved: 1, rejected: 1, resolvedManually: '2' } }),
@@ -270,8 +296,7 @@ describe('DashboardPage', () => {
 
       expect(await screen.findByText(/5 decisions/)).toBeInTheDocument()
       expect(rowOf('Resolved by hand').getByText('2')).toBeInTheDocument()
-      expect(rowOf('Resolved by hand').getByText('40%')).toBeInTheDocument()
-      expect(rowOf('Rejected').getByText('20%')).toBeInTheDocument()
+      expect(rowOf('Approved as written').queryByText(/%/)).not.toBeInTheDocument()
     })
 
     /// The failures are counted beside the rest rather than left out.
