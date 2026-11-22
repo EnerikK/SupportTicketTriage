@@ -62,39 +62,39 @@
    * Semantic names, not colour names: a token called --danger survives a
    * change of hue, one called --red does not.
    */
-  --bg: #f7f8fa;
+  --bg: #f6f5f2;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --surface-sunken: #f1f3f6;
+  --surface-sunken: #efede8;
   --surface-warning: #fdf6f1;
 
-  --border: #dde0e6;
-  --border-strong: #c6cad3;
+  --border: #e3dfd8;
+  --border-strong: #cfc9bf;
   /* For the edge of a control a person types into or presses: 3:1 or
      better against every ground it sits on (WCAG 1.4.11). --border and
      --border-strong stay faint, because they group content rather than
      mark something interactive. */
-  --border-control: #848b97;
+  --border-control: #8a8378;
 
-  --text: #16181d;
-  --text-muted: #636b78;
+  --text: #1d1b18;
+  --text-muted: #6a645b;
 
-  --accent: #1f4fd8;
+  --accent: #0b6f68;
   --accent-contrast: #ffffff;
 
-  --ready: #0f7b3f;
+  --ready: #2a5e12;
   --on-ready: #ffffff;
-  --blocked: #a4502a;
-  --rejected: #a32b2b;
+  --blocked: #a5520f;
+  --rejected: #b42323;
 
-  --focus-ring: #1f4fd8;
+  --focus-ring: #0b6f68;
 
   /* A tint of the accent, for row and control hovers. Deliberately barely
      there: a hover that announces itself is a hover you stop noticing. */
-  --hover: rgb(31 79 216 / 5%);
+  --hover: rgb(11 111 104 / 6%);
 
-  --shadow-sm: 0 1px 2px rgb(16 24 40 / 6%);
-  --shadow-md: 0 1px 3px rgb(16 24 40 / 8%), 0 4px 12px rgb(16 24 40 / 5%);
+  --shadow-sm: 0 1px 2px rgb(29 27 24 / 6%);
+  --shadow-md: 0 1px 3px rgb(29 27 24 / 8%), 0 4px 12px rgb(29 27 24 / 5%);
 }
 
 /* --- Dark palette -------------------------------------------------------
@@ -113,30 +113,30 @@
   :root:not([data-theme='light']) {
     color-scheme: dark;
 
-    --bg: #0e1014;
-    --surface: #161920;
-    --surface-raised: #1c2029;
-    --surface-sunken: #11141a;
+    --bg: #151412;
+    --surface: #1d1b19;
+    --surface-raised: #242220;
+    --surface-sunken: #11100e;
     --surface-warning: #251c14;
 
-    --border: #272c36;
-    --border-strong: #3a414f;
-    --border-control: #6b7386;
+    --border: #2f2c28;
+    --border-strong: #433f39;
+    --border-control: #7b746a;
 
-    --text: #e7e9ee;
-    --text-muted: #969db0;
+    --text: #ede9e3;
+    --text-muted: #a8a196;
 
-    --accent: #7ba2f0;
-    --accent-contrast: #0e1014;
+    --accent: #3ccfbc;
+    --accent-contrast: #031d1a;
 
-    --ready: #4cc38a;
+    --ready: #97eb79;
     --on-ready: #0b1a12;
-    --blocked: #e0924f;
-    --rejected: #ef7a74;
+    --blocked: #f2b45c;
+    --rejected: #f88a84;
 
-    --focus-ring: #7ba2f0;
+    --focus-ring: #3ccfbc;
 
-    --hover: rgb(123 162 240 / 14%);
+    --hover: rgb(60 207 188 / 12%);
 
     /* Shadow does almost nothing on a dark ground; a lighter border carries
        elevation instead, so these stay deliberately faint rather than being
@@ -149,33 +149,33 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #0e1014;
-  --surface: #161920;
-  --surface-raised: #1c2029;
-  --surface-sunken: #11141a;
+  --bg: #151412;
+  --surface: #1d1b19;
+  --surface-raised: #242220;
+  --surface-sunken: #11100e;
   --surface-warning: #251c14;
 
-  --border: #272c36;
-  --border-strong: #3a414f;
-  --border-control: #6b7386;
+  --border: #2f2c28;
+  --border-strong: #433f39;
+  --border-control: #7b746a;
 
-  --text: #e7e9ee;
-  --text-muted: #969db0;
+  --text: #ede9e3;
+  --text-muted: #a8a196;
 
-  --accent: #7ba2f0;
-  --accent-contrast: #0e1014;
+  --accent: #3ccfbc;
+  --accent-contrast: #031d1a;
 
-  --ready: #4cc38a;
+  --ready: #97eb79;
   --on-ready: #0b1a12;
-  --blocked: #e0924f;
-  --rejected: #ef7a74;
+  --blocked: #f2b45c;
+  --rejected: #f88a84;
 
-  --focus-ring: #7ba2f0;
+  --focus-ring: #3ccfbc;
 
   /* Stronger than the light tint, and not for symmetry. The same 5% over a
      near-black surface moves it by a handful of RGB points, which reads as a
      rendering artifact rather than as a response. */
-  --hover: rgb(123 162 240 / 14%);
+  --hover: rgb(60 207 188 / 12%);
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
   --shadow-md: 0 1px 3px rgb(0 0 0 / 45%), 0 4px 14px rgb(0 0 0 / 35%);

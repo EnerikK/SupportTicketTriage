@@ -832,6 +832,13 @@ Forty-five passing tests did not catch a raw float rendered to sixteen decimal p
 - **The grey dashboard bars used `--border-strong`,** at 1.5:1 to 1.8:1 against their track. A bar shows a quantity, so it needs 3:1. They now use `--text-muted`: 4.84:1 in light mode, 6.80:1 in dark.
 - **The state colours are left as they are, and the reason is recorded.** Accent, ready, blocked and rejected share almost the same lightness in each palette: OKLCH L of 0.48 to 0.53 in light mode, 0.71 to 0.74 in dark. Hue alone separates them, which fails a reader who cannot see the hue. That is acceptable only because nothing relies on hue alone: every state carries a text label, the queue adds icon shapes, and the chart's lines differ by dash pattern. Anything that ever shows state by colour alone has to spread these lightnesses first.
 
+### Amendment — 2026-11-22: warm neutrals with a teal accent
+
+- **The owner replaced the palette.** Three directions were compared against the old palette on mock screens, with every pairing measured. The owner chose the warm stone neutrals and status colours, with a teal accent (`#0b6f68` light, `#3ccfbc` dark) in place of the bright blue. The token names are unchanged; only values moved.
+- **"Ready" moved away from the teal.** As first combined, the teal and the green shared a lightness, OKLCH L 0.49 and 0.49 in light mode, 0.77 and 0.78 in dark, about 30° apart in hue. So the chart's received and resolved lines, and the review bars beside each other, read as one colour. "Ready" is now a yellower green: darker than the teal in light mode (`#2a5e12`) and lighter in dark (`#97eb79`), about 45° apart. This partly supersedes the state-colour note above: accent and ready now differ in lightness, while blocked and rejected still rely on their labels and icons.
+- **Every check still passes,** 40 pairings across both modes. The lowest text ratio is 5.00:1 in light mode (muted text on the sunken background) and 6.71:1 in dark. The lowest non-text ratio is 3.21:1 in light mode and 3.43:1 in dark, both for field edges.
+- **Tokens the comparison did not show were derived to match:** the raised surface, the strong border, the focus ring (now the accent), the hover tint (6% teal in light mode, 12% in dark), and shadows tinted warm black rather than blue-black. The warning surfaces were already warm and are unchanged.
+
 ---
 
 ## ADR-025 — Slice F3: `lucide-react`, four circles and one triangle, and a skeleton rather than a spinner
