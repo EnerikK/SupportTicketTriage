@@ -3,13 +3,19 @@ import { toNumber, type Dashboard } from '../../api/client'
 import { describeCategory } from '../../ui/format'
 import { describeGate } from '../queue/ticketState'
 import { BarList } from './BarList'
-import { percent, rangeLabel, share, type DashboardRange } from './metrics'
+import { rangeLabel, shareLabel, type DashboardRange } from './metrics'
 
 /// The breakdown panels, all for the selected range only (ADR-046).
 
+/// Shares are of the tickets routed in the range, the same population as the
+/// headline's "routed to manual triage", so the manual-triage rows add up to
+/// that figure. Untriaged tickets are a different population (ADR-046 counts
+/// them by arrival, having no decision to count by), so they are reported
+/// beside the shares rather than inside them.
 export function RoutingPanel({ routing, range }: { routing: Dashboard['routing']; range: DashboardRange }) {
   const unsure = describeGate('ClassificationScore')
   const nothingSimilar = describeGate('RetrievalSimilarity')
+  const untriaged = toNumber(routing.notTriaged)
 
   return (
     <section className="panel dashboard__panel" aria-labelledby="routing-title">
@@ -17,8 +23,8 @@ export function RoutingPanel({ routing, range }: { routing: Dashboard['routing']
         Routing outcomes
       </h3>
       <p className="muted">
-        Last {rangeLabel(range)}. Both gates must pass before a draft is generated. A failed gate is
-        named, not shown as a probability.
+        Tickets routed in the last {rangeLabel(range)}. Both gates must pass before a draft is generated.
+        A failed gate is named, not shown as a probability.
       </p>
       <BarList
         label="Routing outcomes"
@@ -28,9 +34,13 @@ export function RoutingPanel({ routing, range }: { routing: Dashboard['routing']
           { label: `Manual triage: ${nothingSimilar}`, count: routing.retrievalSimilarityFailed, tone: 'blocked' },
           { label: `Manual triage: ${unsure}`, count: routing.classificationScoreFailed, tone: 'blocked' },
           { label: `Manual triage: ${unsure} and ${nothingSimilar}`, count: routing.bothFailed, tone: 'blocked' },
-          { label: 'Not triaged: no routing decision', count: routing.notTriaged, tone: 'muted' },
         ]}
       />
+      <p className="muted">
+        Not triaged: <strong>{untriaged.toLocaleString()}</strong>{' '}
+        {untriaged === 1 ? 'ticket' : 'tickets'} received in this period with no routing decision, left out
+        of the shares above.
+      </p>
     </section>
   )
 }
@@ -51,9 +61,11 @@ export function ReviewsPanel({ reviews, range }: { reviews: Dashboard['reviews']
         Last {rangeLabel(range)}: {total.toLocaleString()} {total === 1 ? 'decision' : 'decisions'}. A
         person decides every outcome, and nothing is sent.
       </p>
+      {/* Counts only: "approved as written" has one percentage, in its
+          headline card, over approvals and rejections. A second share here,
+          over all four decisions, put two different numbers on one label. */}
       <BarList
         label="Review decisions"
-        withShare
         bars={[
           { label: 'Approved as written', count: reviews.approvedAsWritten, tone: 'ready' },
           { label: 'Edited, then approved', count: reviews.editedThenApproved, tone: 'ready' },
@@ -86,7 +98,7 @@ export function DraftsPanel({ drafts, range }: { drafts: Dashboard['drafts']; ra
     {
       label: 'Withheld: invalid citations',
       value: withheld.toLocaleString(),
-      note: `${percent(share(withheld, generated))} of drafts, never shown to a reviewer`,
+      note: `${shareLabel(withheld, generated)} of drafts, never shown to a reviewer`,
       warn: withheld > 0,
     },
     {

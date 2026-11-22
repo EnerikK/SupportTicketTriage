@@ -28,8 +28,28 @@ export function share(part: Count, whole: Count): number | null {
   return denominator > 0 ? Math.round((toNumber(part) / denominator) * 100) : null
 }
 
-export function percent(value: number | null): string {
-  return value === null ? '—' : `${value}%`
+/// A share as a reader should see it: a whole percentage, except that a
+/// non-zero part never reads as 0% and a part short of the whole never reads
+/// as 100%, because each would claim something false. Nothing to divide by
+/// reads as "—".
+export function shareLabel(part: Count, whole: Count): string {
+  const denominator = toNumber(whole)
+  if (denominator <= 0) {
+    return '—'
+  }
+
+  const numerator = toNumber(part)
+  const rounded = Math.round((numerator / denominator) * 100)
+
+  if (numerator > 0 && rounded === 0) {
+    return '<1%'
+  }
+
+  if (numerator < denominator && rounded === 100) {
+    return '>99%'
+  }
+
+  return `${rounded}%`
 }
 
 const noComparison = '—'

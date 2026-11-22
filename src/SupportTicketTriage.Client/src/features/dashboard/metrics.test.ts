@@ -7,6 +7,7 @@ import {
   pointsDelta,
   readRange,
   share,
+  shareLabel,
   singleArrivalDay,
 } from './metrics'
 
@@ -25,6 +26,19 @@ describe('share', () => {
     expect(share(15, 62)).toBe(24)
     expect(share('1', '1')).toBe(100)
     expect(share(0, 0)).toBeNull()
+  })
+})
+
+describe('shareLabel', () => {
+  /// Rounding must not turn a few into none, or nearly all into all.
+  it('rounds to whole percentages without claiming none or all when that is untrue', () => {
+    expect(shareLabel(15, 62)).toBe('24%')
+    expect(shareLabel(1, 300)).toBe('<1%')
+    expect(shareLabel(299, 300)).toBe('>99%')
+    expect(shareLabel(300, 300)).toBe('100%')
+    expect(shareLabel(0, 10)).toBe('0%')
+    expect(shareLabel('1', '4')).toBe('25%')
+    expect(shareLabel(0, 0)).toBe('—')
   })
 })
 

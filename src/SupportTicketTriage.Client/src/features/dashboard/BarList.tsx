@@ -1,5 +1,5 @@
 import { toNumber } from '../../api/client'
-import { percent, share } from './metrics'
+import { shareLabel } from './metrics'
 
 export interface Bar {
   label: string
@@ -29,7 +29,7 @@ export function BarList({ bars, label, withShare = false }: { bars: Bar[]; label
         <li key={bar.label} className="bars__row">
           <span className="bars__label">{bar.label}</span>
           <span className="bars__count">{counts[index].toLocaleString()}</span>
-          {withShare && <span className="bars__share">{percent(share(counts[index], total))}</span>}
+          {withShare && <span className="bars__share">{shareLabel(counts[index], total)}</span>}
           <span className="bars__track" aria-hidden="true">
             <span
               className={`bars__fill bars__fill--${bar.tone}`}
