@@ -148,7 +148,7 @@ export function TicketDetail() {
   if (!ticket.data) {
     return (
       <p className="status">
-        No such ticket. <Link to="/">Back to the queue</Link>
+        No such ticket. <Link to="/queue">Back to the queue</Link>
       </p>
     )
   }
@@ -159,7 +159,7 @@ export function TicketDetail() {
 
   return (
     <article className="detail">
-      <Link to="/" className="detail__back">
+      <Link to="/queue" className="detail__back">
         <ArrowLeft size={15} aria-hidden="true" focusable="false" />
         Queue
       </Link>

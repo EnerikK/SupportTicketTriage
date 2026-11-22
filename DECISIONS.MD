@@ -1803,6 +1803,13 @@ This changes two things decided above, while building the endpoint. The original
 - **The cost:** the last point is today so far, so it is always low until midnight UTC. The page has to say so.
 - **How the day is found:** the UTC calendar day, explicitly. Npgsql translates `UtcDateTime` into `AT TIME ZONE 'UTC'`, so grouping does not depend on the database session's time zone. An integration test runs with the session in UTC+05:45 to show it.
 
+### Amendment — 2026-11-22: the app opens on the dashboard
+
+- **`/` redirects to `/dashboard`, and the queue moves from `/` to `/queue`.** The owner's call: whoever opens the app sees the state of the pipeline first, and the "Needs attention" panel links straight into the work.
+- **The cost:** a reviewer, whose work is the queue, pays one click per visit. Old queue addresses such as `/?page=3` now land on the dashboard and lose their page. They existed only on the development machine, so forwarding them was not worth the code.
+- **A redirect, not the dashboard rendered at `/`.** Every screen's address names it, existing `/dashboard?range=…` links keep working, and the dashboard has one address rather than two. The redirect replaces the history entry; otherwise Back lands on `/` and is sent straight forward again.
+- **An unknown address shows a "no page here" state** with links to both screens. It used to render the header over an empty page.
+
 ---
 
 ## Entries expected from the audit

@@ -33,7 +33,7 @@ export function NeedsAttention({ items }: { items: Dashboard['needsAttention'] }
         <h3 id="attention-title" className="subheading">
           Needs attention
         </h3>
-        <Link to="/">Open the queue</Link>
+        <Link to="/queue">Open the queue</Link>
       </div>
       <p className="muted">
         Unresolved tickets with no draft a reviewer can approve, newest first. This is the current state,
