@@ -1855,6 +1855,14 @@ This changes two things decided above, while building the endpoint. The original
 
 **What would reverse it.** A queue large enough that the `WHERE` hurts, which moves state into stored columns rather than back into the browser.
 
+### Amendment — 2026-11-22: the category filter
+
+- **`?category=` takes the label** the queue shows ("Account & Login"), parsed by `TicketCategories.TryFromLabel`, which refuses the enum member name ([[ADR-008]]). An unknown value is a 400, like the other two filters.
+- **The dropdown's options come from `GET /categories`,** which returns `TicketCategories.Labels`. The labels exist only in the domain since `28c8a78`; a TypeScript copy would bring back the drift that commit removed. Priority stays a copy, for the reason above.
+- **A category in the address waits for the list.** It can only be checked against the list once the list has arrived, so the queue request waits behind it rather than loading once unfiltered and again filtered. The cost is one extra round trip before the first page when the address carries a category.
+- **If the list fails,** the category reads as "Any", the queue loads, and the filter bar says "Categories could not be loaded." rather than showing a dropdown that quietly offers nothing.
+- The filters follow the table's column order: Category, Priority, State.
+
 ---
 
 ## Entries expected from the audit

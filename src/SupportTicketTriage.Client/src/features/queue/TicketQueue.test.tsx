@@ -27,27 +27,42 @@ function queuePage(items: Partial<TicketQueueItem>[], overrides: Record<string, 
   return { items, totalCount: items.length, page: 1, pageSize: 10, ...overrides }
 }
 
-/// Returns the URLs requested, which is how the paging tests below assert
-/// which page was actually asked for rather than inspecting component state.
-function respondWith(status: number, body: unknown): string[] {
+const categoryLabels = ['Billing', 'Account & Login', 'Returns & Refunds']
+
+function reply(status: number, body: unknown) {
+  return Promise.resolve({
+    ok: status >= 200 && status < 300,
+    status,
+    statusText: '',
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+  })
+}
+
+/// Returns the queue URLs requested, which is how the paging and filter
+/// tests below assert what was actually asked for rather than inspecting
+/// component state. The category list is answered separately and is not
+/// recorded.
+function respondWith(status: number, body: unknown, categoriesStatus = 200): string[] {
   const calls: string[] = []
 
   vi.stubGlobal(
     'fetch',
     vi.fn((url: string) => {
-      calls.push(url)
+      if (url.endsWith('/categories')) {
+        return reply(categoriesStatus, categoriesStatus === 200 ? categoryLabels : { detail: 'down' })
+      }
 
-      return Promise.resolve({
-        ok: status >= 200 && status < 300,
-        status,
-        statusText: '',
-        json: async () => body,
-        text: async () => JSON.stringify(body),
-      })
+      calls.push(url)
+      return reply(status, body)
     }),
   )
 
   return calls
+}
+
+function sentCategory(url: string | undefined): string | null {
+  return new URL(url ?? '', 'http://localhost').searchParams.get('category')
 }
 
 const ticket = {
@@ -110,6 +125,56 @@ describe('TicketQueue', () => {
     expect(screen.getByRole('combobox', { name: /^Priority/ })).toHaveValue('')
     expect(screen.getByRole('combobox', { name: /^State/ })).toHaveValue('')
     expect(calls[0]).not.toMatch(/priority=|state=/)
+  })
+
+  /// The label is the value, "Account & Login" included, so it has to
+  /// survive the trip through the query string.
+  it('sends a chosen category by its label', async () => {
+    const calls = respondWith(200, queuePage([ticket]))
+
+    renderQueue()
+    await screen.findByRole('table')
+
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: /^Category/ }),
+      'Account & Login',
+    )
+
+    await waitFor(() => expect(sentCategory(calls.at(-1))).toBe('Account & Login'))
+  })
+
+  /// A category in the address waits for the list, so the first request is
+  /// already filtered rather than an unfiltered one followed by another.
+  it('asks for a category from the address only once, filtered', async () => {
+    const calls = respondWith(200, queuePage([ticket]))
+
+    renderQueue('/?category=Billing')
+    await screen.findByRole('table')
+
+    expect(calls).toHaveLength(1)
+    expect(sentCategory(calls[0])).toBe('Billing')
+  })
+
+  it('reads a category the list does not have as Any', async () => {
+    const calls = respondWith(200, queuePage([ticket]))
+
+    renderQueue('/?category=Refunds')
+    await screen.findByRole('table')
+
+    expect(screen.getByRole('combobox', { name: /^Category/ })).toHaveValue('')
+    expect(sentCategory(calls[0])).toBeNull()
+  })
+
+  /// The queue still loads, and the missing list is named rather than left
+  /// as a dropdown that quietly offers nothing.
+  it('says so when the categories cannot be loaded', async () => {
+    respondWith(200, queuePage([ticket]), 503)
+
+    renderQueue('/?category=Billing')
+
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    expect(screen.getByText('Categories could not be loaded.')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /^Category/ })).toBeDisabled()
   })
 
   /// "The queue is empty" under a filter would claim there is no work.

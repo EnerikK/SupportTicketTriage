@@ -21,5 +21,5 @@ export function readFilter(value: string | null, offered: readonly string[]): st
 }
 
 export function isFiltered(filters: QueueFilters): boolean {
-  return filters.priority !== null || filters.state !== null
+  return filters.priority !== null || filters.state !== null || filters.category !== null
 }

@@ -342,6 +342,9 @@ public class TicketQueueTests(TicketApiFactory factory)
     [InlineData("priority=1", "priority")]
     [InlineData("state=Sent", "state")]
     [InlineData("state=0", "state")]
+    [InlineData("category=Refunds", "category")]
+    // The enum member name is not a second spelling of the label (ADR-008).
+    [InlineData("category=AccountAndLogin", "category")]
     public async Task AnUnknownFilterValueIsRejected(string query, string field)
     {
         var response = await _client.GetAsync($"/tickets?{query}");
@@ -350,6 +353,29 @@ public class TicketQueueTests(TicketApiFactory factory)
 
         var problem = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>();
         Assert.True(problem!.Errors.ContainsKey(field));
+    }
+
+    /// The filter's value is the label the queue shows, "Account & Login",
+    /// so it has to survive being encoded into a query string.
+    [Fact]
+    public async Task TheCategoryFilterMatchesByLabel()
+    {
+        var account = await SeedAsync(true, null, null, category: TicketCategory.AccountAndLogin);
+        var billing = await SeedAsync(true, null, null, category: TicketCategory.Billing);
+
+        var (items, _) = await FilteredAsync($"category={Uri.EscapeDataString("Account & Login")}");
+
+        Assert.Contains(items, item => item.Id == account);
+        Assert.DoesNotContain(items, item => item.Id == billing);
+        Assert.All(items, item => Assert.Equal("Account & Login", item.Category));
+    }
+
+    [Fact]
+    public async Task TheCategoriesAreTheDomainsLabelsInOrder()
+    {
+        var labels = await _client.GetFromJsonAsync<string[]>("/categories");
+
+        Assert.Equal(TicketCategories.Labels, labels);
     }
 
     [Fact]
@@ -366,7 +392,8 @@ public class TicketQueueTests(TicketApiFactory factory)
         bool? draftEligible,
         bool? draftCitationsValid,
         ReviewDecision? decision,
-        TicketPriority? priority = null)
+        TicketPriority? priority = null,
+        TicketCategory? category = null)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
@@ -376,9 +403,13 @@ public class TicketQueueTests(TicketApiFactory factory)
 
         var ticketId = AddTicket(db, "queue-state").Id;
 
-        if (priority is { } classified)
+        if (priority is not null || category is not null)
         {
-            AddClassification(db, ticketId, priority: classified);
+            AddClassification(
+                db,
+                ticketId,
+                category ?? TicketCategory.Billing,
+                priority ?? TicketPriority.High);
         }
 
         if (draftEligible is { } eligible)

@@ -1,7 +1,7 @@
 import { Inbox } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { toNumber } from '../../api/client'
-import { useQueue, type QueueFilters } from '../../api/queries'
+import { useCategories, useQueue, type QueueFilters } from '../../api/queries'
 import { Alert } from '../../ui/Alert'
 import { formatDate } from '../../ui/format'
 import { LoadingRegion, Skeleton } from '../../ui/Skeleton'
@@ -124,18 +124,43 @@ interface QueueUpdate {
   pageSize?: number
   priority?: string | null
   state?: string | null
+  category?: string | null
 }
 
-/// Native selects with visible labels, each defaulting to "Any".
+/// Native selects with visible labels, each defaulting to "Any", in the
+/// order of the table's columns.
 function FilterBar({
   filters,
+  categories,
+  categoriesFailed,
   onChange,
 }: {
   filters: QueueFilters
+  categories: readonly string[]
+  categoriesFailed: boolean
   onChange: (next: QueueUpdate) => void
 }) {
   return (
     <div className="queue-filters" role="group" aria-label="Filter the queue">
+      <label className="queue-filters__field">
+        <span className="queue-filters__label">Category</span>
+        <select
+          value={filters.category ?? ''}
+          disabled={categories.length === 0}
+          onChange={(event) => onChange({ category: event.target.value || null })}
+        >
+          <option value="">Any</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {/* Named rather than left as a dropdown that silently offers nothing. */}
+      {categoriesFailed && <span className="muted">Categories could not be loaded.</span>}
+
       <label className="queue-filters__field">
         <span className="queue-filters__label">Priority</span>
         <select
@@ -173,7 +198,7 @@ function FilterBar({
       <button
         type="button"
         style={{ visibility: isFiltered(filters) ? 'visible' : 'hidden' }}
-        onClick={() => onChange({ priority: null, state: null })}
+        onClick={() => onChange({ priority: null, state: null, category: null })}
       >
         Clear filters
       </button>
@@ -191,15 +216,25 @@ export function TicketQueue() {
 
   const page = readPage(params.get('page'))
   const pageSize = readPageSize(params.get('pageSize'))
+  const categories = useCategories()
+  const requestedCategory = params.get('category')
+
   const filters: QueueFilters = {
     priority: readFilter(params.get('priority'), priorities),
     state: readFilter(params.get('state'), queueStates),
+    category: readFilter(requestedCategory, categories.data ?? []),
   }
+
+  // A category in the address can only be checked against the list once the
+  // list has arrived, so until then the queue waits rather than loading once
+  // unfiltered and again filtered. If the list fails, the category reads as
+  // "Any" and the queue loads; the filter bar says the list is missing.
+  const ready = !requestedCategory || !categories.isPending
 
   function update(next: QueueUpdate) {
     const updated = new URLSearchParams(params)
 
-    for (const key of ['priority', 'state'] as const) {
+    for (const key of ['priority', 'state', 'category'] as const) {
       const value = next[key]
 
       if (value !== undefined) {
@@ -241,8 +276,19 @@ export function TicketQueue() {
   // matched nothing.
   return (
     <>
-      <FilterBar filters={filters} onChange={update} />
-      <QueueResults page={page} pageSize={pageSize} filters={filters} update={update} />
+      <FilterBar
+        filters={filters}
+        categories={categories.data ?? []}
+        categoriesFailed={categories.isError}
+        onChange={update}
+      />
+      <QueueResults
+        page={page}
+        pageSize={pageSize}
+        filters={filters}
+        ready={ready}
+        update={update}
+      />
     </>
   )
 }
@@ -251,14 +297,18 @@ function QueueResults({
   page,
   pageSize,
   filters,
+  ready,
   update,
 }: {
   page: number
   pageSize: number
   filters: QueueFilters
+  ready: boolean
   update: (next: QueueUpdate) => void
 }) {
-  const { data, isPending, error } = useQueue(page, pageSize, filters)
+  // A query that is not enabled yet reports itself as pending, so the
+  // skeleton covers the wait for the category list as well.
+  const { data, isPending, error } = useQueue(page, pageSize, filters, ready)
   const filtered = isFiltered(filters)
 
   if (isPending) {

@@ -18,6 +18,7 @@ public static class TicketEndpoints
     {
         app.MapPost("/tickets", IngestTicket);
         app.MapGet("/tickets", ListTickets);
+        app.MapGet("/categories", ListCategories);
         app.MapGet("/tickets/{id:guid}", GetTicket);
         app.MapGet("/tickets/{id:guid}/similar", GetSimilarTickets);
         app.MapGet("/tickets/{id:guid}/classification", GetClassification);
@@ -361,7 +362,8 @@ public static class TicketEndpoints
         int page = 1,
         int pageSize = DefaultPageSize,
         string? priority = null,
-        string? state = null)
+        string? state = null,
+        string? category = null)
     {
         // Clamped rather than rejected. A page size of 500 is a client bug or
         // somebody experimenting in the address bar, and answering it with a
@@ -385,6 +387,21 @@ public static class TicketEndpoints
             else
             {
                 errors["priority"] = [$"Priority must be one of {string.Join(", ", Enum.GetNames<TicketPriority>())}."];
+            }
+        }
+
+        // By label, never the enum member name: TryFromLabel refuses
+        // "AccountAndLogin" so that one category has one spelling (ADR-008).
+        TicketCategory? categoryFilter = null;
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            if (TicketCategories.TryFromLabel(category, out var matched))
+            {
+                categoryFilter = matched;
+            }
+            else
+            {
+                errors["category"] = [$"Category must be one of {string.Join(", ", TicketCategories.Labels)}."];
             }
         }
 
@@ -472,6 +489,11 @@ public static class TicketEndpoints
             tickets = tickets.Where(r => r.Classification != null && r.Classification.Priority == wantedPriority);
         }
 
+        if (categoryFilter is { } wantedCategory)
+        {
+            tickets = tickets.Where(r => r.Classification != null && r.Classification.Category == wantedCategory);
+        }
+
         if (stateFilter is { } wantedState)
         {
             tickets = tickets.Where(r => r.State == wantedState);
@@ -532,6 +554,12 @@ public static class TicketEndpoints
     /// Matches an enum member by its name only, ignoring case and surrounding
     /// space, the stance SubmitReview takes on a decision. Enum.TryParse would
     /// also accept "1", and a number is not a priority anyone chose.
+    /// The category labels, from the one place they live. The queue's filter
+    /// offers these rather than a copy in TypeScript, the drift `28c8a78`
+    /// removed from the dashboard.
+    private static Ok<IReadOnlyList<string>> ListCategories() =>
+        TypedResults.Ok(TicketCategories.Labels);
+
     private static bool TryMatchName<TEnum>(string value, out TEnum result)
         where TEnum : struct, Enum
     {

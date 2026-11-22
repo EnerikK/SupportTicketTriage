@@ -18,6 +18,7 @@ import {
 export interface QueueFilters {
   priority: string | null
   state: string | null
+  category: string | null
 }
 
 /// Query keys in one place so that an invalidation after a review decision
@@ -37,7 +38,8 @@ export const keys = {
   // The filters are part of the key, or a filtered page and an unfiltered
   // page with the same number would share one cache entry.
   queuePage: (page: number, pageSize: number, filters: QueueFilters) =>
-    ['tickets', 'queue', page, pageSize, filters.priority, filters.state] as const,
+    ['tickets', 'queue', page, pageSize, filters.priority, filters.state, filters.category] as const,
+  categories: ['categories'] as const,
   ticket: (id: string) => ['tickets', id] as const,
   classification: (id: string) => ['tickets', id, 'classification'] as const,
   routing: (id: string) => ['tickets', id, 'routing'] as const,
@@ -60,7 +62,18 @@ export function useDashboard(range: string) {
   })
 }
 
-export function useQueue(page: number, pageSize: number, filters: QueueFilters) {
+/// The category labels the queue's filter offers, from the domain
+/// (ADR-047), rather than a copy here.
+export function useCategories() {
+  return useQuery({
+    queryKey: keys.categories,
+    queryFn: () => get<string[]>('/categories'),
+  })
+}
+
+/// `enabled` lets the queue wait for something it needs before asking, so
+/// it does not load once unfiltered and again filtered.
+export function useQueue(page: number, pageSize: number, filters: QueueFilters, enabled = true) {
   const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
 
   if (filters.priority) {
@@ -71,9 +84,14 @@ export function useQueue(page: number, pageSize: number, filters: QueueFilters) 
     query.set('state', filters.state)
   }
 
+  if (filters.category) {
+    query.set('category', filters.category)
+  }
+
   return useQuery({
     queryKey: keys.queuePage(page, pageSize, filters),
     queryFn: () => get<TicketQueuePage>(`/tickets?${query}`),
+    enabled,
     // The previous page stays on screen while the next one loads, rather
     // than the table collapsing to a skeleton on every click. This is a
     // per-query choice, not the global cache tuning main.tsx deliberately
