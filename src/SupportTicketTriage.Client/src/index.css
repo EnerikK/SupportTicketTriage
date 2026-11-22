@@ -70,6 +70,11 @@
 
   --border: #dde0e6;
   --border-strong: #c6cad3;
+  /* For the edge of a control a person types into or presses: 3:1 or
+     better against every ground it sits on (WCAG 1.4.11). --border and
+     --border-strong stay faint, because they group content rather than
+     mark something interactive. */
+  --border-control: #848b97;
 
   --text: #16181d;
   --text-muted: #636b78;
@@ -116,6 +121,7 @@
 
     --border: #272c36;
     --border-strong: #3a414f;
+    --border-control: #6b7386;
 
     --text: #e7e9ee;
     --text-muted: #969db0;
@@ -151,6 +157,7 @@
 
   --border: #272c36;
   --border-strong: #3a414f;
+  --border-control: #6b7386;
 
   --text: #e7e9ee;
   --text-muted: #969db0;
@@ -518,7 +525,7 @@ body {
 .pagination select {
   font: inherit;
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-sm);
   background: var(--surface-raised);
   color: var(--text);
@@ -747,7 +754,7 @@ body {
   width: 100%;
   font: inherit;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-sm);
   resize: vertical;
   background: var(--surface-sunken);
@@ -757,9 +764,11 @@ body {
     background-color var(--duration-fast) var(--ease);
 }
 
+/* Hover darkens the edge further. --border-strong, the old hover colour, is
+   now lighter than the resting edge and would have made hover fade it. */
 .review__text:hover,
 .review__reason:hover {
-  border-color: var(--border-strong);
+  border-color: var(--text-muted);
 }
 
 /* The field a reviewer is typing in lifts out of the sunken ground, so
@@ -783,7 +792,7 @@ body {
 button {
   font: inherit;
   padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-sm);
   background: var(--surface-raised);
   color: var(--text);
@@ -868,7 +877,7 @@ button:disabled {
 }
 
 .theme-toggle:hover:not(:disabled) {
-  border-color: var(--border-strong);
+  border-color: var(--text-muted);
   color: var(--text);
 }
 
@@ -880,7 +889,7 @@ button:disabled {
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--text-muted);
@@ -1235,8 +1244,10 @@ button:disabled {
   background: var(--accent);
 }
 
+/* A bar shows a quantity, so it needs 3:1 against its track like any other
+   meaningful graphic. The muted text colour gives 4.8:1 light, 6.8:1 dark. */
 .bars__fill--muted {
-  background: var(--border-strong);
+  background: var(--text-muted);
 }
 
 /* Two figures a row at most, for the same reason as the panel grid. */

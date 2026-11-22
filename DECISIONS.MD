@@ -825,6 +825,13 @@ Forty-five passing tests did not catch a raw float rendered to sixteen decimal p
 - **Paragraphs are capped at 75 characters.** Widening the shell would otherwise stretch running text, above all a draft, past the length a reader can follow back to the start of the next line.
 - **Rejected alternative: widening the dashboard alone.** The header sits in the same container, so its title and nav would jump sideways on every switch between the queue and the dashboard.
 
+**Colour, measured rather than judged by eye.** Every text and control pairing was checked against WCAG in both palettes.
+- **All text passes AA.** The lowest ratio was 4.84:1, muted text on the sunken background in light mode.
+- **Form fields failed non-text contrast (WCAG 1.4.11).** The review textareas drew their edge with `--border`, at 1.32:1 in light mode and 1.26:1 in dark. An empty field has nothing else to show where it is. A new token, `--border-control`, is used for the edges of textareas, the page-size select, outline buttons and the theme toggle: `#848b97` in light mode, at least 3.09:1 on every background; `#6b7386` in dark, at least 3.43:1. Hovering now darkens these edges rather than lightening them.
+- **Panel borders stay faint.** They group content rather than mark a control, so 3:1 does not apply, and making them heavier would crowd every screen.
+- **The grey dashboard bars used `--border-strong`,** at 1.5:1 to 1.8:1 against their track. A bar shows a quantity, so it needs 3:1. They now use `--text-muted`: 4.84:1 in light mode, 6.80:1 in dark.
+- **The state colours are left as they are, and the reason is recorded.** Accent, ready, blocked and rejected share almost the same lightness in each palette: OKLCH L of 0.48 to 0.53 in light mode, 0.71 to 0.74 in dark. Hue alone separates them, which fails a reader who cannot see the hue. That is acceptable only because nothing relies on hue alone: every state carries a text label, the queue adds icon shapes, and the chart's lines differ by dash pattern. Anything that ever shows state by colour alone has to spread these lightnesses first.
+
 ---
 
 ## ADR-025 — Slice F3: `lucide-react`, four circles and one triangle, and a skeleton rather than a spinner
