@@ -111,6 +111,24 @@ export function singleArrivalDay(volume: { day: string; received: Count }[]): st
   return busy.length === 1 ? busy[0].day : null
 }
 
+/// Which days the chart's axis labels: about five, evenly spaced, counted back
+/// from today, so the last day is always labelled and no label can crowd it.
+/// Counting forward from the first day instead left the last two labels
+/// five-sixths of a step apart at 30 days, which overlapped at phone width.
+export function axisLabelDays(count: number, target = 5): number[] {
+  if (count <= 0) {
+    return []
+  }
+
+  const step = Math.max(1, Math.ceil(count / target))
+  const indices: number[] = []
+  for (let index = count - 1; index >= 0; index -= step) {
+    indices.unshift(index)
+  }
+
+  return indices
+}
+
 /// A UTC calendar day as a short date. Formatted in UTC because that is what
 /// the day is; formatting it in the viewer's zone could show the day before.
 export function formatDay(day: string): string {

@@ -1,5 +1,5 @@
 import { toNumber, type DashboardDay } from '../../api/client'
-import { formatDay } from './metrics'
+import { axisLabelDays, formatDay } from './metrics'
 
 const WIDTH = 1000
 const HEIGHT = 240
@@ -40,11 +40,7 @@ export function VolumeChart({ days }: { days: DashboardDay[] }) {
 
   const ticks = [1, 0.5, 0].map((fraction) => Math.round(max * fraction))
 
-  // About five dates on the axis, whatever the range, always ending on today.
-  const every = Math.max(1, Math.ceil(days.length / 5))
-  const labelled = days
-    .map((day, index) => ({ day, index }))
-    .filter(({ index }) => index % every === 0 || index === last)
+  const labelled = axisLabelDays(days.length).map((index) => ({ day: days[index], index }))
 
   const totalReceived = received.reduce((sum, value) => sum + value, 0)
   const totalResolved = resolved.reduce((sum, value) => sum + value, 0)
