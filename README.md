@@ -441,11 +441,11 @@ GET  /dashboard?range=30d             read-only pipeline health over 7d, 30d or 
 ### Tests
 
 ```bash
-dotnet test                                   # 411 unit, 171 integration
+dotnet test                                   # 411 unit, 172 integration
 npm --prefix src/SupportTicketTriage.Client test   # 145 component
 ```
 
-**Backend: 411 unit tests and 171 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
+**Backend: 411 unit tests and 172 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
 
 **Frontend: 145 component tests** covering the parts that branch rather than the markup — how the queue's filters live in the address and fall back to "Any" on a value they do not offer, how a ticket page renders five requests of which four may legitimately 404, what each review action actually sends, and how the dashboard turns counts into shares and changes, including when there is nothing to compare against. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
 
