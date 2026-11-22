@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import type { Dashboard } from '../../api/client'
-import { describeCategory, formatDate } from '../../ui/format'
+import { formatDate } from '../../ui/format'
 import { StateIcon } from '../queue/StateIcon'
 import { describeGate, type TicketStateTone } from '../queue/ticketState'
 
@@ -67,13 +67,7 @@ export function NeedsAttention({ items }: { items: Dashboard['needsAttention'] }
                     <td>
                       <Link to={`/tickets/${item.ticketId}`}>{item.subject}</Link>
                     </td>
-                    <td>
-                      {item.category ? (
-                        describeCategory(item.category)
-                      ) : (
-                        <span className="muted">unclassified</span>
-                      )}
-                    </td>
+                    <td>{item.category ?? <span className="muted">unclassified</span>}</td>
                     <td>
                       <span className={`state state--${reason.tone}`}>
                         <StateIcon tone={reason.tone} />

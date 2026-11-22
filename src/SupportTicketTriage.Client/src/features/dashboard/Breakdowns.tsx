@@ -1,6 +1,5 @@
 import { TriangleAlert } from 'lucide-react'
 import { toNumber, type Dashboard } from '../../api/client'
-import { describeCategory } from '../../ui/format'
 import { describeGate } from '../queue/ticketState'
 import { BarList } from './BarList'
 import { rangeLabel, shareLabel, type DashboardRange } from './metrics'
@@ -161,7 +160,7 @@ export function CategoriesPanel({
         label="Tickets by category"
         bars={[
           ...categories.map((category) => ({
-            label: describeCategory(category.category),
+            label: category.category,
             count: category.count,
             tone: 'accent' as const,
           })),

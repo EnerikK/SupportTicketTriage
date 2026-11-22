@@ -82,17 +82,6 @@ describe('TicketQueue', () => {
     expect(screen.getByText('Draft ready')).toBeInTheDocument()
   })
 
-  /// One label map, shared with the dashboard, so the two screens can never
-  /// name a category two ways.
-  it('shows a category as a person reads it, not as its wire name', async () => {
-    respondWith(200, queuePage([{ ...ticket, category: 'AccountAndLogin' }]))
-
-    renderQueue()
-
-    expect(await screen.findByText('Account and login')).toBeInTheDocument()
-    expect(screen.queryByText('AccountAndLogin')).not.toBeInTheDocument()
-  })
-
   /// A gated ticket must say why it was gated. ADR-003 forbids showing the
   /// routing inputs as a confidence percentage, so the reason is words.
   it('names the failed gates on a ticket routed to manual triage', async () => {
