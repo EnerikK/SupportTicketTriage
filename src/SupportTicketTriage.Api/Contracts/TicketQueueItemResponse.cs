@@ -24,6 +24,25 @@ public static class DraftStates
     };
 }
 
+/// The one word a reviewer scans the queue's state column for, collapsed from
+/// the four signals below it.
+///
+/// Members are listed in precedence order, but the order that counts is the
+/// conditional chain in the queue query, which is what decides a ticket's
+/// state. It is computed in SQL rather than here so that a filter on state
+/// can reuse the same expression rather than a second copy of the rule.
+public enum QueueState
+{
+    Approved,
+    ResolvedManually,
+    Rejected,
+    DraftReady,
+    DraftWithheld,
+    ManualTriage,
+    ReadyToDraft,
+    NotTriaged,
+}
+
 /// One row of the review queue.
 ///
 /// Deliberately not <see cref="TicketResponse"/>: the queue has no use for
@@ -37,6 +56,7 @@ public sealed record TicketQueueItemResponse(
     Guid Id,
     string Subject,
     DateTimeOffset CreatedAt,
+    string State,
     string? Category,
     string? Priority,
     bool? IsDraftEligible,
@@ -49,6 +69,7 @@ public sealed record TicketQueueItemResponse(
         Guid id,
         string subject,
         DateTimeOffset createdAt,
+        QueueState state,
         bool isResolved,
         TicketCategory? category,
         TicketPriority? priority,
@@ -60,6 +81,7 @@ public sealed record TicketQueueItemResponse(
             id,
             subject,
             createdAt,
+            state.ToString(),
             // The wire label, matching the evaluation dataset's vocabulary,
             // for the same reason the classification resource uses it.
             category?.ToLabel(),

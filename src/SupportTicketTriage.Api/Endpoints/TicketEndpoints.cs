@@ -18,6 +18,7 @@ public static class TicketEndpoints
     {
         app.MapPost("/tickets", IngestTicket);
         app.MapGet("/tickets", ListTickets);
+        app.MapGet("/categories", ListCategories);
         app.MapGet("/tickets/{id:guid}", GetTicket);
         app.MapGet("/tickets/{id:guid}/similar", GetSimilarTickets);
         app.MapGet("/tickets/{id:guid}/classification", GetClassification);
@@ -335,22 +336,34 @@ public static class TicketEndpoints
     /// UI fetch classification, routing, draft and review per row: at fifty
     /// tickets that is two hundred requests to render one screen.
     ///
-    /// Each signal is append-only with most-recent-wins semantics, so each
-    /// contributes a correlated subquery ordered by CreatedAt. Three
-    /// subqueries per row is fine at this size and would not be at a much
-    /// larger one — but it is one round trip for the page, and an integration
-    /// test asserts that by reading the SQL EF Core actually sends.
+    /// Each signal is append-only with most-recent-wins semantics. EF reads
+    /// the returned signals through one window-function join each, but writes
+    /// the state's CASE as correlated LIMIT 1 subqueries, some of them
+    /// repeated. PostgreSQL evaluates those after the sort, for each row up
+    /// to the end of the requested page (EXPLAIN ANALYZE, 2026-11-22), so a
+    /// deep page pays for the rows its OFFSET skips. Fine at this size; past
+    /// a few thousand tickets, ADR-012's denormalised state columns are the
+    /// fix.
+    /// It is still one round trip for the page, and an integration test
+    /// asserts that by reading the SQL EF Core actually sends.
     ///
     /// Paging makes this two statements rather than one: a COUNT and a
     /// windowed projection. ADR-012 recorded the queue as "one projection
     /// query" and this amends it — the property worth protecting was never
     /// "exactly one statement", it was "not one query per ticket per signal",
     /// and that still holds.
-    private static async Task<Ok<TicketQueuePageResponse>> ListTickets(
+    ///
+    /// The priority and state filters apply before the count and the paging
+    /// (ADR-047), so totalCount is the filtered total and a page is a page of
+    /// matches, not a page of tickets with the non-matching ones removed.
+    private static async Task<Results<Ok<TicketQueuePageResponse>, ValidationProblem>> ListTickets(
         SupportTicketTriageDbContext db,
         CancellationToken ct,
         int page = 1,
-        int pageSize = DefaultPageSize)
+        int pageSize = DefaultPageSize,
+        string? priority = null,
+        string? state = null,
+        string? category = null)
     {
         // Clamped rather than rejected. A page size of 500 is a client bug or
         // somebody experimenting in the address bar, and answering it with a
@@ -359,35 +372,58 @@ public static class TicketEndpoints
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
-        var total = await db.Tickets.CountAsync(ct);
+        // A filter, unlike a page size, is rejected rather than corrected:
+        // there is no nearest priority to "Urgent", and answering with the
+        // whole queue would look like a filter that matched everything.
+        var errors = new Dictionary<string, string[]>();
 
-        // Computed as long before it is cast back. (page - 1) * pageSize
-        // overflows int for a large hand-typed page number, and the negative
-        // OFFSET that follows is a 500 rather than an empty page.
-        //
-        // Past the end we answer with no rows and the true total rather than
-        // clamping to the last page: clamping would hide that the caller
-        // asked for something that does not exist, and the envelope already
-        // carries everything needed to recover. It also skips a query whose
-        // only possible answer is nothing.
-        var skip = (long)(page - 1) * pageSize;
-
-        if (skip >= total)
+        TicketPriority? priorityFilter = null;
+        if (!string.IsNullOrWhiteSpace(priority))
         {
-            return TypedResults.Ok(new TicketQueuePageResponse([], total, page, pageSize));
+            if (TryMatchName<TicketPriority>(priority, out var matched))
+            {
+                priorityFilter = matched;
+            }
+            else
+            {
+                errors["priority"] = [$"Priority must be one of {string.Join(", ", Enum.GetNames<TicketPriority>())}."];
+            }
         }
 
-        var rows = await db.Tickets
-            // Id is the tie-break, and it is not decoration. CreatedAt is
-            // truncated to microseconds, so ties are genuinely reachable —
-            // the seeded dataset is full of them — and without a total order
-            // rows repeat and vanish across page boundaries. Ordering and
-            // windowing both happen before the projection, so LIMIT and
-            // OFFSET reach PostgreSQL rather than the paging happening here.
-            .OrderByDescending(t => t.CreatedAt)
-            .ThenByDescending(t => t.Id)
-            .Skip((int)skip)
-            .Take(pageSize)
+        // By label, never the enum member name: TryFromLabel refuses
+        // "AccountAndLogin" so that one category has one spelling (ADR-008).
+        TicketCategory? categoryFilter = null;
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            if (TicketCategories.TryFromLabel(category, out var matched))
+            {
+                categoryFilter = matched;
+            }
+            else
+            {
+                errors["category"] = [$"Category must be one of {string.Join(", ", TicketCategories.Labels)}."];
+            }
+        }
+
+        QueueState? stateFilter = null;
+        if (!string.IsNullOrWhiteSpace(state))
+        {
+            if (TryMatchName<QueueState>(state, out var matched))
+            {
+                stateFilter = matched;
+            }
+            else
+            {
+                errors["state"] = [$"State must be one of {string.Join(", ", Enum.GetNames<QueueState>())}."];
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        var tickets = db.Tickets
             .Select(t => new
             {
                 t.Id,
@@ -417,6 +453,82 @@ public static class TicketEndpoints
                     .Select(v => new { v.Decision })
                     .FirstOrDefault(),
             })
+            // The state, as one conditional chain that EF writes as a SQL
+            // CASE. Order is the point: a decision already taken outranks the
+            // draft that produced it, and a draft that failed citation
+            // validation is called out rather than folded into "no draft",
+            // because ADR-010 withholds its content and a reviewer needs to
+            // know why there is nothing to read. A ticket with no routing
+            // decision was never evaluated (ADR-028).
+            .Select(r => new
+            {
+                r.Id,
+                r.Subject,
+                r.CreatedAt,
+                r.Resolution,
+                r.Classification,
+                r.Routing,
+                r.DraftCitationsValid,
+                r.Review,
+                State =
+                    r.Review != null && r.Review.Decision == ReviewDecision.Approved ? QueueState.Approved
+                    : r.Review != null && r.Review.Decision == ReviewDecision.ResolvedManually ? QueueState.ResolvedManually
+                    : r.Review != null && r.Review.Decision == ReviewDecision.Rejected ? QueueState.Rejected
+                    : r.DraftCitationsValid == true ? QueueState.DraftReady
+                    : r.DraftCitationsValid == false ? QueueState.DraftWithheld
+                    : r.Routing != null && !r.Routing.IsDraftEligible ? QueueState.ManualTriage
+                    : r.Routing != null ? QueueState.ReadyToDraft
+                    : QueueState.NotTriaged,
+            });
+
+        // The same State expression the column shows, not a second copy of
+        // the rule. In the WHERE it runs for every ticket rather than only
+        // the page, which is the cost ADR-047 accepts.
+        if (priorityFilter is { } wantedPriority)
+        {
+            tickets = tickets.Where(r => r.Classification != null && r.Classification.Priority == wantedPriority);
+        }
+
+        if (categoryFilter is { } wantedCategory)
+        {
+            tickets = tickets.Where(r => r.Classification != null && r.Classification.Category == wantedCategory);
+        }
+
+        if (stateFilter is { } wantedState)
+        {
+            tickets = tickets.Where(r => r.State == wantedState);
+        }
+
+        var total = await tickets.CountAsync(ct);
+
+        // Computed as long before it is cast back. (page - 1) * pageSize
+        // overflows int for a large hand-typed page number, and the negative
+        // OFFSET that follows is a 500 rather than an empty page.
+        //
+        // Past the end we answer with no rows and the true total rather than
+        // clamping to the last page: clamping would hide that the caller
+        // asked for something that does not exist, and the envelope already
+        // carries everything needed to recover. It also skips a query whose
+        // only possible answer is nothing.
+        var skip = (long)(page - 1) * pageSize;
+
+        if (skip >= total)
+        {
+            return TypedResults.Ok(new TicketQueuePageResponse([], total, page, pageSize));
+        }
+
+        var rows = await tickets
+            // Id is the tie-break, and it is not decoration. CreatedAt is
+            // truncated to microseconds, so ties are genuinely reachable —
+            // the seeded dataset is full of them — and without a total order
+            // rows repeat and vanish across page boundaries. Ordering and
+            // windowing are composed into the query before ToListAsync, so
+            // LIMIT and OFFSET reach PostgreSQL rather than the paging
+            // happening here.
+            .OrderByDescending(r => r.CreatedAt)
+            .ThenByDescending(r => r.Id)
+            .Skip((int)skip)
+            .Take(pageSize)
             .ToListAsync(ct);
 
         // Mapped here rather than inside the projection because naming the
@@ -426,6 +538,7 @@ public static class TicketEndpoints
                 r.Id,
                 r.Subject,
                 r.CreatedAt,
+                r.State,
                 isResolved: r.Resolution is not null,
                 r.Classification?.Category,
                 r.Classification?.Priority,
@@ -436,6 +549,31 @@ public static class TicketEndpoints
             .ToList();
 
         return TypedResults.Ok(new TicketQueuePageResponse(queue, total, page, pageSize));
+    }
+
+    /// Matches an enum member by its name only, ignoring case and surrounding
+    /// space, the stance SubmitReview takes on a decision. Enum.TryParse would
+    /// also accept "1", and a number is not a priority anyone chose.
+    /// The category labels, from the one place they live. The queue's filter
+    /// offers these rather than a copy in TypeScript, the drift `28c8a78`
+    /// removed from the dashboard.
+    private static Ok<IReadOnlyList<string>> ListCategories() =>
+        TypedResults.Ok(TicketCategories.Labels);
+
+    private static bool TryMatchName<TEnum>(string value, out TEnum result)
+        where TEnum : struct, Enum
+    {
+        foreach (var candidate in Enum.GetValues<TEnum>())
+        {
+            if (string.Equals(value.Trim(), candidate.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                result = candidate;
+                return true;
+            }
+        }
+
+        result = default;
+        return false;
     }
 
     private static async Task<Results<Ok<TicketResponse>, NotFound>> GetTicket(

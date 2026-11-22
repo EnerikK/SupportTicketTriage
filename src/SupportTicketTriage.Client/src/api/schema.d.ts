@@ -16,6 +16,9 @@ export interface paths {
                 query?: {
                     page?: number | string;
                     pageSize?: number | string;
+                    priority?: string;
+                    state?: string;
+                    category?: string;
                 };
                 header?: never;
                 path?: never;
@@ -30,6 +33,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["TicketQueuePageResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                     };
                 };
             };
@@ -68,6 +80,41 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string[];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -690,6 +737,7 @@ export interface components {
             subject: string;
             /** Format: date-time */
             createdAt: string;
+            state: string;
             category: null | string;
             priority: null | string;
             isDraftEligible: null | boolean;

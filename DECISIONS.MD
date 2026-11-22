@@ -979,6 +979,23 @@ What is missing, all confirmed by reading the markup:
 
 The focus-management gap is the one worth doing carefully: it is the difference between an interface that is navigable and one that is merely compliant.
 
+### Amendment — 2026-11-22: the queue's columns are fixed
+
+- **The defect.** The queue used the default automatic table layout, which sizes each column from the content of the page on screen. On the seeded data, page 6 has three gate lines that widen State and squeeze Subject and Category; page 7 has none. Every page turn moved the columns.
+- **The decision.** `table-layout: fixed`, with widths from a `<colgroup>` in the header the table shares with its skeleton: Category 11rem, Priority 6.5rem, State 16rem, Received 12rem, Subject the rest. Each fixed width fits the longest value its column shows. The table has a `min-width` of 60rem, and cells break a long unbroken word instead of letting it spill into the next column.
+- **Still intrinsic.** No device-width media query was added. Below the minimum, the scroll region above takes over, as it already did on phones.
+- **The cost.** At tablet width the table now scrolls sideways where automatic layout squeezed it to fit, seen at 768px. Without the minimum, Subject would shrink toward nothing instead.
+- **Rows still differ in height.** A gated row carries its gate line, so the pager moves between pages with different numbers of gated tickets. Equal heights would mean truncating the gate text, which [[ADR-023]] forbids.
+- **Checked by eye** at 1280px in light and dark mode, and at 768px. Phone width was not checked: headless Chrome on Windows will not lay out narrower than about 500px.
+
+### Amendment — 2026-11-22, later: the pager moves above the table
+
+- **Fixed columns did not stop the pager moving,** and the owner found it in use: the table's height follows its rows, so Next moved under the cursor between pages.
+- **The pager now sits above the table,** where nothing above it depends on the page's content. That holds for gated pages, the short last page and a change of page size.
+- **The skeleton holds the pager's row,** or the table would drop by that height when data arrives. A hidden strut with the button class gives the row the buttons' height by construction.
+- **Rejected:** equal row heights, which still move with any extra wrapped line and pad every row; and pagers above and below, which need two names and must not announce the page twice.
+- **The cost:** at 50 or 100 rows a page, a reader at the foot of the table scrolls back up to page.
+
 ---
 
 ## ADR-027 — The queue is paged in the database, with a total order and a clamped page size
@@ -1809,6 +1826,51 @@ This changes two things decided above, while building the endpoint. The original
 - **The cost:** a reviewer, whose work is the queue, pays one click per visit. Old queue addresses such as `/?page=3` now land on the dashboard and lose their page. They existed only on the development machine, so forwarding them was not worth the code.
 - **A redirect, not the dashboard rendered at `/`.** Every screen's address names it, existing `/dashboard?range=…` links keep working, and the dashboard has one address rather than two. The redirect replaces the history entry; otherwise Back lands on `/` and is sent straight forward again.
 - **An unknown address shows a "no page here" state** with links to both screens. It used to render the header over an empty page.
+
+---
+
+## ADR-047 — The queue is filtered on the server, by a state the server derives
+
+**Status:** Accepted — 2026-11-22. Branch `queue/filters`. Amends [[ADR-027]], whose "no filtering" this ends.
+
+**Decision.**
+- `GET /tickets` takes `priority` and `state`. Both apply **before the count and the paging**, so `totalCount` is the filtered total and a page is a page of matches.
+- **State is derived on the server** (commit `2b67bb8`): one conditional chain in the queue query, which EF writes as a SQL `CASE`. The column and the filter use the same expression. The browser only maps a state's name to its label and tone.
+- **Values are matched by name,** ignoring case and surrounding space, as `SubmitReview` matches a decision. An unknown value is a 400 `ValidationProblem`, as `GET /dashboard` answers an unknown `range`. `Enum.TryParse` is not used, because it would accept `priority=1`.
+- **The page:** native selects with visible labels, each defaulting to "Any", above the pager. The values live in the URL beside `page` and `pageSize`; changing one returns to page 1; a value not on offer reads as "Any". A filter that matches nothing says so, separately from an empty queue. "Clear filters" is hidden, not removed, while no filter is set, so setting the first one moves nothing.
+
+**Why on the server.** Paging is in the database ([[ADR-027]]). A filter in the browser would see only the current page of ten rows, and the total beside it would be wrong. That entry warned that any filter must come before `Skip`/`Take`; a test now walks every filtered page and checks the rows add up to the total.
+
+**Why the state moved to the server.** A server-side filter needs the precedence rule in SQL. A second copy in TypeScript would leave two orders free to drift; this is the reason `28c8a78` moved category labels to the server.
+
+**Decided while building.**
+- **No "Unclassified" option** (owner's call). Priority offers the domain's three values. An unclassified ticket is reached through "Any", or through state, as "Not triaged" or "Manual triage".
+- **The priority list is a copy in TypeScript,** while category labels will come from the API (commit 3). Three member names that have not changed since classification was built; if they drift, the API answers the stale value with a 400 the page shows, not a silent empty result.
+
+**Date was deferred, on evidence.** All 300 tickets were received within two minutes on 2026-11-17, so a date range would return everything or nothing. It would also need a rule for where a day starts. If age matters later, an "oldest first" sort is the better control.
+
+**The cost.** Filtering on state puts the `CASE`, with its correlated `LIMIT 1` subqueries, into the `WHERE`, where it runs for every ticket rather than for the page alone. That is the cost profile the dashboard's needs-attention query already documents, fine at this size. Past a few thousand tickets, the fix is the denormalised state columns [[ADR-012]] names.
+
+**Not done.** Removing the four queue fields the browser no longer reads (`isDraftEligible`, `draftState`, `reviewDecision`, `isResolved`) is a separate change. `TicketPriorities.TryFromLabel`, used by the classification parser, still accepts a number from the model; noticed here, not changed.
+
+**What would reverse it.** A queue large enough that the `WHERE` hurts, which moves state into stored columns rather than back into the browser.
+
+### Amendment — 2026-11-22: the category filter
+
+- **`?category=` takes the label** the queue shows ("Account & Login"), parsed by `TicketCategories.TryFromLabel`, which refuses the enum member name ([[ADR-008]]). An unknown value is a 400, like the other two filters.
+- **The dropdown's options come from `GET /categories`,** which returns `TicketCategories.Labels`. The labels exist only in the domain since `28c8a78`; a TypeScript copy would bring back the drift that commit removed. Priority stays a copy, for the reason above.
+- **A category in the address waits for the list.** It can only be checked against the list once the list has arrived, so the queue request waits behind it rather than loading once unfiltered and again filtered. The cost is one extra round trip before the first page when the address carries a category.
+- **If the list fails,** the category reads as "Any", the queue loads, and the filter bar says "Categories could not be loaded." rather than showing a dropdown that quietly offers nothing.
+- The filters follow the table's column order: Category, Priority, State.
+
+### Amendment — 2026-11-22: clicking a priority or state in the table
+
+- **The owner added it,** after first keeping the dropdowns alone. Clicking a priority or state value sets the same URL parameter its dropdown sets, so the two cannot disagree, and returns to page 1. Category and Received are not clickable.
+- **A pointer shortcut, out of the tab order** (owner's call). Each is a real `<button>` with `tabIndex={-1}`: a screen reader still finds and activates it, but Tab skips it. The dropdowns are the keyboard route and do exactly the same, so nothing is lost by keyboard. In the tab order, a row would cost three stops instead of one; at 100 rows, about 300 presses to cross the page.
+- **An active value is plain text** (owner's call). Every row of a filtered table shows that value, so a button there would do nothing on every line, and a toggle would put an accidental "clear" on every line instead. "Clear filters" and the dropdown are the way back.
+- **Its accessible name contains the visible word,** "Show only High priority" for "High" (WCAG 2.5.3), and the same text is its title, so a pointer user can see what a click will do. The state's icon stays beside the button (ADR-025) and the gate line outside it, so the name is the state alone.
+- **It looks like the value it is:** no box, the column's own colour, and a dotted underline only on hover. The no-send scan now reads accessible names as well as text.
+- **The cost:** a pointer user has to discover the shortcut, by the cursor and the underline. The dropdowns stay for everyone who does not.
 
 ---
 

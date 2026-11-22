@@ -433,8 +433,14 @@ a {
   margin-block: calc(var(--space-1) * -1);
 }
 
+/* Fixed layout: the columns take the widths below instead of being measured
+   from each page's content. Measured, a page with gate lines widened State
+   and squeezed Subject, and every page turn moved the columns. The minimum
+   keeps Subject readable; below it the scroll region above takes over. */
 .queue {
   width: 100%;
+  min-width: 60rem;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   background: var(--surface);
@@ -457,6 +463,30 @@ a {
   padding: var(--space-3);
   border-bottom: 1px solid var(--border);
   vertical-align: top;
+  /* A fixed column no longer grows for a long unbroken word, such as an
+     order reference in a subject, so the word breaks rather than spilling
+     into the next column. */
+  overflow-wrap: break-word;
+}
+
+/* Subject has no width and takes what is left. Each width fits the longest
+   value its column shows: "Shipping & Delivery"; "Normal" and the header;
+   "Resolved manually" with its icon, the gate line wrapping beneath; and a
+   date in the longer locale forms, which never wraps. */
+.queue__col--category {
+  width: 11rem;
+}
+
+.queue__col--priority {
+  width: 6.5rem;
+}
+
+.queue__col--state {
+  width: 16rem;
+}
+
+.queue__col--received {
+  width: 12rem;
 }
 
 .queue th {
@@ -513,7 +543,53 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+/* Above the pager. Its height does not depend on the results, so a filter
+   that changes them moves neither the pager nor the table. */
+.queue-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.queue-filters__field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* A value in the queue that filters to itself. It reads as the value it is,
+   in its column's colour, and shows that it can be clicked only when pointed
+   at. The :not(:disabled) selectors are there to outrank the base button's
+   hover and press rules, which would otherwise paint a box and nudge it. */
+.filter-value {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  text-decoration: underline dotted transparent;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.filter-value:hover:not(:disabled) {
+  background: none;
+  text-decoration-color: currentColor;
+}
+
+.filter-value:active:not(:disabled) {
+  transform: none;
+}
+
+/* Holds the loading skeleton's pager row at the height of the real one. */
+.pagination__strut {
+  visibility: hidden;
 }
 
 .pagination__size {
@@ -522,7 +598,8 @@ a {
   gap: var(--space-2);
 }
 
-.pagination__label {
+.pagination__label,
+.queue-filters__label {
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
@@ -530,7 +607,8 @@ a {
   font-weight: var(--weight-semibold);
 }
 
-.pagination select {
+.pagination select,
+.queue-filters select {
   font: inherit;
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border-control);
