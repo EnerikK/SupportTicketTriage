@@ -442,7 +442,7 @@ public class DashboardServiceTests(TicketApiFactory factory)
         Assert.Equal("30d", dashboard!.Range);
         Assert.Equal(dashboard.To.AddDays(-30), dashboard.From);
         Assert.Equal(30, dashboard.Volume.Count);
-        Assert.Equal(Enum.GetNames<TicketCategory>(), dashboard.Categories.Select(c => c.Category));
+        Assert.Equal(Enum.GetValues<TicketCategory>().Select(c => c.ToLabel()), dashboard.Categories.Select(c => c.Category));
         Assert.InRange(dashboard.NeedsAttention.Count, 0, DashboardService.NeedsAttentionLimit);
 
         var refused = await client.GetAsync("/dashboard?range=1d");

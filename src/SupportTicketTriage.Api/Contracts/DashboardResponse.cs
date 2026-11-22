@@ -1,4 +1,5 @@
 using SupportTicketTriage.Application.Dashboard;
+using SupportTicketTriage.Domain;
 using SupportTicketTriage.Infrastructure.Dashboard;
 
 namespace SupportTicketTriage.Api.Contracts;
@@ -109,7 +110,7 @@ public sealed record DashboardResponse(
                 snapshot.Drafts.ValidCitingNoSource,
                 snapshot.Drafts.AverageCitedPerValidDraft),
             snapshot.Categories
-                .Select(c => new DashboardCategoryResponse(c.Category.ToString(), c.Count))
+                .Select(c => new DashboardCategoryResponse(c.Category.ToLabel(), c.Count))
                 .ToArray(),
             snapshot.Unclassified,
             snapshot.NeedsAttention
@@ -117,7 +118,7 @@ public sealed record DashboardResponse(
                     a.TicketId,
                     a.Subject,
                     a.ReceivedAt,
-                    a.Category?.ToString(),
+                    a.Category?.ToLabel(),
                     a.Reason.ToString(),
                     RoutingGates.Describe(a.FailedGates)))
                 .ToArray());

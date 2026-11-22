@@ -409,7 +409,7 @@ Validation cannot tell whether a deployment name exists, so each configured depl
 
 | | |
 |---|---|
-| Review UI | http://localhost:3000 |
+| Review UI | http://localhost:3000 — opens on the dashboard; the queue is `/queue` |
 | API | http://localhost:8080 |
 | API reference | http://localhost:8080/scalar |
 | OpenAPI document | http://localhost:8080/openapi/v1.json |
@@ -443,7 +443,7 @@ npm --prefix src/SupportTicketTriage.Client test   # 123 component
 
 **Backend: 411 unit tests and 140 integration tests.** The integration tests run against a real `pgvector/pgvector:pg16` container via Testcontainers — EF Core is never mocked — and cover migrations, vector storage, similarity queries and API-to-database behaviour. Several assert properties no behavioural test can see, by reading the SQL EF Core actually emits: that retrieval filters and limits in the database rather than in memory, and that the review queue is one round trip rather than N+1.
 
-**Frontend: 123 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, what each review action actually sends, and how the dashboard turns counts into shares and changes, including when there is nothing to compare against. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
+**Frontend: 129 component tests** covering the parts that branch rather than the markup — how the queue collapses four triage signals into one word, how a ticket page renders five requests of which four may legitimately 404, what each review action actually sends, and how the dashboard turns counts into shares and changes, including when there is nothing to compare against. One of them asserts an absence: it scans every rendered action for send-shaped wording and fails if one appears.
 
 ### Evaluation harness
 

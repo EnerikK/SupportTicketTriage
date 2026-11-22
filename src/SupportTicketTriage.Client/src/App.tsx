@@ -1,8 +1,21 @@
-import { Link, NavLink, Route, Routes } from 'react-router'
+import { Link, Navigate, NavLink, Route, Routes } from 'react-router'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { TicketQueue } from './features/queue/TicketQueue'
 import { TicketDetail } from './features/ticket/TicketDetail'
 import { ThemeToggle } from './theme/ThemeToggle'
+
+/// A mistyped or outdated address. Without this the header sat over an empty
+/// page, which reads as a broken app rather than a wrong address.
+function NotFound() {
+  return (
+    <div className="empty">
+      <p className="empty__title">There is no page at this address.</p>
+      <p className="empty__detail">
+        Go to the <Link to="/dashboard">dashboard</Link> or the <Link to="/queue">queue</Link>.
+      </p>
+    </div>
+  )
+}
 
 export function App() {
   return (
@@ -25,23 +38,26 @@ export function App() {
             Drafts are grounded in resolved tickets and reviewed by a human. Nothing is ever sent.
           </p>
           {/* NavLink marks the current page with aria-current="page", which
-              is what both the styling and a screen reader read. `end` keeps
-              the queue link from matching every path that starts with "/". */}
+              is what both the styling and a screen reader read. */}
           <nav aria-label="Primary" className="app__nav">
-            <NavLink to="/" end>
-              Queue
-            </NavLink>
             <NavLink to="/dashboard">Dashboard</NavLink>
+            <NavLink to="/queue">Queue</NavLink>
           </nav>
         </div>
         <ThemeToggle />
       </header>
 
       <main>
+        {/* The app opens on the dashboard (ADR-046, 2026-11-22). `/` is a
+            redirect rather than a second address for the dashboard, so every
+            screen's address names it. `replace` swaps the history entry:
+            without it, Back lands on `/` and is sent straight forward again. */}
         <Routes>
-          <Route path="/" element={<TicketQueue />} />
-          <Route path="/tickets/:id" element={<TicketDetail />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/queue" element={<TicketQueue />} />
+          <Route path="/tickets/:id" element={<TicketDetail />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
     </div>

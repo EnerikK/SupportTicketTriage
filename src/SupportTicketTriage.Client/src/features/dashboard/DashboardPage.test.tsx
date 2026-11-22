@@ -325,13 +325,13 @@ describe('DashboardPage', () => {
       expect(within(label.parentElement!).getAllByRole('definition')[0]).toHaveTextContent('—')
     })
 
-    it('lists categories as a person reads them, with the unclassified apart', async () => {
+    it('lists every category the API names, with the unclassified apart', async () => {
       respondWith(
         200,
         dashboard({
           categories: [
             { category: 'Billing', count: 1 },
-            { category: 'AccountAndLogin', count: 3 },
+            { category: 'Account & Login', count: 3 },
           ],
           unclassified: 2,
         }),
@@ -340,9 +340,8 @@ describe('DashboardPage', () => {
       renderDashboard()
 
       await screen.findByText('Tickets by category')
-      expect(rowOf('Account and login').getByText('3')).toBeInTheDocument()
+      expect(rowOf('Account & Login').getByText('3')).toBeInTheDocument()
       expect(rowOf('Unclassified').getByText('2')).toBeInTheDocument()
-      expect(screen.queryByText('AccountAndLogin')).not.toBeInTheDocument()
     })
   })
 
@@ -364,7 +363,7 @@ describe('DashboardPage', () => {
         200,
         dashboard({
           needsAttention: [
-            item({ ticketId: 'rejected', subject: 'Rejected one', reason: 'DraftRejected', category: 'AccountAndLogin' }),
+            item({ ticketId: 'rejected', subject: 'Rejected one', reason: 'DraftRejected', category: 'Account & Login' }),
             item({ ticketId: 'withheld', subject: 'Withheld one', reason: 'DraftWithheld' }),
             item({ ticketId: 'gated', subject: 'Gated one', reason: 'GateFailed', failedGates: ['RetrievalSimilarity'] }),
             item({ ticketId: 'untriaged', subject: 'Untriaged one', reason: 'NotTriaged' }),
@@ -379,7 +378,7 @@ describe('DashboardPage', () => {
       expect(table.getByText('Draft withheld: invalid citations')).toBeInTheDocument()
       expect(table.getByText('Manual triage: nothing similar resolved')).toBeInTheDocument()
       expect(table.getByText('Not triaged')).toBeInTheDocument()
-      expect(table.getByText('Account and login')).toBeInTheDocument()
+      expect(table.getByText('Account & Login')).toBeInTheDocument()
       expect(table.getByRole('link', { name: 'Gated one' })).toHaveAttribute('href', '/tickets/gated')
     })
 
