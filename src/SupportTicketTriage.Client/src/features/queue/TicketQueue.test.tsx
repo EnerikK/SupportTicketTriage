@@ -199,6 +199,55 @@ describe('TicketQueue', () => {
     expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument()
   })
 
+  it('filters to a priority clicked in the table, from the first page', async () => {
+    const calls = respondWith(200, queuePage([ticket]))
+
+    renderQueue('/?page=3')
+    await screen.findByRole('table')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Show only High priority' }))
+
+    await waitFor(() => expect(calls.at(-1)).toContain('priority=High'))
+    expect(calls.at(-1)).toContain('page=1')
+  })
+
+  it('filters to a state clicked in the table', async () => {
+    const calls = respondWith(200, queuePage([ticket]))
+
+    renderQueue()
+    await screen.findByRole('table')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Show only Draft ready' }))
+
+    await waitFor(() => expect(calls.at(-1)).toContain('state=DraftReady'))
+  })
+
+  /// Every row of a filtered table shows the active value, so a button there
+  /// would do nothing on every line.
+  it('shows the active filter value as plain text', async () => {
+    respondWith(200, queuePage([ticket]))
+
+    renderQueue('/?priority=High&state=DraftReady')
+    const table = within(await screen.findByRole('table'))
+
+    expect(table.getByText('High')).toBeInTheDocument()
+    expect(table.getByText('Draft ready')).toBeInTheDocument()
+    expect(table.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  /// A pointer shortcut: the dropdowns are the keyboard route, so Tab through
+  /// a row stays one stop rather than three.
+  it('keeps the table values out of the tab order', async () => {
+    respondWith(200, queuePage([ticket]))
+
+    renderQueue()
+    const table = within(await screen.findByRole('table'))
+
+    for (const button of table.getAllByRole('button')) {
+      expect(button).toHaveAttribute('tabindex', '-1')
+    }
+  })
+
   /// The filters add buttons to this page. No-send is an absence, so it is
   /// pinned here as it is on the dashboard and the review actions.
   it('has no button that could send anything', async () => {
@@ -207,7 +256,11 @@ describe('TicketQueue', () => {
     renderQueue('/?priority=High')
     await screen.findByRole('table')
 
-    const labels = screen.getAllByRole('button').map((button) => button.textContent ?? '')
+    // The accessible name as well as the text: a filter value's name is
+    // longer than the word it shows.
+    const labels = screen
+      .getAllByRole('button')
+      .map((button) => `${button.textContent ?? ''} ${button.getAttribute('aria-label') ?? ''}`)
 
     expect(labels.length).toBeGreaterThan(0)
     expect(labels.some((label) => /send|deliver|email/i.test(label))).toBe(false)

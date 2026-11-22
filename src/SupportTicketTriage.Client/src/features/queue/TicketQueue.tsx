@@ -1,4 +1,5 @@
 import { Inbox } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { toNumber } from '../../api/client'
 import { useCategories, useQueue, type QueueFilters } from '../../api/queries'
@@ -116,6 +117,40 @@ function NoMatches() {
       <p className="empty__title">No tickets match these filters.</p>
       <p className="empty__detail">Clear the filters to see the whole queue.</p>
     </div>
+  )
+}
+
+/// A value in the table that filters the queue to itself: a pointer
+/// shortcut for the dropdowns above, which do the same by keyboard.
+///
+/// Out of the tab order (tabIndex -1), or every row would cost three Tab
+/// presses instead of one. Still a real button, so a screen reader finds and
+/// activates it. The name contains the visible word (WCAG 2.5.3), and the
+/// title shows a pointer user what a click will do.
+///
+/// Where the column is already filtered to the value, the caller renders
+/// plain text instead: every row of a filtered table shows that value, and a
+/// button that does nothing on every line helps nobody.
+function FilterValue({
+  name,
+  onClick,
+  children,
+}: {
+  name: string
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      className="filter-value"
+      tabIndex={-1}
+      aria-label={name}
+      title={name}
+      onClick={onClick}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -384,11 +419,36 @@ function QueueResults({
                   <Link to={`/tickets/${ticket.id}`}>{ticket.subject}</Link>
                 </td>
                 <td>{ticket.category ?? <span className="muted">unclassified</span>}</td>
-                <td>{ticket.priority ?? <span className="muted">—</span>}</td>
                 <td>
+                  {ticket.priority === null ? (
+                    <span className="muted">—</span>
+                  ) : ticket.priority === filters.priority ? (
+                    ticket.priority
+                  ) : (
+                    <FilterValue
+                      name={`Show only ${ticket.priority} priority`}
+                      onClick={() => update({ priority: ticket.priority })}
+                    >
+                      {ticket.priority}
+                    </FilterValue>
+                  )}
+                </td>
+                <td>
+                  {/* The icon stays beside the button, never inside it
+                      (ADR-025), and the gate line stays outside it, so the
+                      button's name is the state alone. */}
                   <span className={`state state--${state.tone}`}>
                     <StateIcon tone={state.tone} />
-                    {state.label}
+                    {ticket.state === filters.state || !queueStates.includes(ticket.state) ? (
+                      state.label
+                    ) : (
+                      <FilterValue
+                        name={`Show only ${state.label}`}
+                        onClick={() => update({ state: ticket.state })}
+                      >
+                        {state.label}
+                      </FilterValue>
+                    )}
                   </span>
                   {ticket.failedGates.length > 0 && (
                     <span className="muted gates">

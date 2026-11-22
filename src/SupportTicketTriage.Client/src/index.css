@@ -562,6 +562,31 @@ a {
   gap: var(--space-2);
 }
 
+/* A value in the queue that filters to itself. It reads as the value it is,
+   in its column's colour, and shows that it can be clicked only when pointed
+   at. The :not(:disabled) selectors are there to outrank the base button's
+   hover and press rules, which would otherwise paint a box and nudge it. */
+.filter-value {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  text-decoration: underline dotted transparent;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.filter-value:hover:not(:disabled) {
+  background: none;
+  text-decoration-color: currentColor;
+}
+
+.filter-value:active:not(:disabled) {
+  transform: none;
+}
+
 /* Holds the loading skeleton's pager row at the height of the real one. */
 .pagination__strut {
   visibility: hidden;

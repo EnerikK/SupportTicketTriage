@@ -1863,6 +1863,15 @@ This changes two things decided above, while building the endpoint. The original
 - **If the list fails,** the category reads as "Any", the queue loads, and the filter bar says "Categories could not be loaded." rather than showing a dropdown that quietly offers nothing.
 - The filters follow the table's column order: Category, Priority, State.
 
+### Amendment — 2026-11-22: clicking a priority or state in the table
+
+- **The owner added it,** after first keeping the dropdowns alone. Clicking a priority or state value sets the same URL parameter its dropdown sets, so the two cannot disagree, and returns to page 1. Category and Received are not clickable.
+- **A pointer shortcut, out of the tab order** (owner's call). Each is a real `<button>` with `tabIndex={-1}`: a screen reader still finds and activates it, but Tab skips it. The dropdowns are the keyboard route and do exactly the same, so nothing is lost by keyboard. In the tab order, a row would cost three stops instead of one; at 100 rows, about 300 presses to cross the page.
+- **An active value is plain text** (owner's call). Every row of a filtered table shows that value, so a button there would do nothing on every line, and a toggle would put an accidental "clear" on every line instead. "Clear filters" and the dropdown are the way back.
+- **Its accessible name contains the visible word,** "Show only High priority" for "High" (WCAG 2.5.3), and the same text is its title, so a pointer user can see what a click will do. The state's icon stays beside the button (ADR-025) and the gate line outside it, so the name is the state alone.
+- **It looks like the value it is:** no box, the column's own colour, and a dotted underline only on hover. The no-send scan now reads accessible names as well as text.
+- **The cost:** a pointer user has to discover the shortcut, by the cursor and the underline. The dropdowns stay for everyone who does not.
+
 ---
 
 ## Entries expected from the audit
