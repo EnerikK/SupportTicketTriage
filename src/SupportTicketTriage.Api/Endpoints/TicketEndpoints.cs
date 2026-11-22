@@ -351,11 +351,17 @@ public static class TicketEndpoints
     /// query" and this amends it — the property worth protecting was never
     /// "exactly one statement", it was "not one query per ticket per signal",
     /// and that still holds.
-    private static async Task<Ok<TicketQueuePageResponse>> ListTickets(
+    ///
+    /// The priority and state filters apply before the count and the paging
+    /// (ADR-047), so totalCount is the filtered total and a page is a page of
+    /// matches, not a page of tickets with the non-matching ones removed.
+    private static async Task<Results<Ok<TicketQueuePageResponse>, ValidationProblem>> ListTickets(
         SupportTicketTriageDbContext db,
         CancellationToken ct,
         int page = 1,
-        int pageSize = DefaultPageSize)
+        int pageSize = DefaultPageSize,
+        string? priority = null,
+        string? state = null)
     {
         // Clamped rather than rejected. A page size of 500 is a client bug or
         // somebody experimenting in the address bar, and answering it with a
@@ -363,6 +369,42 @@ public static class TicketEndpoints
         // was actually applied, so nobody is left guessing which they got.
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
+        // A filter, unlike a page size, is rejected rather than corrected:
+        // there is no nearest priority to "Urgent", and answering with the
+        // whole queue would look like a filter that matched everything.
+        var errors = new Dictionary<string, string[]>();
+
+        TicketPriority? priorityFilter = null;
+        if (!string.IsNullOrWhiteSpace(priority))
+        {
+            if (TryMatchName<TicketPriority>(priority, out var matched))
+            {
+                priorityFilter = matched;
+            }
+            else
+            {
+                errors["priority"] = [$"Priority must be one of {string.Join(", ", Enum.GetNames<TicketPriority>())}."];
+            }
+        }
+
+        QueueState? stateFilter = null;
+        if (!string.IsNullOrWhiteSpace(state))
+        {
+            if (TryMatchName<QueueState>(state, out var matched))
+            {
+                stateFilter = matched;
+            }
+            else
+            {
+                errors["state"] = [$"State must be one of {string.Join(", ", Enum.GetNames<QueueState>())}."];
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
 
         var tickets = db.Tickets
             .Select(t => new
@@ -422,6 +464,19 @@ public static class TicketEndpoints
                     : QueueState.NotTriaged,
             });
 
+        // The same State expression the column shows, not a second copy of
+        // the rule. In the WHERE it runs for every ticket rather than only
+        // the page, which is the cost ADR-047 accepts.
+        if (priorityFilter is { } wantedPriority)
+        {
+            tickets = tickets.Where(r => r.Classification != null && r.Classification.Priority == wantedPriority);
+        }
+
+        if (stateFilter is { } wantedState)
+        {
+            tickets = tickets.Where(r => r.State == wantedState);
+        }
+
         var total = await tickets.CountAsync(ct);
 
         // Computed as long before it is cast back. (page - 1) * pageSize
@@ -472,6 +527,25 @@ public static class TicketEndpoints
             .ToList();
 
         return TypedResults.Ok(new TicketQueuePageResponse(queue, total, page, pageSize));
+    }
+
+    /// Matches an enum member by its name only, ignoring case and surrounding
+    /// space, the stance SubmitReview takes on a decision. Enum.TryParse would
+    /// also accept "1", and a number is not a priority anyone chose.
+    private static bool TryMatchName<TEnum>(string value, out TEnum result)
+        where TEnum : struct, Enum
+    {
+        foreach (var candidate in Enum.GetValues<TEnum>())
+        {
+            if (string.Equals(value.Trim(), candidate.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                result = candidate;
+                return true;
+            }
+        }
+
+        result = default;
+        return false;
     }
 
     private static async Task<Results<Ok<TicketResponse>, NotFound>> GetTicket(

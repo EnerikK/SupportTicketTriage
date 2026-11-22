@@ -1,14 +1,15 @@
 import { Inbox } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { toNumber } from '../../api/client'
-import { useQueue } from '../../api/queries'
+import { useQueue, type QueueFilters } from '../../api/queries'
 import { Alert } from '../../ui/Alert'
 import { formatDate } from '../../ui/format'
 import { LoadingRegion, Skeleton } from '../../ui/Skeleton'
 import { Pagination } from './Pagination'
 import { readPage, readPageSize } from './paging'
 import { StateIcon } from './StateIcon'
-import { describeGate, describeState } from './ticketState'
+import { isFiltered, priorities, readFilter } from './filters'
+import { describeGate, describeState, queueStates } from './ticketState'
 
 /// Shared by the table and its skeleton so the two cannot drift apart and
 /// make the layout jump on load, which is the only thing a skeleton is for.
@@ -105,21 +106,114 @@ function EmptyQueue() {
   )
 }
 
+/// A filter that matches nothing is not an empty queue. "The queue is
+/// empty" would claim there is no work when there may be three hundred
+/// tickets behind the filter. The way out is the Clear filters button above,
+/// which is why this does not offer a second one.
+function NoMatches() {
+  return (
+    <div className="empty">
+      <p className="empty__title">No tickets match these filters.</p>
+      <p className="empty__detail">Clear the filters to see the whole queue.</p>
+    </div>
+  )
+}
+
+interface QueueUpdate {
+  page?: number
+  pageSize?: number
+  priority?: string | null
+  state?: string | null
+}
+
+/// Native selects with visible labels, each defaulting to "Any".
+function FilterBar({
+  filters,
+  onChange,
+}: {
+  filters: QueueFilters
+  onChange: (next: QueueUpdate) => void
+}) {
+  return (
+    <div className="queue-filters" role="group" aria-label="Filter the queue">
+      <label className="queue-filters__field">
+        <span className="queue-filters__label">Priority</span>
+        <select
+          value={filters.priority ?? ''}
+          onChange={(event) => onChange({ priority: event.target.value || null })}
+        >
+          <option value="">Any</option>
+          {priorities.map((priority) => (
+            <option key={priority} value={priority}>
+              {priority}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="queue-filters__field">
+        <span className="queue-filters__label">State</span>
+        <select
+          value={filters.state ?? ''}
+          onChange={(event) => onChange({ state: event.target.value || null })}
+        >
+          <option value="">Any</option>
+          {queueStates.map((state) => (
+            <option key={state} value={state}>
+              {describeState(state).label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {/* Hidden rather than removed while no filter is set, so setting the
+          first one does not push the pager and the table down. `visibility:
+          hidden` also takes it out of the tab order and the accessibility
+          tree, so nobody can reach a button that would do nothing. */}
+      <button
+        type="button"
+        style={{ visibility: isFiltered(filters) ? 'visible' : 'hidden' }}
+        onClick={() => onChange({ priority: null, state: null })}
+      >
+        Clear filters
+      </button>
+    </div>
+  )
+}
+
 export function TicketQueue() {
-  // Paging lives in the URL rather than in component state: the back button
-  // works, a page is a link somebody can send, and a refresh does not throw
-  // a reviewer back to the top of a queue they were working through. ADR-015
-  // already put navigation in react-router rather than in selection state,
-  // and this is the same call.
+  // Paging and filters live in the URL rather than in component state: the
+  // back button works, a filtered page is a link somebody can send, and a
+  // refresh does not throw a reviewer back to the top of a queue they were
+  // working through. ADR-015 already put navigation in react-router rather
+  // than in selection state, and this is the same call.
   const [params, setParams] = useSearchParams()
 
   const page = readPage(params.get('page'))
   const pageSize = readPageSize(params.get('pageSize'))
+  const filters: QueueFilters = {
+    priority: readFilter(params.get('priority'), priorities),
+    state: readFilter(params.get('state'), queueStates),
+  }
 
-  const { data, isPending, error } = useQueue(page, pageSize)
-
-  function update(next: { page?: number; pageSize?: number }) {
+  function update(next: QueueUpdate) {
     const updated = new URLSearchParams(params)
+
+    for (const key of ['priority', 'state'] as const) {
+      const value = next[key]
+
+      if (value !== undefined) {
+        if (value) {
+          updated.set(key, value)
+        } else {
+          updated.delete(key)
+        }
+
+        // A filter changes which tickets there are, so the page number no
+        // longer refers to anything. The rule page size already follows.
+        updated.delete('page')
+      }
+    }
 
     if (next.pageSize !== undefined) {
       updated.set('pageSize', String(next.pageSize))
@@ -142,6 +236,31 @@ export function TicketQueue() {
     setParams(updated)
   }
 
+  // The filter bar renders whatever the results are doing - loading, failed,
+  // empty - so it never moves, and it is there to undo a filter that
+  // matched nothing.
+  return (
+    <>
+      <FilterBar filters={filters} onChange={update} />
+      <QueueResults page={page} pageSize={pageSize} filters={filters} update={update} />
+    </>
+  )
+}
+
+function QueueResults({
+  page,
+  pageSize,
+  filters,
+  update,
+}: {
+  page: number
+  pageSize: number
+  filters: QueueFilters
+  update: (next: QueueUpdate) => void
+}) {
+  const { data, isPending, error } = useQueue(page, pageSize, filters)
+  const filtered = isFiltered(filters)
+
   if (isPending) {
     return <QueueSkeleton rows={pageSize} />
   }
@@ -151,9 +270,10 @@ export function TicketQueue() {
   }
 
   const totalCount = toNumber(data.totalCount)
+  const tickets = totalCount === 1 ? 'ticket' : 'tickets'
 
   if (totalCount === 0) {
-    return <EmptyQueue />
+    return filtered ? <NoMatches /> : <EmptyQueue />
   }
 
   // Reachable by typing a page number past the end. The API answers it with
@@ -164,7 +284,9 @@ export function TicketQueue() {
       <div className="empty">
         <p className="empty__title">There is nothing on page {page}.</p>
         <p className="empty__detail">
-          The queue holds {totalCount} {totalCount === 1 ? 'ticket' : 'tickets'}.{' '}
+          {filtered
+            ? `${totalCount} ${tickets} match these filters.`
+            : `The queue holds ${totalCount} ${tickets}.`}{' '}
           <button type="button" className="link-button" onClick={() => update({ page: 1 })}>
             Back to the first page
           </button>
@@ -199,7 +321,7 @@ export function TicketQueue() {
     <div className="queue-scroll" tabIndex={0} role="region" aria-label="Ticket queue">
       <table className="queue">
         <caption className="queue__caption">
-          {totalCount} {totalCount === 1 ? 'ticket' : 'tickets'}
+          {totalCount} {filtered ? `matching ${tickets}` : tickets}
         </caption>
         <QueueHeader />
         <tbody>

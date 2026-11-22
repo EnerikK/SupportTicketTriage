@@ -1829,6 +1829,34 @@ This changes two things decided above, while building the endpoint. The original
 
 ---
 
+## ADR-047 — The queue is filtered on the server, by a state the server derives
+
+**Status:** Accepted — 2026-11-22. Branch `queue/filters`. Amends [[ADR-027]], whose "no filtering" this ends.
+
+**Decision.**
+- `GET /tickets` takes `priority` and `state`. Both apply **before the count and the paging**, so `totalCount` is the filtered total and a page is a page of matches.
+- **State is derived on the server** (commit `2b67bb8`): one conditional chain in the queue query, which EF writes as a SQL `CASE`. The column and the filter use the same expression. The browser only maps a state's name to its label and tone.
+- **Values are matched by name,** ignoring case and surrounding space, as `SubmitReview` matches a decision. An unknown value is a 400 `ValidationProblem`, as `GET /dashboard` answers an unknown `range`. `Enum.TryParse` is not used, because it would accept `priority=1`.
+- **The page:** native selects with visible labels, each defaulting to "Any", above the pager. The values live in the URL beside `page` and `pageSize`; changing one returns to page 1; a value not on offer reads as "Any". A filter that matches nothing says so, separately from an empty queue. "Clear filters" is hidden, not removed, while no filter is set, so setting the first one moves nothing.
+
+**Why on the server.** Paging is in the database ([[ADR-027]]). A filter in the browser would see only the current page of ten rows, and the total beside it would be wrong. That entry warned that any filter must come before `Skip`/`Take`; a test now walks every filtered page and checks the rows add up to the total.
+
+**Why the state moved to the server.** A server-side filter needs the precedence rule in SQL. A second copy in TypeScript would leave two orders free to drift; this is the reason `28c8a78` moved category labels to the server.
+
+**Decided while building.**
+- **No "Unclassified" option** (owner's call). Priority offers the domain's three values. An unclassified ticket is reached through "Any", or through state, as "Not triaged" or "Manual triage".
+- **The priority list is a copy in TypeScript,** while category labels will come from the API (commit 3). Three member names that have not changed since classification was built; if they drift, the API answers the stale value with a 400 the page shows, not a silent empty result.
+
+**Date was deferred, on evidence.** All 300 tickets were received within two minutes on 2026-11-17, so a date range would return everything or nothing. It would also need a rule for where a day starts. If age matters later, an "oldest first" sort is the better control.
+
+**The cost.** Filtering on state puts the `CASE`, with its correlated `LIMIT 1` subqueries, into the `WHERE`, where it runs for every ticket rather than for the page alone. That is the cost profile the dashboard's needs-attention query already documents, fine at this size. Past a few thousand tickets, the fix is the denormalised state columns [[ADR-012]] names.
+
+**Not done.** Removing the four queue fields the browser no longer reads (`isDraftEligible`, `draftState`, `reviewDecision`, `isResolved`) is a separate change. `TicketPriorities.TryFromLabel`, used by the classification parser, still accepts a number from the model; noticed here, not changed.
+
+**What would reverse it.** A queue large enough that the `WHERE` hurts, which moves state into stored columns rather than back into the browser.
+
+---
+
 ## Entries expected from the audit
 
 The audit will surface decisions already committed to in existing code. Each gets an entry here with an honest status — `Accepted` if it survives review, `Superseded` if it is being reworked. A decision discovered in code rather than made deliberately is still a decision I will be asked to defend.

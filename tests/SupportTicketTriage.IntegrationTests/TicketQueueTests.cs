@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SupportTicketTriage.Api.Contracts;
@@ -244,39 +245,183 @@ public class TicketQueueTests(TicketApiFactory factory)
         ReviewDecision? decision,
         QueueState expected)
     {
-        Guid ticketId;
-
-        using (var scope = factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
-
-            var source = AddTicket(db, "queue-state-source");
-            source.Resolve("A resolution.", ResolutionSource.Imported);
-
-            ticketId = AddTicket(db, $"queue-state-{expected}").Id;
-
-            if (draftEligible is { } eligible)
-            {
-                AddRouting(db, ticketId, score: eligible ? 0.95 : 0.1, similarity: eligible ? 0.9 : 0.05);
-            }
-
-            await db.SaveChangesAsync();
-
-            var draft = draftCitationsValid is { } valid
-                ? AddDraft(db, ticketId, source.Id, valid)
-                : null;
-            await db.SaveChangesAsync();
-
-            if (decision is { } reviewed)
-            {
-                db.TicketReviews.Add(TicketReview.Create(ticketId, draft?.Id, Submission(reviewed)));
-                await db.SaveChangesAsync();
-            }
-        }
+        var ticketId = await SeedAsync(draftEligible, draftCitationsValid, decision);
 
         var item = await QueueItemAsync(ticketId);
 
         Assert.Equal(expected.ToString(), item.State);
+    }
+
+    /// The same table, through the filter: each ticket is found under the
+    /// state the column gives it, by the same expression, and every row the
+    /// filter returns is in that state.
+    [Theory]
+    [InlineData(null, null, null, QueueState.NotTriaged)]
+    [InlineData(false, null, null, QueueState.ManualTriage)]
+    [InlineData(true, null, null, QueueState.ReadyToDraft)]
+    [InlineData(true, true, null, QueueState.DraftReady)]
+    [InlineData(true, false, null, QueueState.DraftWithheld)]
+    [InlineData(true, true, ReviewDecision.Approved, QueueState.Approved)]
+    [InlineData(true, true, ReviewDecision.Rejected, QueueState.Rejected)]
+    [InlineData(false, null, ReviewDecision.ResolvedManually, QueueState.ResolvedManually)]
+    [InlineData(true, false, ReviewDecision.ResolvedManually, QueueState.ResolvedManually)]
+    public async Task TheStateFilterFindsATicketUnderTheStateItReads(
+        bool? draftEligible,
+        bool? draftCitationsValid,
+        ReviewDecision? decision,
+        QueueState state)
+    {
+        var ticketId = await SeedAsync(draftEligible, draftCitationsValid, decision);
+
+        var (items, _) = await FilteredAsync($"state={state}");
+
+        Assert.Contains(items, item => item.Id == ticketId);
+        Assert.All(items, item => Assert.Equal(state.ToString(), item.State));
+    }
+
+    /// Precedence through the filter: a rejected ticket still has a valid
+    /// draft, and must not be offered to a reviewer as one ready to approve.
+    [Fact]
+    public async Task ARejectedTicketIsNotFoundUnderDraftReady()
+    {
+        var ticketId = await SeedAsync(true, true, ReviewDecision.Rejected);
+
+        var (items, _) = await FilteredAsync($"state={QueueState.DraftReady}");
+
+        Assert.DoesNotContain(items, item => item.Id == ticketId);
+    }
+
+    [Fact]
+    public async Task ThePriorityFilterReturnsOnlyThatPriority()
+    {
+        var high = await SeedAsync(true, null, null, TicketPriority.High);
+        var low = await SeedAsync(true, null, null, TicketPriority.Low);
+
+        var (items, _) = await FilteredAsync("priority=High");
+
+        Assert.Contains(items, item => item.Id == high);
+        Assert.DoesNotContain(items, item => item.Id == low);
+        Assert.All(items, item => Assert.Equal("High", item.Priority));
+    }
+
+    [Fact]
+    public async Task FiltersCombineSoATicketMustMatchBoth()
+    {
+        var both = await SeedAsync(false, null, null, TicketPriority.High);
+        var priorityOnly = await SeedAsync(true, null, null, TicketPriority.High);
+        var stateOnly = await SeedAsync(false, null, null, TicketPriority.Low);
+
+        var (items, _) = await FilteredAsync($"priority=High&state={QueueState.ManualTriage}");
+
+        Assert.Contains(items, item => item.Id == both);
+        Assert.DoesNotContain(items, item => item.Id == priorityOnly);
+        Assert.DoesNotContain(items, item => item.Id == stateOnly);
+    }
+
+    /// ADR-027's warning, tested: a filter applied after paging would count
+    /// every ticket and hand back pages with holes in them. Walking every
+    /// page of a filtered queue must yield exactly totalCount rows.
+    [Fact]
+    public async Task TheTotalIsTheFilteredTotalAndThePagesAddUpToIt()
+    {
+        await SeedAsync(false, null, null);
+        await SeedAsync(true, null, null);
+
+        var (items, total) = await FilteredAsync($"state={QueueState.ManualTriage}", pageSize: 3);
+        var everything = await QueuePageAsync();
+
+        Assert.Equal(total, items.Count);
+        Assert.Equal(total, items.Select(item => item.Id).Distinct().Count());
+        Assert.True(total < everything.TotalCount);
+    }
+
+    /// Matched by name, as a review decision is. A number is rejected even
+    /// though Enum.TryParse would read it as a member.
+    [Theory]
+    [InlineData("priority=Urgent", "priority")]
+    [InlineData("priority=1", "priority")]
+    [InlineData("state=Sent", "state")]
+    [InlineData("state=0", "state")]
+    public async Task AnUnknownFilterValueIsRejected(string query, string field)
+    {
+        var response = await _client.GetAsync($"/tickets?{query}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var problem = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>();
+        Assert.True(problem!.Errors.ContainsKey(field));
+    }
+
+    [Fact]
+    public async Task AFilterValueIsMatchedIgnoringCase()
+    {
+        var response = await _client.GetAsync("/tickets?priority=high&state=manualtriage");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    /// Seeds one ticket with the signals a ticket can really have, the
+    /// shape every state test above shares.
+    private async Task<Guid> SeedAsync(
+        bool? draftEligible,
+        bool? draftCitationsValid,
+        ReviewDecision? decision,
+        TicketPriority? priority = null)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+
+        var source = AddTicket(db, "queue-state-source");
+        source.Resolve("A resolution.", ResolutionSource.Imported);
+
+        var ticketId = AddTicket(db, "queue-state").Id;
+
+        if (priority is { } classified)
+        {
+            AddClassification(db, ticketId, priority: classified);
+        }
+
+        if (draftEligible is { } eligible)
+        {
+            AddRouting(db, ticketId, score: eligible ? 0.95 : 0.1, similarity: eligible ? 0.9 : 0.05);
+        }
+
+        await db.SaveChangesAsync();
+
+        var draft = draftCitationsValid is { } valid
+            ? AddDraft(db, ticketId, source.Id, valid)
+            : null;
+        await db.SaveChangesAsync();
+
+        if (decision is { } reviewed)
+        {
+            db.TicketReviews.Add(TicketReview.Create(ticketId, draft?.Id, Submission(reviewed)));
+            await db.SaveChangesAsync();
+        }
+
+        return ticketId;
+    }
+
+    /// Every row of a filtered queue, walked page by page, with the total
+    /// the first page reported.
+    private async Task<(List<TicketQueueItemResponse> Items, int Total)> FilteredAsync(
+        string query,
+        int pageSize = MaxPageSize)
+    {
+        var items = new List<TicketQueueItemResponse>();
+
+        for (var page = 1; ; page++)
+        {
+            var response = (await _client.GetFromJsonAsync<TicketQueuePageResponse>(
+                $"/tickets?{query}&page={page}&pageSize={pageSize}"))!;
+
+            items.AddRange(response.Items);
+
+            if ((long)page * response.PageSize >= response.TotalCount)
+            {
+                return (items, response.TotalCount);
+            }
+        }
     }
 
     /// A reviewer reads draft text in the detail view, never in the queue.

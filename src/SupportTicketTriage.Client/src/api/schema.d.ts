@@ -16,6 +16,8 @@ export interface paths {
                 query?: {
                     page?: number | string;
                     pageSize?: number | string;
+                    priority?: string;
+                    state?: string;
                 };
                 header?: never;
                 path?: never;
@@ -30,6 +32,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["TicketQueuePageResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                     };
                 };
             };

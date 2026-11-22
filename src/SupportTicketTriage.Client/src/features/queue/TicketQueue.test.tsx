@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
@@ -79,8 +79,73 @@ describe('TicketQueue', () => {
     renderQueue()
 
     expect(await screen.findByRole('link', { name: 'Charged twice' })).toBeInTheDocument()
-    expect(screen.getByText('Billing')).toBeInTheDocument()
-    expect(screen.getByText('Draft ready')).toBeInTheDocument()
+    // Within the table: the state filter's options carry the same words.
+    const table = within(screen.getByRole('table'))
+    expect(table.getByText('Billing')).toBeInTheDocument()
+    expect(table.getByText('Draft ready')).toBeInTheDocument()
+  })
+
+  /// A filter changes which tickets there are, so the page number no longer
+  /// means anything; page 3 of the whole queue is not page 3 of the matches.
+  it('sends a chosen filter and goes back to the first page', async () => {
+    const calls = respondWith(200, queuePage([ticket]))
+
+    renderQueue('/?page=3')
+    await screen.findByRole('table')
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /^Priority/ }), 'High')
+
+    await waitFor(() => expect(calls.at(-1)).toContain('priority=High'))
+    expect(calls.at(-1)).toContain('page=1')
+  })
+
+  /// The URL is text anyone can type. A value the page has no option for
+  /// reads as "Any", so the dropdown never misreports what is on screen.
+  it('reads an unknown filter in the address as Any', async () => {
+    const calls = respondWith(200, queuePage([ticket]))
+
+    renderQueue('/?priority=Urgent&state=Sent')
+    await screen.findByRole('table')
+
+    expect(screen.getByRole('combobox', { name: /^Priority/ })).toHaveValue('')
+    expect(screen.getByRole('combobox', { name: /^State/ })).toHaveValue('')
+    expect(calls[0]).not.toMatch(/priority=|state=/)
+  })
+
+  /// "The queue is empty" under a filter would claim there is no work.
+  it('says that nothing matches, not that the queue is empty', async () => {
+    respondWith(200, queuePage([], { totalCount: 0 }))
+
+    renderQueue('/?state=Rejected')
+
+    expect(await screen.findByText('No tickets match these filters.')).toBeInTheDocument()
+    expect(screen.queryByText(/The queue is empty/)).not.toBeInTheDocument()
+  })
+
+  it('offers to clear the filters only when one is set', async () => {
+    const calls = respondWith(200, queuePage([ticket]))
+
+    renderQueue('/?priority=High')
+    await screen.findByRole('table')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+
+    await waitFor(() => expect(calls.at(-1)).not.toContain('priority='))
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument()
+  })
+
+  /// The filters add buttons to this page. No-send is an absence, so it is
+  /// pinned here as it is on the dashboard and the review actions.
+  it('has no button that could send anything', async () => {
+    respondWith(200, queuePage([ticket]))
+
+    renderQueue('/?priority=High')
+    await screen.findByRole('table')
+
+    const labels = screen.getAllByRole('button').map((button) => button.textContent ?? '')
+
+    expect(labels.length).toBeGreaterThan(0)
+    expect(labels.some((label) => /send|deliver|email/i.test(label))).toBe(false)
   })
 
   /// The table's height follows its rows, so a pager beneath it moved under
@@ -119,11 +184,14 @@ describe('TicketQueue', () => {
 
     renderQueue()
 
-    expect(await screen.findByText('Manual triage')).toBeInTheDocument()
+    // Within the table: the state filter's options carry the same words.
+    const table = within(await screen.findByRole('table'))
+
+    expect(table.getByText('Manual triage')).toBeInTheDocument()
     expect(
-      screen.getByText('classifier was unsure, nothing similar resolved'),
+      table.getByText('classifier was unsure, nothing similar resolved'),
     ).toBeInTheDocument()
-    expect(screen.getByText('unclassified')).toBeInTheDocument()
+    expect(table.getByText('unclassified')).toBeInTheDocument()
   })
 
   it('shows the failure rather than an empty queue when the request fails', async () => {
