@@ -54,6 +54,14 @@ function QueueHeader() {
 function QueueSkeleton({ rows }: { rows: number }) {
   return (
     <LoadingRegion label="Loading the queue">
+      {/* The pager sits above the table, so the skeleton holds its row too,
+          or the table would drop by that height when the data arrives. The
+          strut takes the button class, so the row is the buttons' height by
+          construction rather than by a measured number. */}
+      <div className="pagination">
+        <Skeleton width="14rem" />
+        <span className="button pagination__strut">{' '}</span>
+      </div>
       {/* The same scroll wrapper, deliberately without `tabIndex` or the
           region role: this sits inside an `aria-hidden` subtree, and a
           focusable element hidden from assistive technology is a trap a
@@ -167,6 +175,18 @@ export function TicketQueue() {
 
   return (
     <>
+    {/* Above the table, not below it. The table's height follows its rows -
+        a gate line makes a row taller, the last page is short - so a pager
+        beneath it moved under the cursor on every page turn. Nothing above
+        this depends on the page's content. */}
+    <Pagination
+      page={page}
+      pageSize={pageSize}
+      totalCount={totalCount}
+      onPage={(next) => update({ page: next })}
+      onPageSize={(next) => update({ pageSize: next })}
+    />
+
     {/* A scrollable region has to be reachable by keyboard, or the content
         past its right edge is unreachable without a mouse - WCAG 2.1.1. That
         is what `tabIndex` and the labelled `region` role are for, not
@@ -211,14 +231,6 @@ export function TicketQueue() {
         </tbody>
       </table>
     </div>
-
-    <Pagination
-      page={page}
-      pageSize={pageSize}
-      totalCount={totalCount}
-      onPage={(next) => update({ page: next })}
-      onPageSize={(next) => update({ pageSize: next })}
-    />
     </>
   )
 }

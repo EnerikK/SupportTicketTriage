@@ -988,6 +988,14 @@ The focus-management gap is the one worth doing carefully: it is the difference 
 - **Rows still differ in height.** A gated row carries its gate line, so the pager moves between pages with different numbers of gated tickets. Equal heights would mean truncating the gate text, which [[ADR-023]] forbids.
 - **Checked by eye** at 1280px in light and dark mode, and at 768px. Phone width was not checked: headless Chrome on Windows will not lay out narrower than about 500px.
 
+### Amendment — 2026-11-22, later: the pager moves above the table
+
+- **Fixed columns did not stop the pager moving,** and the owner found it in use: the table's height follows its rows, so Next moved under the cursor between pages.
+- **The pager now sits above the table,** where nothing above it depends on the page's content. That holds for gated pages, the short last page and a change of page size.
+- **The skeleton holds the pager's row,** or the table would drop by that height when data arrives. A hidden strut with the button class gives the row the buttons' height by construction.
+- **Rejected:** equal row heights, which still move with any extra wrapped line and pad every row; and pagers above and below, which need two names and must not announce the page twice.
+- **The cost:** at 50 or 100 rows a page, a reader at the foot of the table scrolls back up to page.
+
 ---
 
 ## ADR-027 — The queue is paged in the database, with a total order and a clamped page size

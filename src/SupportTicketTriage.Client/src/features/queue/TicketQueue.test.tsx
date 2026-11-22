@@ -83,6 +83,20 @@ describe('TicketQueue', () => {
     expect(screen.getByText('Draft ready')).toBeInTheDocument()
   })
 
+  /// The table's height follows its rows, so a pager beneath it moved under
+  /// the cursor between pages. Above the table, nothing it sits under
+  /// depends on the page's content.
+  it('puts the pager above the table', async () => {
+    respondWith(200, queuePage([ticket]))
+
+    renderQueue()
+
+    const table = await screen.findByRole('table')
+    const pager = screen.getByRole('navigation', { name: 'Queue pages' })
+
+    expect(pager.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   /// A gated ticket must say why it was gated. ADR-003 forbids showing the
   /// routing inputs as a confidence percentage, so the reason is words.
   it('names the failed gates on a ticket routed to manual triage', async () => {

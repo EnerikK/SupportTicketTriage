@@ -543,7 +543,12 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+/* Holds the loading skeleton's pager row at the height of the real one. */
+.pagination__strut {
+  visibility: hidden;
 }
 
 .pagination__size {
