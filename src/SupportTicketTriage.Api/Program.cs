@@ -19,6 +19,7 @@ app.Services.ApplyMigrations();
 
 app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponse.WriteAsync });
 app.MapTicketEndpoints();
+app.MapDashboardEndpoints();
 
 // Deliberately not gated behind IsDevelopment(), which is what the templates
 // do. The compose stack runs with no ASPNETCORE_ENVIRONMENT set, so it is

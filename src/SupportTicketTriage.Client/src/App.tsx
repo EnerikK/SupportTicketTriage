@@ -1,4 +1,5 @@
-import { Link, Route, Routes } from 'react-router'
+import { Link, NavLink, Route, Routes } from 'react-router'
+import { DashboardPage } from './features/dashboard/DashboardPage'
 import { TicketQueue } from './features/queue/TicketQueue'
 import { TicketDetail } from './features/ticket/TicketDetail'
 import { ThemeToggle } from './theme/ThemeToggle'
@@ -23,6 +24,15 @@ export function App() {
           <p className="app__tagline">
             Drafts are grounded in resolved tickets and reviewed by a human. Nothing is ever sent.
           </p>
+          {/* NavLink marks the current page with aria-current="page", which
+              is what both the styling and a screen reader read. `end` keeps
+              the queue link from matching every path that starts with "/". */}
+          <nav aria-label="Primary" className="app__nav">
+            <NavLink to="/" end>
+              Queue
+            </NavLink>
+            <NavLink to="/dashboard">Dashboard</NavLink>
+          </nav>
         </div>
         <ThemeToggle />
       </header>
@@ -31,6 +41,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<TicketQueue />} />
           <Route path="/tickets/:id" element={<TicketDetail />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>
       </main>
     </div>

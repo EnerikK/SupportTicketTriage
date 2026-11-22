@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using SupportTicketTriage.Infrastructure.Persistence;
 
@@ -177,35 +175,9 @@ public class MigrationTests(TicketApiFactory factory)
     /// afterwards whether the body passed or not.
     private async Task InThrowawayDatabaseAsync(Func<SupportTicketTriageDbContext, IMigrator, Task> body)
     {
-        await using var db = CreateThrowawayDatabaseContext();
+        await using var database = ThrowawayDatabase.Create(factory);
+        await using var db = database.CreateContext();
 
-        try
-        {
-            await body(db, db.GetService<IMigrator>());
-        }
-        finally
-        {
-            await db.Database.EnsureDeletedAsync();
-        }
-    }
-
-    private SupportTicketTriageDbContext CreateThrowawayDatabaseContext()
-    {
-        // Read from configuration, not from the shared DbContext: Npgsql strips
-        // the password from a connection string once it has been opened.
-        var sharedConnection = factory.Services
-            .GetRequiredService<IConfiguration>()
-            .GetConnectionString("Default")!;
-
-        var connection = new NpgsqlConnectionStringBuilder(sharedConnection)
-        {
-            Database = $"backfill_{Guid.NewGuid():N}",
-        }.ConnectionString;
-
-        var options = new DbContextOptionsBuilder<SupportTicketTriageDbContext>()
-            .UseNpgsql(connection, npgsql => npgsql.UseVector())
-            .Options;
-
-        return new SupportTicketTriageDbContext(options);
+        await body(db, db.GetService<IMigrator>());
     }
 }

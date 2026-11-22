@@ -487,10 +487,144 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    range?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DashboardResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        DashboardAttentionResponse: {
+            /** Format: uuid */
+            ticketId: string;
+            subject: string;
+            /** Format: date-time */
+            receivedAt: string;
+            category: null | string;
+            reason: string;
+            failedGates: string[];
+        };
+        DashboardCategoryResponse: {
+            category: string;
+            /** Format: int32 */
+            count: number | string;
+        };
+        DashboardDayResponse: {
+            /** Format: date */
+            day: string;
+            /** Format: int32 */
+            received: number | string;
+            /** Format: int32 */
+            resolvedByReviewer: number | string;
+        };
+        DashboardDraftsResponse: {
+            /** Format: int32 */
+            generated: number | string;
+            /** Format: int32 */
+            withheld: number | string;
+            /** Format: int32 */
+            validCitingNoSource: number | string;
+            /** Format: double */
+            averageCitedPerValidDraft: null | number | string;
+        };
+        DashboardHeadlineResponse: {
+            /** Format: int32 */
+            received: number | string;
+            /** Format: int32 */
+            routed: number | string;
+            /** Format: int32 */
+            routedToManualTriage: number | string;
+            /** Format: int32 */
+            draftDecisions: number | string;
+            /** Format: int32 */
+            approvedAsWritten: number | string;
+            /** Format: double */
+            medianSecondsToResolution: null | number | string;
+        };
+        DashboardResponse: {
+            range: string;
+            /** Format: date-time */
+            from: string;
+            /** Format: date-time */
+            to: string;
+            /** Format: date-time */
+            previousFrom: string;
+            current: components["schemas"]["DashboardHeadlineResponse"];
+            previous: components["schemas"]["DashboardHeadlineResponse"];
+            volume: components["schemas"]["DashboardDayResponse"][];
+            routing: components["schemas"]["DashboardRoutingResponse"];
+            reviews: components["schemas"]["DashboardReviewsResponse"];
+            drafts: components["schemas"]["DashboardDraftsResponse"];
+            categories: components["schemas"]["DashboardCategoryResponse"][];
+            /** Format: int32 */
+            unclassified: number | string;
+            needsAttention: components["schemas"]["DashboardAttentionResponse"][];
+        };
+        DashboardReviewsResponse: {
+            /** Format: int32 */
+            approvedAsWritten: number | string;
+            /** Format: int32 */
+            editedThenApproved: number | string;
+            /** Format: int32 */
+            rejected: number | string;
+            /** Format: int32 */
+            resolvedManually: number | string;
+        };
+        DashboardRoutingResponse: {
+            /** Format: int32 */
+            bothPassed: number | string;
+            /** Format: int32 */
+            retrievalSimilarityFailed: number | string;
+            /** Format: int32 */
+            classificationScoreFailed: number | string;
+            /** Format: int32 */
+            bothFailed: number | string;
+            /** Format: int32 */
+            notTriaged: number | string;
+        };
         DraftCitationResponse: {
             /** Format: uuid */
             ticketId: string;

@@ -11,6 +11,8 @@ export type SimilarTicket = Schemas['SimilarTicketResponse']
 export type TicketDraft = Schemas['TicketDraftResponse']
 export type TicketReview = Schemas['TicketReviewResponse']
 export type SubmitReview = Schemas['SubmitReviewRequest']
+export type Dashboard = Schemas['DashboardResponse']
+export type DashboardDay = Schemas['DashboardDayResponse']
 
 /// Every type above is generated from the API's own OpenAPI document by
 /// `npm run generate-types`. Nothing here is hand-written, so a renamed field
