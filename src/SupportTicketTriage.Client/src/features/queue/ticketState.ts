@@ -1,5 +1,3 @@
-import type { TicketQueueItem } from '../../api/client'
-
 export type TicketStateTone = 'reviewed' | 'rejected' | 'ready' | 'blocked' | 'pending'
 
 export interface TicketState {
@@ -7,47 +5,26 @@ export interface TicketState {
   tone: TicketStateTone
 }
 
-/// Collapses the four independent triage signals the queue carries into the
-/// one word a reviewer scans the column for.
-///
-/// Order matters and is the point: a decision already taken outranks the
-/// draft that produced it, and a draft that failed citation validation is
-/// called out rather than folded into "no draft", because ADR-010 withholds
-/// its content and a reviewer needs to know why there is nothing to read.
-export function describeState(item: TicketQueueItem): TicketState {
-  if (item.reviewDecision === 'Approved') {
-    return { label: 'Approved', tone: 'reviewed' }
-  }
-
+/// What each queue state looks like. Which state a ticket is in is decided
+/// on the server, in the queue query, so that a filter on state and the
+/// column a reviewer reads cannot disagree.
+const states: Record<string, TicketState> = {
+  Approved: { label: 'Approved', tone: 'reviewed' },
   // Reuses the reviewed tone and its icon: a person decided and the ticket is
   // resolved, which is what that tone means. The word carries the difference.
-  if (item.reviewDecision === 'ResolvedManually') {
-    return { label: 'Resolved manually', tone: 'reviewed' }
-  }
+  ResolvedManually: { label: 'Resolved manually', tone: 'reviewed' },
+  Rejected: { label: 'Rejected', tone: 'rejected' },
+  DraftReady: { label: 'Draft ready', tone: 'ready' },
+  DraftWithheld: { label: 'Draft withheld', tone: 'blocked' },
+  ManualTriage: { label: 'Manual triage', tone: 'blocked' },
+  ReadyToDraft: { label: 'Ready to draft', tone: 'ready' },
+  NotTriaged: { label: 'Not triaged', tone: 'pending' },
+}
 
-  if (item.reviewDecision === 'Rejected') {
-    return { label: 'Rejected', tone: 'rejected' }
-  }
-
-  if (item.draftState === 'Ready') {
-    return { label: 'Draft ready', tone: 'ready' }
-  }
-
-  if (item.draftState === 'Failed') {
-    return { label: 'Draft withheld', tone: 'blocked' }
-  }
-
-  if (item.isDraftEligible === false) {
-    return { label: 'Manual triage', tone: 'blocked' }
-  }
-
-  if (item.isDraftEligible === true) {
-    return { label: 'Ready to draft', tone: 'ready' }
-  }
-
-  // No routing decision at all: the ticket was ingested but never evaluated,
-  // which happens when it is still in flight.
-  return { label: 'Not triaged', tone: 'pending' }
+/// A state this client does not know shows its wire name rather than
+/// nothing, as describeGate does for a gate.
+export function describeState(state: string): TicketState {
+  return states[state] ?? { label: state, tone: 'pending' }
 }
 
 /// ADR-003 forbids presenting the routing inputs as a confidence percentage,

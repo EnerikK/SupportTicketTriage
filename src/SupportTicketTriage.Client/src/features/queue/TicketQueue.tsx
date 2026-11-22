@@ -174,7 +174,7 @@ export function TicketQueue() {
         <QueueHeader />
         <tbody>
           {data.items.map((ticket) => {
-            const state = describeState(ticket)
+            const state = describeState(ticket.state)
 
             return (
               <tr key={ticket.id}>

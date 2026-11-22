@@ -67,6 +67,24 @@ public class TicketQueueTests(TicketApiFactory factory)
         return draft;
     }
 
+    private static ReviewSubmission Submission(ReviewDecision decision)
+    {
+        ReviewSubmission? submission;
+
+        var created = decision == ReviewDecision.ResolvedManually
+            ? ReviewSubmission.TryCreateManualResolution("A reply written by hand.", null, out submission, out _)
+            : ReviewSubmission.TryCreate(
+                decision,
+                DraftText,
+                null,
+                decision == ReviewDecision.Rejected ? "Cites the wrong precedent." : null,
+                out submission,
+                out _);
+
+        Assert.True(created);
+        return submission!;
+    }
+
     private async Task<TicketQueuePageResponse> QueuePageAsync(int page = 1, int pageSize = MaxPageSize) =>
         (await _client.GetFromJsonAsync<TicketQueuePageResponse>(
             $"/tickets?page={page}&pageSize={pageSize}"))!;
@@ -201,6 +219,64 @@ public class TicketQueueTests(TicketApiFactory factory)
         Assert.Equal(
             [nameof(RoutingGate.ClassificationScore), nameof(RoutingGate.RetrievalSimilarity)],
             item.FailedGates.OrderBy(gate => gate));
+    }
+
+    /// The state column's rule, as a table. Each row seeds only signals a
+    /// ticket can really have: a draft only after an eligible routing
+    /// decision, approval and rejection only of a valid draft.
+    ///
+    /// The last three rows are the precedence cases. A decision a person has
+    /// already taken outranks the draft, the gate or the withheld draft
+    /// behind it, so a rejected ticket must not read "Draft ready".
+    [Theory]
+    [InlineData(null, null, null, QueueState.NotTriaged)]
+    [InlineData(false, null, null, QueueState.ManualTriage)]
+    [InlineData(true, null, null, QueueState.ReadyToDraft)]
+    [InlineData(true, true, null, QueueState.DraftReady)]
+    [InlineData(true, false, null, QueueState.DraftWithheld)]
+    [InlineData(true, true, ReviewDecision.Approved, QueueState.Approved)]
+    [InlineData(true, true, ReviewDecision.Rejected, QueueState.Rejected)]
+    [InlineData(false, null, ReviewDecision.ResolvedManually, QueueState.ResolvedManually)]
+    [InlineData(true, false, ReviewDecision.ResolvedManually, QueueState.ResolvedManually)]
+    public async Task TheStateIsDerivedFromTheSignalsInPrecedenceOrder(
+        bool? draftEligible,
+        bool? draftCitationsValid,
+        ReviewDecision? decision,
+        QueueState expected)
+    {
+        Guid ticketId;
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<SupportTicketTriageDbContext>();
+
+            var source = AddTicket(db, "queue-state-source");
+            source.Resolve("A resolution.", ResolutionSource.Imported);
+
+            ticketId = AddTicket(db, $"queue-state-{expected}").Id;
+
+            if (draftEligible is { } eligible)
+            {
+                AddRouting(db, ticketId, score: eligible ? 0.95 : 0.1, similarity: eligible ? 0.9 : 0.05);
+            }
+
+            await db.SaveChangesAsync();
+
+            var draft = draftCitationsValid is { } valid
+                ? AddDraft(db, ticketId, source.Id, valid)
+                : null;
+            await db.SaveChangesAsync();
+
+            if (decision is { } reviewed)
+            {
+                db.TicketReviews.Add(TicketReview.Create(ticketId, draft?.Id, Submission(reviewed)));
+                await db.SaveChangesAsync();
+            }
+        }
+
+        var item = await QueueItemAsync(ticketId);
+
+        Assert.Equal(expected.ToString(), item.State);
     }
 
     /// A reviewer reads draft text in the detail view, never in the queue.

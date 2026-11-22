@@ -335,11 +335,16 @@ public static class TicketEndpoints
     /// UI fetch classification, routing, draft and review per row: at fifty
     /// tickets that is two hundred requests to render one screen.
     ///
-    /// Each signal is append-only with most-recent-wins semantics, so each
-    /// contributes a correlated subquery ordered by CreatedAt. Three
-    /// subqueries per row is fine at this size and would not be at a much
-    /// larger one — but it is one round trip for the page, and an integration
-    /// test asserts that by reading the SQL EF Core actually sends.
+    /// Each signal is append-only with most-recent-wins semantics. EF reads
+    /// the returned signals through one window-function join each, but writes
+    /// the state's CASE as correlated LIMIT 1 subqueries, some of them
+    /// repeated. PostgreSQL evaluates those after the sort, for each row up
+    /// to the end of the requested page (EXPLAIN ANALYZE, 2026-11-22), so a
+    /// deep page pays for the rows its OFFSET skips. Fine at this size; past
+    /// a few thousand tickets, ADR-012's denormalised state columns are the
+    /// fix.
+    /// It is still one round trip for the page, and an integration test
+    /// asserts that by reading the SQL EF Core actually sends.
     ///
     /// Paging makes this two statements rather than one: a COUNT and a
     /// windowed projection. ADR-012 recorded the queue as "one projection
@@ -359,35 +364,7 @@ public static class TicketEndpoints
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
-        var total = await db.Tickets.CountAsync(ct);
-
-        // Computed as long before it is cast back. (page - 1) * pageSize
-        // overflows int for a large hand-typed page number, and the negative
-        // OFFSET that follows is a 500 rather than an empty page.
-        //
-        // Past the end we answer with no rows and the true total rather than
-        // clamping to the last page: clamping would hide that the caller
-        // asked for something that does not exist, and the envelope already
-        // carries everything needed to recover. It also skips a query whose
-        // only possible answer is nothing.
-        var skip = (long)(page - 1) * pageSize;
-
-        if (skip >= total)
-        {
-            return TypedResults.Ok(new TicketQueuePageResponse([], total, page, pageSize));
-        }
-
-        var rows = await db.Tickets
-            // Id is the tie-break, and it is not decoration. CreatedAt is
-            // truncated to microseconds, so ties are genuinely reachable —
-            // the seeded dataset is full of them — and without a total order
-            // rows repeat and vanish across page boundaries. Ordering and
-            // windowing both happen before the projection, so LIMIT and
-            // OFFSET reach PostgreSQL rather than the paging happening here.
-            .OrderByDescending(t => t.CreatedAt)
-            .ThenByDescending(t => t.Id)
-            .Skip((int)skip)
-            .Take(pageSize)
+        var tickets = db.Tickets
             .Select(t => new
             {
                 t.Id,
@@ -417,6 +394,64 @@ public static class TicketEndpoints
                     .Select(v => new { v.Decision })
                     .FirstOrDefault(),
             })
+            // The state, as one conditional chain that EF writes as a SQL
+            // CASE. Order is the point: a decision already taken outranks the
+            // draft that produced it, and a draft that failed citation
+            // validation is called out rather than folded into "no draft",
+            // because ADR-010 withholds its content and a reviewer needs to
+            // know why there is nothing to read. A ticket with no routing
+            // decision was never evaluated (ADR-028).
+            .Select(r => new
+            {
+                r.Id,
+                r.Subject,
+                r.CreatedAt,
+                r.Resolution,
+                r.Classification,
+                r.Routing,
+                r.DraftCitationsValid,
+                r.Review,
+                State =
+                    r.Review != null && r.Review.Decision == ReviewDecision.Approved ? QueueState.Approved
+                    : r.Review != null && r.Review.Decision == ReviewDecision.ResolvedManually ? QueueState.ResolvedManually
+                    : r.Review != null && r.Review.Decision == ReviewDecision.Rejected ? QueueState.Rejected
+                    : r.DraftCitationsValid == true ? QueueState.DraftReady
+                    : r.DraftCitationsValid == false ? QueueState.DraftWithheld
+                    : r.Routing != null && !r.Routing.IsDraftEligible ? QueueState.ManualTriage
+                    : r.Routing != null ? QueueState.ReadyToDraft
+                    : QueueState.NotTriaged,
+            });
+
+        var total = await tickets.CountAsync(ct);
+
+        // Computed as long before it is cast back. (page - 1) * pageSize
+        // overflows int for a large hand-typed page number, and the negative
+        // OFFSET that follows is a 500 rather than an empty page.
+        //
+        // Past the end we answer with no rows and the true total rather than
+        // clamping to the last page: clamping would hide that the caller
+        // asked for something that does not exist, and the envelope already
+        // carries everything needed to recover. It also skips a query whose
+        // only possible answer is nothing.
+        var skip = (long)(page - 1) * pageSize;
+
+        if (skip >= total)
+        {
+            return TypedResults.Ok(new TicketQueuePageResponse([], total, page, pageSize));
+        }
+
+        var rows = await tickets
+            // Id is the tie-break, and it is not decoration. CreatedAt is
+            // truncated to microseconds, so ties are genuinely reachable —
+            // the seeded dataset is full of them — and without a total order
+            // rows repeat and vanish across page boundaries. Ordering and
+            // windowing are composed into the query before ToListAsync, so
+            // LIMIT and OFFSET reach PostgreSQL rather than the paging
+            // happening here.
+            .OrderByDescending(r => r.CreatedAt)
+            .ThenByDescending(r => r.Id)
+            .Skip((int)skip)
+            .Take(pageSize)
             .ToListAsync(ct);
 
         // Mapped here rather than inside the projection because naming the
@@ -426,6 +461,7 @@ public static class TicketEndpoints
                 r.Id,
                 r.Subject,
                 r.CreatedAt,
+                r.State,
                 isResolved: r.Resolution is not null,
                 r.Classification?.Category,
                 r.Classification?.Priority,

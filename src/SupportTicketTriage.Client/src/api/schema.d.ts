@@ -690,6 +690,7 @@ export interface components {
             subject: string;
             /** Format: date-time */
             createdAt: string;
+            state: string;
             category: null | string;
             priority: null | string;
             isDraftEligible: null | boolean;
