@@ -213,6 +213,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* A default for any link no context styles, so none falls back to the
+   browser's blue and ignores the palette. Every context that styles its own
+   links (the title, the nav, the queue) does so with a class selector, which
+   outranks this one. */
+a {
+  color: var(--accent);
+}
+
 /* --- Responsive ----------------------------------------------------------
  *
  * There is not one `@media (max-width: …)` in this file, and that is the
